@@ -51,7 +51,7 @@ export function pickString(source: RawRecord | null, keys: string[], fallback = 
   return fallback;
 }
 
-export function getOfferType(offer: OfferDetail) {
+export function getOfferType(offer: OfferDetail | OfferSummary) {
   const record = asRecord(offer);
   const rawType = pickString(record, ["type", "offer_type", "offerType"], "WORKSHOP").toUpperCase();
 
@@ -65,6 +65,37 @@ export function getOfferType(offer: OfferDetail) {
   }
 
   return "WORKSHOP";
+}
+
+export function getOfferCollectionPathByType(offerType: string) {
+  const normalized = offerType.trim().toUpperCase();
+  if (normalized === "CLASS") {
+    return "/classes";
+  }
+  if (normalized === "PRIVATE_SESSION") {
+    return "/private-sessions";
+  }
+  if (normalized === "TRAINING_INFO") {
+    return "/trainings";
+  }
+  return "/workshops";
+}
+
+export function getCanonicalOfferPathByTypeAndSlug(offerType: string, slug: string) {
+  const cleanedSlug = slug.trim().replace(/^\/+/, "");
+  if (!cleanedSlug) {
+    return "";
+  }
+  return `${getOfferCollectionPathByType(offerType)}/${cleanedSlug}`;
+}
+
+export function getCanonicalOfferPath(offer: OfferDetail | OfferSummary) {
+  const slug = getOfferSlug(offer);
+  if (!slug) {
+    return "";
+  }
+  const offerType = getOfferType(offer);
+  return getCanonicalOfferPathByTypeAndSlug(offerType, slug);
 }
 
 export function getOfferSlug(offer: OfferDetail | OfferSummary) {
@@ -276,6 +307,28 @@ export function getThemes(offer: OfferDetail) {
       } satisfies ThemeTag;
     })
     .filter((theme): theme is ThemeTag => theme !== null);
+}
+
+export function getDomains(offer: OfferDetail) {
+  const record = asRecord(offer);
+  if (!record) {
+    return [] as ThemeTag[];
+  }
+
+  return asRecords(record.domains)
+    .map((domain) => {
+      const name = pickString(domain, ["name", "label"]);
+      if (!name) {
+        return null;
+      }
+
+      const slug = pickString(domain, ["slug"], name);
+      return {
+        id: slug,
+        name,
+      } satisfies ThemeTag;
+    })
+    .filter((domain): domain is ThemeTag => domain !== null);
 }
 
 export function getSections(offer: OfferDetail) {

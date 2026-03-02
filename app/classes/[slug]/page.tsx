@@ -1,14 +1,15 @@
 import { notFound, permanentRedirect } from "next/navigation";
 
+import ClassTemplate from "@/components/offers/ClassTemplate";
 import { ApiError, fetchOfferDetail, fetchSiteConfig, type OfferDetail } from "@/lib/api";
 import { getHostname } from "@/lib/get-hostname";
-import { getCanonicalOfferPath } from "@/lib/offers";
+import { getCanonicalOfferPath, getOfferType } from "@/lib/offers";
 
 type OfferPageProps = {
   params: Promise<{ slug: string }> | { slug: string };
 };
 
-export default async function OfferLegacyRedirectPage({ params }: OfferPageProps) {
+export default async function ClassDetailPage({ params }: OfferPageProps) {
   const { slug } = await params;
   const hostname = await getHostname();
   const siteConfig = await fetchSiteConfig(hostname).catch(() => null);
@@ -16,7 +17,7 @@ export default async function OfferLegacyRedirectPage({ params }: OfferPageProps
   if (!siteConfig) {
     return (
       <section className="page-section">
-        <h1>Offer</h1>
+        <h1>Class</h1>
         <p>Unable to load this offer right now.</p>
       </section>
     );
@@ -42,10 +43,14 @@ export default async function OfferLegacyRedirectPage({ params }: OfferPageProps
     notFound();
   }
 
-  const canonicalPath = getCanonicalOfferPath(offer);
-  if (!canonicalPath) {
-    notFound();
+  const offerType = getOfferType(offer);
+  if (offerType !== "CLASS") {
+    const canonicalPath = getCanonicalOfferPath(offer);
+    if (!canonicalPath) {
+      notFound();
+    }
+    permanentRedirect(canonicalPath);
   }
 
-  permanentRedirect(canonicalPath);
+  return <ClassTemplate offer={offer} locale={siteConfig.defaultLocale} />;
 }

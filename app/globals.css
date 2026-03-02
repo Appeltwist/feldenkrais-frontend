@@ -225,6 +225,33 @@ a {
 
 /* ── Grouped calendar cards ── */
 
+.calendar-filter-form {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.calendar-filter-form__label {
+  color: var(--foreground);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.calendar-filter-form__controls {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.calendar-filter-form__select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--foreground);
+  min-width: 240px;
+  padding: 0.5rem 0.65rem;
+}
+
 .schedule-view-toggle {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -344,6 +371,16 @@ a {
 }
 
 @media (max-width: 768px) {
+  .calendar-filter-form__controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .calendar-filter-form__select {
+    min-width: 0;
+    width: 100%;
+  }
+
   .schedule-view-toggle {
     width: 100%;
   }
@@ -386,6 +423,12 @@ a {
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.offer-domain-label {
+  color: var(--color-secondary);
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
 }
 
 .offer-quick-facts {
@@ -632,6 +675,7 @@ a {
 
 .site-forest-lighthouse .calendar-group-card__domains,
 .site-forest-lighthouse .gallery-grid figcaption,
+.site-forest-lighthouse .offer-domain-label,
 .site-forest-lighthouse .offer-subtitle,
 .site-forest-lighthouse .offer-type-label,
 .site-forest-lighthouse .offer-action-bar__status {

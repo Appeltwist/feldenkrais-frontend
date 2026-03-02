@@ -6,6 +6,7 @@ import { getOfferLabels } from "@/lib/i18n";
 import {
   asRecord,
   formatDateTime,
+  getCanonicalOfferPath,
   getOfferSlug,
   getOfferTitle,
   pickString,
@@ -53,6 +54,7 @@ export default async function OfferListPage({ heading, offerType }: OfferListPag
           const offerRecord = asRecord(offer);
           const slug = getOfferSlug(offer);
           const title = getOfferTitle(offer, "Untitled offer");
+          const canonicalPath = getCanonicalOfferPath(offer);
           const excerpt = pickString(offerRecord, ["excerpt", "summary", "short_description"]);
           const nextOccurrence = readNextOccurrence(offer);
           const nextOccurrenceLabel = formatDateTime(
@@ -69,7 +71,7 @@ export default async function OfferListPage({ heading, offerType }: OfferListPag
                 <strong>{labels.nextOccurrence}:</strong> {nextOccurrenceLabel || "-"}
               </p>
               {slug ? (
-                <Link className="text-link" href={`/offer/${slug}`}>
+                <Link className="text-link" href={canonicalPath || `/offer/${slug}`}>
                   {detailsLabel}
                 </Link>
               ) : null}

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { getCanonicalOfferPathByTypeAndSlug } from "@/lib/offers";
+
 type RawRecord = Record<string, unknown>;
 
 export type CalendarDomainLabel = {
@@ -201,6 +203,8 @@ export default function GroupedCalendar({
         const selectedId = selectedByOffer[entry.offer.id];
         const selectedOccurrence = sessionList.find((session) => session.id === selectedId) ?? sessionList[0];
         const bookingUrl = selectedOccurrence?.bookingUrl || entry.offer.canonicalUrl || undefined;
+        const offerDetailsPath =
+          getCanonicalOfferPathByTypeAndSlug(entry.offer.type, entry.offer.slug) || `/offer/${entry.offer.slug}`;
         const previewSecondary = entry.nextOccurrences.slice(1, 3);
         const domainsLabel = entry.offer.domains.map((domain) => domain.name).join(" · ");
 
@@ -251,7 +255,7 @@ export default function GroupedCalendar({
                   {entry.ctaLabel}
                 </a>
               ) : (
-                <Link className="text-link" href={`/offer/${entry.offer.slug}`}>
+                <Link className="text-link" href={offerDetailsPath}>
                   View offer
                 </Link>
               )}
@@ -290,7 +294,7 @@ export default function GroupedCalendar({
                           {entry.ctaLabel}
                         </a>
                       ) : (
-                        <Link className="text-link" href={`/offer/${entry.offer.slug}`}>
+                        <Link className="text-link" href={offerDetailsPath}>
                           View offer
                         </Link>
                       )}
@@ -299,7 +303,7 @@ export default function GroupedCalendar({
                           Add to calendar
                         </a>
                       ) : null}
-                      <Link className="text-link" href={`/offer/${entry.offer.slug}`}>
+                      <Link className="text-link" href={offerDetailsPath}>
                         Offer details
                       </Link>
                     </div>

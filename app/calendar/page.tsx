@@ -3,10 +3,21 @@ import GroupedCalendar, {
   type CalendarOccurrenceOption,
   type GroupedCalendarEntry,
 } from "@/components/calendar/GroupedCalendar";
-import { fetchCalendar, fetchSiteConfig, type CalendarItem } from "@/lib/api";
+import {
+  fetchCalendarWithMeta,
+  fetchSiteConfig,
+  type CalendarDomainOption,
+  type CalendarItem,
+} from "@/lib/api";
 import { getHostname } from "@/lib/get-hostname";
 
 type RawRecord = Record<string, unknown>;
+
+type CalendarPageProps = {
+  searchParams?:
+    | Promise<Record<string, string | string[] | undefined>>
+    | Record<string, string | string[] | undefined>;
+};
 
 function asRecord(value: unknown): RawRecord | null {
   if (typeof value === "object" && value !== null && !Array.isArray(value)) {
@@ -123,13 +134,43 @@ function parseGroupedEntries(items: CalendarItem[]) {
   return entries;
 }
 
-export default async function CalendarPage() {
+function pickSingleSearchParam(
+  searchParams: Record<string, string | string[] | undefined>,
+  keys: string[],
+) {
+  for (const key of keys) {
+    const value = searchParams[key];
+    const item = Array.isArray(value) ? value[0] : value;
+    if (typeof item === "string" && item.trim()) {
+      return item.trim();
+    }
+  }
+  return "";
+}
+
+function sortDomains(domains: CalendarDomainOption[]) {
+  return [...domains].sort((left, right) => {
+    const leftOrder = typeof left.sort_order === "number" ? left.sort_order : 9999;
+    const rightOrder = typeof right.sort_order === "number" ? right.sort_order : 9999;
+    if (leftOrder !== rightOrder) {
+      return leftOrder - rightOrder;
+    }
+    return left.name.localeCompare(right.name);
+  });
+}
+
+export default async function CalendarPage({ searchParams }: CalendarPageProps) {
   const hostname = await getHostname();
   const today = new Date();
   const thirtyDaysLater = new Date(today);
   thirtyDaysLater.setDate(today.getDate() + 30);
   const from = toIsoDate(today);
   const to = toIsoDate(thirtyDaysLater);
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const selectedDomainTheme = pickSingleSearchParam(
+    resolvedSearchParams,
+    ["domain_theme", "domain_slug", "domains", "domain_filter", "theme"],
+  );
 
   const siteConfig = await fetchSiteConfig(hostname).catch(() => null);
   if (!siteConfig) {
@@ -141,15 +182,16 @@ export default async function CalendarPage() {
     );
   }
 
-  const payload = await fetchCalendar({
+  const calendar = await fetchCalendarWithMeta({
     hostname,
     center: siteConfig.centerSlug,
     locale: siteConfig.defaultLocale,
     from,
     to,
     groupBy: "offer",
+    domainTheme: selectedDomainTheme || undefined,
   }).catch(() => null);
-  if (!payload) {
+  if (!calendar) {
     return (
       <section className="page-section">
         <h1>Calendar</h1>
@@ -158,7 +200,8 @@ export default async function CalendarPage() {
     );
   }
 
-  const entries = parseGroupedEntries(payload);
+  const entries = parseGroupedEntries(calendar.items);
+  const domains = sortDomains(calendar.meta.domains);
 
   return (
     <section className="page-section">
@@ -166,6 +209,34 @@ export default async function CalendarPage() {
       <p>
         {from} to {to}
       </p>
+      <form className="calendar-filter-form" method="get">
+        <label className="calendar-filter-form__label" htmlFor="calendar-domain-theme">
+          Domain
+        </label>
+        <div className="calendar-filter-form__controls">
+          <select
+            className="calendar-filter-form__select"
+            defaultValue={selectedDomainTheme}
+            id="calendar-domain-theme"
+            name="domain_theme"
+          >
+            <option value="">All domains</option>
+            {domains.map((domain) => (
+              <option key={domain.slug} value={domain.slug}>
+                {domain.name}
+              </option>
+            ))}
+          </select>
+          <button className="button-link button-link--secondary" type="submit">
+            Apply
+          </button>
+          {selectedDomainTheme ? (
+            <a className="text-link" href="?">
+              Clear
+            </a>
+          ) : null}
+        </div>
+      </form>
       {entries.length === 0 ? <p>No events in this date range.</p> : null}
       <GroupedCalendar
         center={siteConfig.centerSlug}

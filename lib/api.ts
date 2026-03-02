@@ -61,6 +61,24 @@ export type FetchCalendarParams = {
   domainTheme?: string;
 };
 
+export type CalendarDomainOption = {
+  slug: string;
+  name: string;
+  name_en?: string | null;
+  name_fr?: string | null;
+  sort_order?: number;
+};
+
+export type CalendarMeta = {
+  domains: CalendarDomainOption[];
+  selectedDomains: string[];
+};
+
+export type CalendarResponse = {
+  items: CalendarItem[];
+  meta: CalendarMeta;
+};
+
 export type { CalendarItem, OfferDetail, OfferSummary } from "@/lib/types";
 
 export class ApiError extends Error {
@@ -326,4 +344,71 @@ export async function fetchCalendar({
   });
 
   return toList<CalendarItem>(payload, ["results", "items", "data", "calendar", "events"]);
+}
+
+function toCalendarMeta(payload: unknown): CalendarMeta {
+  const record = asRecord(payload);
+  const metaRecord = asRecord(record?.meta);
+  const domainsRaw = toArray<unknown>(metaRecord?.domains);
+  const selectedRaw = toArray<unknown>(metaRecord?.selected_domains ?? metaRecord?.selectedDomains);
+
+  const domains: CalendarDomainOption[] = domainsRaw
+    .map((item) => {
+      const domain = asRecord(item);
+      const slug = pickString(domain, ["slug"]);
+      const name = pickString(domain, ["name", "label"]);
+      if (!slug || !name) {
+        return null;
+      }
+
+      const sortOrderRaw = domain?.sort_order;
+      const sortOrder =
+        typeof sortOrderRaw === "number" && Number.isInteger(sortOrderRaw) ? sortOrderRaw : undefined;
+
+      return {
+        slug,
+        name,
+        name_en: pickString(domain, ["name_en"]) || null,
+        name_fr: pickString(domain, ["name_fr"]) || null,
+        sort_order: sortOrder,
+      } satisfies CalendarDomainOption;
+    })
+    .filter((domain): domain is CalendarDomainOption => domain !== null);
+
+  const selectedDomains = selectedRaw
+    .map((item) => (typeof item === "string" ? item.trim() : ""))
+    .filter(Boolean);
+
+  return {
+    domains,
+    selectedDomains,
+  };
+}
+
+export async function fetchCalendarWithMeta({
+  hostname,
+  center,
+  locale,
+  from,
+  to,
+  groupBy,
+  offeringId,
+  domainTheme,
+}: FetchCalendarParams): Promise<CalendarResponse> {
+  const normalizedHostname = normalizeHostname(hostname);
+  const payload = await requestJson<unknown>("/calendar", {
+    domain: normalizedHostname,
+    center,
+    locale,
+    from,
+    to,
+    group_by: groupBy,
+    offering_id: offeringId,
+    domain_theme: domainTheme,
+  });
+
+  return {
+    items: toList<CalendarItem>(payload, ["results", "items", "data", "calendar", "events"]),
+    meta: toCalendarMeta(payload),
+  };
 }

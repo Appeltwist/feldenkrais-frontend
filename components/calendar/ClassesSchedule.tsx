@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import { getCanonicalOfferPathByTypeAndSlug } from "@/lib/offers";
 import { useSiteContext } from "@/lib/site-context";
 
 import type { GroupedCalendarEntry } from "./GroupedCalendar";
@@ -252,6 +253,8 @@ export default function ClassesSchedule({
           const selectedId = selectedByOffer[entry.offer.id];
           const selectedOccurrence = sessionList.find((session) => session.id === selectedId) ?? sessionList[0];
           const bookingUrl = deriveBookingUrl(entry, selectedOccurrence) || undefined;
+          const offerDetailsPath =
+            getCanonicalOfferPathByTypeAndSlug(entry.offer.type, entry.offer.slug) || `/offer/${entry.offer.slug}`;
           const previewSecondary = entry.nextOccurrences.slice(1, 3);
           const domainsLabel = entry.offer.domains.map((domain) => domain.name).join(" · ");
 
@@ -300,7 +303,7 @@ export default function ClassesSchedule({
                     {entry.ctaLabel}
                   </a>
                 ) : (
-                  <Link className="text-link" href={`/offer/${entry.offer.slug}`}>
+                  <Link className="text-link" href={offerDetailsPath}>
                     View offer
                   </Link>
                 )}
@@ -339,7 +342,7 @@ export default function ClassesSchedule({
                             {entry.ctaLabel}
                           </a>
                         ) : (
-                          <Link className="text-link" href={`/offer/${entry.offer.slug}`}>
+                          <Link className="text-link" href={offerDetailsPath}>
                             View offer
                           </Link>
                         )}
@@ -348,7 +351,7 @@ export default function ClassesSchedule({
                             Add to calendar
                           </a>
                         ) : null}
-                        <Link className="text-link" href={`/offer/${entry.offer.slug}`}>
+                        <Link className="text-link" href={offerDetailsPath}>
                           Offer details
                         </Link>
                       </div>
