@@ -4,6 +4,7 @@ import type { OfferDetail } from "@/lib/types";
 import {
   formatDateTime,
   getFacilitators,
+  getCanonicalUrl,
   getFaqItems,
   getMediaUrl,
   getOccurrences,
@@ -67,12 +68,12 @@ export default function OfferTemplateBase({
   const priceOptions = getPriceOptions(offer);
   const facilitators = getFacilitators(offer);
   const tags = getTags(offer);
-  const canonicalUrl = pickString(asRecord(offer), ["canonical_url", "canonicalUrl", "url"]);
+  const canonicalUrl = getCanonicalUrl(offer);
   const mediaUrl = getMediaUrl(offer);
   const faqItems = getFaqItems(offer);
   const offerType = getOfferType(offer);
   const trialEligible = isTrialEligible(offer);
-  const primaryOccurrence = occurrences[0] ? asRecord(occurrences[0]) : null;
+  const primaryOccurrence = (occurrences[0] ?? null) as Record<string, unknown> | null;
   const primaryIcsUrl = pickString(primaryOccurrence, ["ics_url", "icsUrl"]);
   const isPracticeContext = offerType === "CLASS" || offerType === "PRIVATE_SESSION";
 

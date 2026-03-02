@@ -193,7 +193,7 @@ export default function GroupedCalendar({
   }
 
   return (
-    <ul className="stack-list">
+    <ul className="calendar-group-grid">
       {entries.map((entry) => {
         const isExpanded = expandedOfferId === entry.offer.id;
         const loadedOccurrences = occurrencesByOffer[entry.offer.id] ?? [];

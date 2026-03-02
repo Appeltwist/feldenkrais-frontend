@@ -5,10 +5,14 @@ import Link from "next/link";
 import { useSiteContext } from "@/lib/site-context";
 
 export default function MobileFixedFooter({ locale }: { locale: string }) {
-  const { centerSlug } = useSiteContext();
+  const { centerSlug, mobileBookingCta } = useSiteContext();
   if (centerSlug !== "forest-lighthouse") return null;
 
   const isEn = !locale.startsWith("fr");
+  const defaultBookingUrl =
+    "https://clients.mindbodyonline.com/classic/ws?studioid=5742807&stype=41&sTG=23&prodId=100023";
+  const bookingUrl = mobileBookingCta?.href || defaultBookingUrl;
+  const bookingLabel = mobileBookingCta?.label || (isEn ? "Book Now" : "Réserver");
 
   return (
     <div className="fl-mobile-footer">
@@ -17,11 +21,11 @@ export default function MobileFixedFooter({ locale }: { locale: string }) {
       </Link>
       <a
         className="fl-mobile-footer__link fl-mobile-footer__link--cta"
-        href="https://clients.mindbodyonline.com/classic/ws?studioid=5742807&stype=41&sTG=23&prodId=100023"
+        href={bookingUrl}
         rel="noopener noreferrer"
         target="_blank"
       >
-        {isEn ? "Book Now" : "Réserver"}
+        {bookingLabel}
       </a>
     </div>
   );

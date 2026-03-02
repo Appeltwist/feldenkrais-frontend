@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 
 export type Brand = {
   colorPrimary: string;
@@ -29,8 +29,15 @@ export type SiteConfig = {
   center: Center;
 };
 
+export type MobileBookingCta = {
+  href: string;
+  label?: string;
+} | null;
+
 export type SiteContextValue = SiteConfig & {
   hostname: string;
+  mobileBookingCta: MobileBookingCta;
+  setMobileBookingCta: (value: MobileBookingCta) => void;
 };
 
 const defaultSiteContext: SiteContextValue = {
@@ -49,6 +56,8 @@ const defaultSiteContext: SiteContextValue = {
     name: "Forest Lighthouse",
     socials: [],
   },
+  mobileBookingCta: null,
+  setMobileBookingCta: () => undefined,
 };
 
 const SiteContext = createContext<SiteContextValue>(defaultSiteContext);
@@ -60,12 +69,16 @@ type SiteProviderProps = {
 };
 
 export function SiteProvider({ hostname, initialSiteConfig, children }: SiteProviderProps) {
+  const [mobileBookingCta, setMobileBookingCta] = useState<MobileBookingCta>(null);
+
   const value = useMemo(
     () => ({
       hostname,
       ...initialSiteConfig,
+      mobileBookingCta,
+      setMobileBookingCta,
     }),
-    [hostname, initialSiteConfig],
+    [hostname, initialSiteConfig, mobileBookingCta],
   );
 
   return <SiteContext.Provider value={value}>{children}</SiteContext.Provider>;
