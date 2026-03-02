@@ -92,6 +92,38 @@ export function getCanonicalUrl(offer: OfferDetail) {
   return pickString(record, ["canonical_url", "canonicalUrl", "url"]);
 }
 
+export function getMediaUrl(offer: OfferDetail) {
+  const record = asRecord(offer);
+  return pickString(record, ["media_url", "mediaUrl", "video_url", "videoUrl"]);
+}
+
+export function isTrialEligible(offer: OfferDetail) {
+  const record = asRecord(offer);
+  if (!record) {
+    return false;
+  }
+  const value = record.trial_eligible ?? record.trialEligible;
+  return value === true;
+}
+
+export function getFaqItems(offer: OfferDetail) {
+  const record = asRecord(offer);
+  if (!record || !Array.isArray(record.faq)) {
+    return [] as Array<{ question: string; answer: string }>;
+  }
+
+  return asRecords(record.faq)
+    .map((item) => {
+      const question = pickString(item, ["question"]);
+      const answer = pickString(item, ["answer"]);
+      if (!question || !answer) {
+        return null;
+      }
+      return { question, answer };
+    })
+    .filter((item): item is { question: string; answer: string } => item !== null);
+}
+
 export function getPrimaryCta(offer: OfferDetail): PrimaryCTA | null {
   const record = asRecord(offer);
   if (!record) {
@@ -292,13 +324,13 @@ export function readNextOccurrence(offer: OfferSummary | OfferDetail) {
     }
 
     return {
-      start: pickString(allOccurrences[0], ["start", "start_at", "datetime", "date"]),
+      start: pickString(allOccurrences[0], ["start_datetime", "start", "start_at", "datetime", "date"]),
       timezone: pickString(allOccurrences[0], ["timezone", "tz", "time_zone"]),
     };
   }
 
   return {
-    start: pickString(occurrence, ["start", "start_at", "datetime", "date"]),
+    start: pickString(occurrence, ["start_datetime", "start", "start_at", "datetime", "date"]),
     timezone: pickString(occurrence, ["timezone", "tz", "time_zone"]),
   };
 }

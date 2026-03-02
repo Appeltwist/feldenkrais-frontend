@@ -31,11 +31,17 @@ export type ThemeTag = {
 };
 
 export type Occurrence = {
+  id?: number | string | null;
   start?: string | null;
   end?: string | null;
   start_at?: string | null;
   end_at?: string | null;
+  start_datetime?: string | null;
+  end_datetime?: string | null;
   timezone?: string | null;
+  label?: string | null;
+  booking_url?: string | null;
+  ics_url?: string | null;
   [key: string]: unknown;
 };
 
@@ -164,6 +170,8 @@ export type OfferDetail = {
   body?: string | null;
   body_html?: string | null;
   canonical_url?: string | null;
+  media_url?: string | null;
+  trial_eligible?: boolean;
   primary_cta?: PrimaryCTA | null;
   quick_facts?: QuickFacts | null;
   schedule_cards?: ScheduleCard[] | null;
@@ -173,6 +181,7 @@ export type OfferDetail = {
   price_options?: PriceOption[] | null;
   facilitators?: Facilitator[] | null;
   tags?: Array<string | ThemeTag> | string | null;
+  faq?: Array<{ question?: string | null; answer?: string | null }> | null;
   next_occurrence?: NextOccurrence | string | null;
   [key: string]: unknown;
 };

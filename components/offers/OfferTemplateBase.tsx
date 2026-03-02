@@ -4,8 +4,11 @@ import type { OfferDetail } from "@/lib/types";
 import {
   formatDateTime,
   getFacilitators,
+  getFaqItems,
+  getMediaUrl,
   getOccurrences,
   getOfferBodyHtml,
+  getOfferType,
   getOfferSubtitle,
   getOfferTitle,
   getPriceOptions,
@@ -15,9 +18,11 @@ import {
   getSections,
   getTags,
   getThemes,
+  isTrialEligible,
   pickString,
 } from "@/lib/offers";
 
+import OfferActionBar from "./OfferActionBar";
 import QuickFacts from "./QuickFacts";
 import ScheduleCards from "./ScheduleCards";
 import ThemesPills from "./ThemesPills";
@@ -62,6 +67,14 @@ export default function OfferTemplateBase({
   const priceOptions = getPriceOptions(offer);
   const facilitators = getFacilitators(offer);
   const tags = getTags(offer);
+  const canonicalUrl = pickString(asRecord(offer), ["canonical_url", "canonicalUrl", "url"]);
+  const mediaUrl = getMediaUrl(offer);
+  const faqItems = getFaqItems(offer);
+  const offerType = getOfferType(offer);
+  const trialEligible = isTrialEligible(offer);
+  const primaryOccurrence = occurrences[0] ? asRecord(occurrences[0]) : null;
+  const primaryIcsUrl = pickString(primaryOccurrence, ["ics_url", "icsUrl"]);
+  const isPracticeContext = offerType === "CLASS" || offerType === "PRIVATE_SESSION";
 
   return (
     <section className="page-section">
@@ -85,6 +98,19 @@ export default function OfferTemplateBase({
         {bodyHtml ? <div className="rich-text" dangerouslySetInnerHTML={{ __html: bodyHtml }} /> : null}
       </section>
 
+      <OfferActionBar canonicalUrl={canonicalUrl} icsUrl={primaryIcsUrl} mediaUrl={mediaUrl} title={title} />
+
+      {trialEligible && isPracticeContext ? (
+        <section className="offer-trial-banner">
+          <p>{localeCode === "fr" ? "Essai gratuit disponible pour ce cours." : "Free trial available for this class."}</p>
+          <p>
+            <a className="text-link" href={primaryCta?.url || canonicalUrl || "/contact"}>
+              {localeCode === "fr" ? "Essayer un cours gratuit" : "Try a free class"}
+            </a>
+          </p>
+        </section>
+      ) : null}
+
       <QuickFacts locale={localeCode} quickFacts={quickFacts} />
 
       {showScheduleCards ? <ScheduleCards cards={scheduleCards} locale={localeCode} /> : null}
@@ -92,6 +118,20 @@ export default function OfferTemplateBase({
       <ThemesPills locale={localeCode} themes={themes} />
 
       {sections.length > 0 ? <BlockRenderer blocks={sections} locale={localeCode} /> : null}
+
+      {faqItems.length > 0 ? (
+        <section>
+          <h2>{localeCode === "fr" ? "FAQ" : "FAQ"}</h2>
+          <ul className="stack-list">
+            {faqItems.map((item, index) => (
+              <li key={`${item.question}-${index}`}>
+                <strong>{item.question}</strong>
+                <p>{item.answer}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {priceOptions.length > 0 ? (
         <section>
@@ -120,18 +160,38 @@ export default function OfferTemplateBase({
           <ul className="stack-list">
             {occurrences.map((occurrence, index) => {
               const start = formatDateTime(
-                pickString(occurrence, ["start", "start_at", "datetime", "date"]),
+                pickString(occurrence, ["start_datetime", "start", "start_at", "datetime", "date"]),
                 locale,
                 pickString(occurrence, ["timezone", "tz", "time_zone"]),
               );
               const end = formatDateTime(
-                pickString(occurrence, ["end", "end_at"]),
+                pickString(occurrence, ["end_datetime", "end", "end_at"]),
                 locale,
                 pickString(occurrence, ["timezone", "tz", "time_zone"]),
               );
-              const line = [start, end].filter(Boolean).join(" -> ");
+              const line = [start, end].filter(Boolean).join(" - ");
+              const label = pickString(occurrence, ["label"]);
+              const bookingUrl = pickString(occurrence, ["booking_url", "bookingUrl"]);
+              const icsUrl = pickString(occurrence, ["ics_url", "icsUrl"]);
 
-              return <li key={`${line || "occurrence"}-${index}`}>{line || "-"}</li>;
+              return (
+                <li key={`${line || "occurrence"}-${index}`}>
+                  <p>{label || line || "-"}</p>
+                  {label ? <p>{line || "-"}</p> : null}
+                  <div className="link-row">
+                    {bookingUrl ? (
+                      <a className="button-link" href={bookingUrl} rel="noreferrer" target="_blank">
+                        {labels.book}
+                      </a>
+                    ) : null}
+                    {icsUrl ? (
+                      <a className="text-link" href={icsUrl}>
+                        Add to calendar
+                      </a>
+                    ) : null}
+                  </div>
+                </li>
+              );
             })}
           </ul>
         </section>

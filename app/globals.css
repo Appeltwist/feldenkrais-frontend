@@ -323,6 +323,34 @@ a {
   font-size: 1.05rem;
 }
 
+.offer-action-bar {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.offer-action-bar__button {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+}
+
+.offer-action-bar__status {
+  color: var(--color-secondary);
+  font-size: 0.85rem;
+}
+
+.offer-trial-banner {
+  background: #fff3da;
+  border: 1px solid #efc96e;
+  border-radius: 8px;
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.85rem;
+}
+
 .quick-facts-grid {
   display: grid;
   gap: 0.6rem;
