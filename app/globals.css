@@ -142,8 +142,10 @@ a {
 
 .button-link {
   background: var(--color-primary);
+  border: 0;
   border-radius: 6px;
   color: #ffffff;
+  cursor: pointer;
   display: inline-block;
   font-weight: 600;
   padding: 0.5rem 0.9rem;
@@ -219,6 +221,72 @@ a {
   color: #ffffff;
   font-size: 0.85rem;
   padding: 0.25rem 0.6rem;
+}
+
+/* ── Grouped calendar cards ── */
+
+.calendar-group-card {
+  gap: 0.8rem;
+}
+
+.calendar-group-card__hero {
+  border-radius: 8px;
+  color: #ffffff;
+  display: grid;
+  gap: 0.5rem;
+  min-height: 130px;
+  padding: 1rem;
+  background-position: center;
+  background-size: cover;
+}
+
+.calendar-group-card__domains {
+  color: var(--color-secondary);
+  font-size: 0.85rem;
+}
+
+.calendar-group-card__primary-time {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.calendar-group-card__next-list {
+  display: grid;
+  gap: 0.25rem;
+  list-style: none;
+}
+
+.calendar-group-card__expanded {
+  border-top: 1px dashed var(--border);
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+  padding-top: 0.75rem;
+}
+
+.calendar-group-card__session-list {
+  display: grid;
+  gap: 0.45rem;
+  list-style: none;
+}
+
+.calendar-group-card__session-button {
+  align-items: center;
+  background: #f8fafb;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--foreground);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  padding: 0.6rem 0.7rem;
+  text-align: left;
+  width: 100%;
+}
+
+.calendar-group-card__session-button.is-selected {
+  background: #e4f2ee;
+  border-color: var(--color-primary);
 }
 
 /* ── Rich text ── */

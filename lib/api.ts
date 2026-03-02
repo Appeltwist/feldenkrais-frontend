@@ -56,6 +56,9 @@ export type FetchCalendarParams = {
   locale?: string;
   from?: string;
   to?: string;
+  groupBy?: "offer";
+  offeringId?: number;
+  domainTheme?: string;
 };
 
 export type { CalendarItem, OfferDetail, OfferSummary } from "@/lib/types";
@@ -300,7 +303,16 @@ export async function fetchOfferDetail({ hostname, center, slug, locale }: Fetch
   return wrapped ?? record;
 }
 
-export async function fetchCalendar({ hostname, center, locale, from, to }: FetchCalendarParams) {
+export async function fetchCalendar({
+  hostname,
+  center,
+  locale,
+  from,
+  to,
+  groupBy,
+  offeringId,
+  domainTheme,
+}: FetchCalendarParams) {
   const normalizedHostname = normalizeHostname(hostname);
   const payload = await requestJson<unknown>("/calendar", {
     domain: normalizedHostname,
@@ -308,6 +320,9 @@ export async function fetchCalendar({ hostname, center, locale, from, to }: Fetc
     locale,
     from,
     to,
+    group_by: groupBy,
+    offering_id: offeringId,
+    domain_theme: domainTheme,
   });
 
   return toList<CalendarItem>(payload, ["results", "items", "data", "calendar", "events"]);

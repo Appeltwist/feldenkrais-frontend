@@ -1,5 +1,8 @@
-import Link from "next/link";
-
+import GroupedCalendar, {
+  type CalendarDomainLabel,
+  type CalendarOccurrenceOption,
+  type GroupedCalendarEntry,
+} from "@/components/calendar/GroupedCalendar";
 import { fetchCalendar, fetchSiteConfig, type CalendarItem } from "@/lib/api";
 import { getHostname } from "@/lib/get-hostname";
 
@@ -9,7 +12,6 @@ function asRecord(value: unknown): RawRecord | null {
   if (typeof value === "object" && value !== null && !Array.isArray(value)) {
     return value as RawRecord;
   }
-
   return null;
 }
 
@@ -17,75 +19,120 @@ function pickString(source: RawRecord | null, keys: string[], fallback = "") {
   if (!source) {
     return fallback;
   }
-
   for (const key of keys) {
     const value = source[key];
     if (typeof value === "string" && value.trim()) {
-      return value;
+      return value.trim();
     }
   }
-
   return fallback;
+}
+
+function toPositiveInt(value: unknown) {
+  if (typeof value === "number" && Number.isInteger(value) && value > 0) {
+    return value;
+  }
+  if (typeof value === "string") {
+    const parsed = Number.parseInt(value, 10);
+    if (!Number.isNaN(parsed) && parsed > 0) {
+      return parsed;
+    }
+  }
+  return null;
 }
 
 function toIsoDate(value: Date) {
   return value.toISOString().slice(0, 10);
 }
 
-function formatDateTime(dateValue: string, locale: string, timezone?: string) {
-  if (!dateValue) {
-    return "Date unavailable";
+function parseOccurrence(value: unknown): CalendarOccurrenceOption | null {
+  const record = asRecord(value);
+  const id = toPositiveInt(record?.id);
+  const startDateTime = pickString(record, ["start_datetime", "start", "start_at"]);
+  const endDateTime = pickString(record, ["end_datetime", "end", "end_at"]);
+  if (!id || !startDateTime || !endDateTime) {
+    return null;
   }
-
-  const parsed = new Date(dateValue);
-  if (Number.isNaN(parsed.getTime())) {
-    return dateValue;
-  }
-
-  const formatter = new Intl.DateTimeFormat(locale || "en", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: timezone || "UTC",
-  });
-
-  const formatted = formatter.format(parsed);
-  return timezone ? `${formatted} (${timezone})` : formatted;
-}
-
-function readOfferData(event: CalendarItem) {
-  const eventRecord = asRecord(event);
-  const offerRecord = asRecord(eventRecord?.offer);
 
   return {
-    title:
-      pickString(eventRecord, ["offer_title", "offerTitle", "title"]) ||
-      pickString(offerRecord, ["title", "name"], "Untitled offer"),
-    slug:
-      pickString(eventRecord, ["offer_slug", "offerSlug", "slug"]) ||
-      pickString(offerRecord, ["slug"]),
-    start: pickString(eventRecord, ["start", "start_at", "datetime", "date"]),
-    timezone: pickString(eventRecord, ["timezone", "tz", "time_zone"]),
+    id,
+    startDateTime,
+    endDateTime,
+    timezone: pickString(record, ["timezone", "tz", "time_zone"]),
+    label: pickString(record, ["label", "title"]),
+    bookingUrl: pickString(record, ["booking_url", "bookingUrl"]) || undefined,
+    icsUrl: pickString(record, ["ics_url", "icsUrl"]) || undefined,
   };
+}
+
+function parseDomains(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [] as CalendarDomainLabel[];
+  }
+
+  const domains: CalendarDomainLabel[] = [];
+  for (const item of value) {
+    const record = asRecord(item);
+    const slug = pickString(record, ["slug"]);
+    const name = pickString(record, ["name", "label"]);
+    if (!slug || !name) {
+      continue;
+    }
+    domains.push({ slug, name });
+  }
+
+  return domains;
+}
+
+function parseGroupedEntries(items: CalendarItem[]) {
+  const entries: GroupedCalendarEntry[] = [];
+
+  for (const item of items) {
+    const record = asRecord(item);
+    const offer = asRecord(record?.offer);
+    const offerId = toPositiveInt(offer?.id);
+    const title = pickString(offer, ["title", "name"]);
+    const slug = pickString(offer, ["slug"]);
+    if (!offerId || !title || !slug) {
+      continue;
+    }
+
+    const nextRaw =
+      (Array.isArray(record?.next_occurrences) ? record?.next_occurrences : null) ??
+      (Array.isArray(record?.nextOccurrences) ? record?.nextOccurrences : []);
+    const nextOccurrences = nextRaw
+      .map((occurrence) => parseOccurrence(occurrence))
+      .filter((occurrence): occurrence is CalendarOccurrenceOption => occurrence !== null);
+
+    entries.push({
+      offer: {
+        id: offerId,
+        type: pickString(offer, ["type"], "WORKSHOP"),
+        title,
+        slug,
+        heroImageUrl: pickString(offer, ["hero_image_url", "heroImageUrl"]) || undefined,
+        canonicalUrl: pickString(offer, ["canonical_url", "canonicalUrl"]) || undefined,
+        category: pickString(offer, ["category"]) || undefined,
+        domains: parseDomains(offer?.domains),
+      },
+      ctaLabel: pickString(record, ["cta_label", "ctaLabel"], "Book"),
+      nextOccurrences,
+    });
+  }
+
+  return entries;
 }
 
 export default async function CalendarPage() {
   const hostname = await getHostname();
-  let siteConfig: Awaited<ReturnType<typeof fetchSiteConfig>> | null = null;
   const today = new Date();
   const thirtyDaysLater = new Date(today);
   thirtyDaysLater.setDate(today.getDate() + 30);
-  let entries: CalendarItem[] = [];
+  const from = toIsoDate(today);
+  const to = toIsoDate(thirtyDaysLater);
 
-  try {
-    siteConfig = await fetchSiteConfig(hostname);
-    entries = await fetchCalendar({
-      hostname,
-      center: siteConfig.centerSlug,
-      locale: siteConfig.defaultLocale,
-      from: toIsoDate(today),
-      to: toIsoDate(thirtyDaysLater),
-    });
-  } catch {
+  const siteConfig = await fetchSiteConfig(hostname).catch(() => null);
+  if (!siteConfig) {
     return (
       <section className="page-section">
         <h1>Calendar</h1>
@@ -94,30 +141,40 @@ export default async function CalendarPage() {
     );
   }
 
+  const payload = await fetchCalendar({
+    hostname,
+    center: siteConfig.centerSlug,
+    locale: siteConfig.defaultLocale,
+    from,
+    to,
+    groupBy: "offer",
+  }).catch(() => null);
+  if (!payload) {
+    return (
+      <section className="page-section">
+        <h1>Calendar</h1>
+        <p>Unable to load calendar right now.</p>
+      </section>
+    );
+  }
+
+  const entries = parseGroupedEntries(payload);
+
   return (
     <section className="page-section">
       <h1>Calendar</h1>
       <p>
-        {toIsoDate(today)} to {toIsoDate(thirtyDaysLater)}
+        {from} to {to}
       </p>
       {entries.length === 0 ? <p>No events in this date range.</p> : null}
-      <ul className="stack-list">
-        {entries.map((entry, index) => {
-          const event = readOfferData(entry);
-
-          return (
-            <li className="card" key={`${event.slug || "event"}-${index}`}>
-              <p>{formatDateTime(event.start, siteConfig.defaultLocale, event.timezone)}</p>
-              <p>{event.title}</p>
-              {event.slug ? (
-                <Link className="text-link" href={`/offer/${event.slug}`}>
-                  View offer
-                </Link>
-              ) : null}
-            </li>
-          );
-        })}
-      </ul>
+      <GroupedCalendar
+        center={siteConfig.centerSlug}
+        entries={entries}
+        from={from}
+        hostname={hostname}
+        locale={siteConfig.defaultLocale}
+        to={to}
+      />
     </section>
   );
 }
