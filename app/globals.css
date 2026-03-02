@@ -439,6 +439,37 @@ a {
   padding: 0.85rem;
 }
 
+.lead-magnet {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--foreground);
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.9rem;
+}
+
+.lead-magnet__form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.lead-magnet__input {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--foreground);
+  flex: 1;
+  font-size: 0.95rem;
+  min-width: 220px;
+  padding: 0.55rem 0.65rem;
+}
+
+.lead-magnet__error {
+  color: #9f2f2f;
+  font-weight: 600;
+}
+
 .quick-facts-grid {
   display: grid;
   gap: 0.6rem;

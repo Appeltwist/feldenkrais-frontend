@@ -7,6 +7,7 @@ import {
   getCanonicalUrl,
   getFaqItems,
   getMediaUrl,
+  getOfferSlug,
   getOccurrences,
   getOfferBodyHtml,
   getOfferType,
@@ -24,6 +25,7 @@ import {
 } from "@/lib/offers";
 
 import OfferActionBar from "./OfferActionBar";
+import LeadMagnetDownload from "./LeadMagnetDownload";
 import QuickFacts from "./QuickFacts";
 import ScheduleCards from "./ScheduleCards";
 import ThemesPills from "./ThemesPills";
@@ -69,6 +71,7 @@ export default function OfferTemplateBase({
   const facilitators = getFacilitators(offer);
   const tags = getTags(offer);
   const canonicalUrl = getCanonicalUrl(offer);
+  const offerSlug = getOfferSlug(offer);
   const mediaUrl = getMediaUrl(offer);
   const faqItems = getFaqItems(offer);
   const offerType = getOfferType(offer);
@@ -100,6 +103,8 @@ export default function OfferTemplateBase({
       </section>
 
       <OfferActionBar canonicalUrl={canonicalUrl} icsUrl={primaryIcsUrl} mediaUrl={mediaUrl} title={title} />
+
+      {offerSlug ? <LeadMagnetDownload locale={localeCode} offerSlug={offerSlug} offerType={offerType} /> : null}
 
       {trialEligible && isPracticeContext ? (
         <section className="offer-trial-banner">
