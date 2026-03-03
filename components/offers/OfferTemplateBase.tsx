@@ -67,6 +67,9 @@ export default function OfferTemplateBase({
   const scheduleCards = getScheduleCards(offer);
   const themes = getThemes(offer);
   const domains = getDomains(offer);
+  const domainNames = domains
+    .map((domain) => (domain && typeof domain.name === "string" ? domain.name : ""))
+    .filter(Boolean);
   const sections = getSections(offer);
   const occurrences = getOccurrences(offer);
   const priceOptions = getPriceOptions(offer);
@@ -85,7 +88,7 @@ export default function OfferTemplateBase({
   return (
     <section className="page-section">
       <p className="offer-type-label">{typeLabel}</p>
-      {domains.length > 0 ? <p className="offer-domain-label">{domains.map((domain) => domain.name).join(" · ")}</p> : null}
+      {domainNames.length > 0 ? <p className="offer-domain-label">{domainNames.join(" · ")}</p> : null}
 
       <section className="offer-hero">
         <h1>{title}</h1>

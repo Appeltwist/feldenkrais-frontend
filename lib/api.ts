@@ -352,28 +352,27 @@ function toCalendarMeta(payload: unknown): CalendarMeta {
   const domainsRaw = toArray<unknown>(metaRecord?.domains);
   const selectedRaw = toArray<unknown>(metaRecord?.selected_domains ?? metaRecord?.selectedDomains);
 
-  const domains: CalendarDomainOption[] = domainsRaw
-    .map((item) => {
-      const domain = asRecord(item);
-      const slug = pickString(domain, ["slug"]);
-      const name = pickString(domain, ["name", "label"]);
-      if (!slug || !name) {
-        return null;
-      }
+  const domains: CalendarDomainOption[] = [];
+  for (const item of domainsRaw) {
+    const domain = asRecord(item);
+    const slug = pickString(domain, ["slug"]);
+    const name = pickString(domain, ["name", "label"]);
+    if (!slug || !name) {
+      continue;
+    }
 
-      const sortOrderRaw = domain?.sort_order;
-      const sortOrder =
-        typeof sortOrderRaw === "number" && Number.isInteger(sortOrderRaw) ? sortOrderRaw : undefined;
+    const sortOrderRaw = domain?.sort_order;
+    const sortOrder =
+      typeof sortOrderRaw === "number" && Number.isInteger(sortOrderRaw) ? sortOrderRaw : undefined;
 
-      return {
-        slug,
-        name,
-        name_en: pickString(domain, ["name_en"]) || null,
-        name_fr: pickString(domain, ["name_fr"]) || null,
-        sort_order: sortOrder,
-      } satisfies CalendarDomainOption;
-    })
-    .filter((domain): domain is CalendarDomainOption => domain !== null);
+    domains.push({
+      slug,
+      name,
+      name_en: pickString(domain, ["name_en"]) || null,
+      name_fr: pickString(domain, ["name_fr"]) || null,
+      sort_order: sortOrder,
+    });
+  }
 
   const selectedDomains = selectedRaw
     .map((item) => (typeof item === "string" ? item.trim() : ""))

@@ -291,22 +291,19 @@ export function getThemes(offer: OfferDetail) {
     return [] as ThemeTag[];
   }
 
-  return asRecords(record.themes)
-    .map((theme) => {
-      const name = pickString(theme, ["name", "label", "title"]);
-      if (!name) {
-        return null;
-      }
+  const themes: ThemeTag[] = [];
+  for (const theme of asRecords(record.themes)) {
+    const name = pickString(theme, ["name", "label", "title"]);
+    if (!name) {
+      continue;
+    }
 
-      const rawId = theme.id;
-      const id = typeof rawId === "number" || typeof rawId === "string" ? rawId : name;
+    const rawId = theme.id;
+    const id = typeof rawId === "number" || typeof rawId === "string" ? rawId : name;
+    themes.push({ id, name });
+  }
 
-      return {
-        id,
-        name,
-      } satisfies ThemeTag;
-    })
-    .filter((theme): theme is ThemeTag => theme !== null);
+  return themes;
 }
 
 export function getDomains(offer: OfferDetail) {
@@ -315,20 +312,21 @@ export function getDomains(offer: OfferDetail) {
     return [] as ThemeTag[];
   }
 
-  return asRecords(record.domains)
-    .map((domain) => {
-      const name = pickString(domain, ["name", "label"]);
-      if (!name) {
-        return null;
-      }
+  const domains: ThemeTag[] = [];
+  for (const domain of asRecords(record.domains)) {
+    const name = pickString(domain, ["name", "label"]);
+    if (!name) {
+      continue;
+    }
 
-      const slug = pickString(domain, ["slug"], name);
-      return {
-        id: slug,
-        name,
-      } satisfies ThemeTag;
-    })
-    .filter((domain): domain is ThemeTag => domain !== null);
+    const slug = pickString(domain, ["slug"], name);
+    domains.push({
+      id: slug,
+      name,
+    });
+  }
+
+  return domains;
 }
 
 export function getSections(offer: OfferDetail) {
