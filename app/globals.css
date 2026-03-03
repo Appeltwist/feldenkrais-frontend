@@ -429,6 +429,55 @@ a {
   justify-content: space-between;
 }
 
+.domains-page {
+  display: grid;
+  gap: 1.4rem;
+}
+
+.domains-page__header {
+  display: grid;
+  gap: 0.6rem;
+  max-width: 760px;
+}
+
+.domains-room {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1.15rem;
+}
+
+.domains-room__eyebrow {
+  color: var(--color-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.domains-room__intro {
+  color: var(--color-secondary);
+  font-size: 1.02rem;
+}
+
+.domains-room__preview {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.domains-room__preview-card {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.domains-room__preview-time {
+  font-size: 0.92rem;
+}
+
+.domains-room__links {
+  justify-content: space-between;
+}
+
 @media (max-width: 768px) {
   .calendar-filter-form__controls {
     align-items: stretch;
@@ -468,6 +517,12 @@ a {
 
   .home-main-hall {
     grid-template-columns: 1fr;
+  }
+
+  .domains-room__links {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.35rem;
   }
 }
 
