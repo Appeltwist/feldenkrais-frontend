@@ -28,6 +28,14 @@ type HomeOfferCard = {
   next_occurrences: HomeOccurrence[];
 };
 
+type HomePillar = {
+  key: string;
+  title: string;
+  description: string;
+  cta_label: string;
+  cta_href: string;
+};
+
 type HomePayload = {
   hero: {
     headline_lines: string[];
@@ -39,13 +47,7 @@ type HomePayload = {
     body?: string | null;
     image_url?: string | null;
   };
-  pillars: Array<{
-    key: string;
-    title: string;
-    description: string;
-    cta_label: string;
-    cta_href: string;
-  }>;
+  pillars: HomePillar[];
   whats_on_preview: {
     cards: HomeOfferCard[];
   };
@@ -54,6 +56,17 @@ type HomePayload = {
     locale: string;
   };
 };
+
+type EngageTile = {
+  key: string;
+  title: string;
+  description: string;
+  ctaLabel: string;
+  href: string;
+  compact?: boolean;
+};
+
+const MAX_WHATS_ON_CARDS = 9;
 
 async function fetchHomePayload() {
   const hostname = await getHostname();
@@ -77,6 +90,20 @@ async function fetchHomePayload() {
   return (await response.json()) as HomePayload;
 }
 
+function getLocalePrefix(locale: string): "/fr" | "/en" {
+  return locale.toLowerCase().startsWith("fr") ? "/fr" : "/en";
+}
+
+function localizePath(locale: string, path: string): string {
+  if (!path || !path.startsWith("/")) {
+    return path;
+  }
+  if (path.startsWith("/fr/") || path.startsWith("/en/")) {
+    return path;
+  }
+  return `${getLocalePrefix(locale)}${path}`;
+}
+
 function formatOccurrence(value: string, locale: string, timezone?: string) {
   if (!value) {
     return "";
@@ -97,6 +124,252 @@ function formatOccurrence(value: string, locale: string, timezone?: string) {
   return timezone ? `${formatted} (${timezone})` : formatted;
 }
 
+function compactText(value: string | null | undefined, limit = 190): string {
+  const text = (value || "").replace(/\s+/g, " ").trim();
+  if (!text) {
+    return "";
+  }
+  if (text.length <= limit) {
+    return text;
+  }
+  return `${text.slice(0, limit).trimEnd()}...`;
+}
+
+function buildEngageTiles(locale: string, pillars: HomePillar[]): EngageTile[] {
+  const isFr = locale.toLowerCase().startsWith("fr");
+  const practice = pillars.find((pillar) => pillar.key === "practice") ?? pillars[0];
+  const training =
+    pillars.find((pillar) => pillar.key === "training") ??
+    pillars.find((pillar) => pillar.cta_href.includes("training")) ??
+    pillars[1];
+
+  return [
+    {
+      key: "classes",
+      title: practice?.title || (isFr ? "Cours" : "Classes"),
+      description:
+        compactText(practice?.description, 130) ||
+        (isFr ? "Pratique hebdomadaire en groupe." : "Weekly group practice sessions."),
+      ctaLabel: practice?.cta_label || (isFr ? "Voir les cours" : "See classes"),
+      href: "/classes",
+    },
+    {
+      key: "private",
+      title: isFr ? "Privé" : "Private",
+      description: isFr
+        ? "Accompagnement individuel pour besoins spécifiques et progression ciblée."
+        : "One-to-one guidance for specific needs and focused progress.",
+      ctaLabel: isFr ? "Découvrir" : "Explore",
+      href: "/private-sessions",
+    },
+    {
+      key: "training",
+      title: training?.title || (isFr ? "Formation" : "Training"),
+      description:
+        compactText(training?.description, 130) ||
+        (isFr ? "Parcours de formation sur la durée." : "Longer-form professional learning pathways."),
+      ctaLabel: training?.cta_label || (isFr ? "Voir les formations" : "See trainings"),
+      href: "/trainings",
+    },
+    {
+      key: "rent",
+      title: isFr ? "Location" : "Rent",
+      description: isFr
+        ? "Accueillez ateliers et événements dans notre espace principal."
+        : "Host workshops and events in our main hall.",
+      ctaLabel: isFr ? "Demander un devis" : "Request a quote",
+      href: "/rent",
+      compact: true,
+    },
+  ];
+}
+
+function HomeHero({
+  hero,
+  heroMediaUrl,
+  locale,
+}: {
+  hero: HomePayload["hero"];
+  heroMediaUrl: string;
+  locale: string;
+}) {
+  return (
+    <section
+      className="home-hero"
+      style={
+        heroMediaUrl
+          ? {
+              backgroundImage: `linear-gradient(120deg, rgba(7, 33, 33, 0.78), rgba(7, 33, 33, 0.36)), url(${heroMediaUrl})`,
+            }
+          : {
+              backgroundImage:
+                "linear-gradient(120deg, rgba(7, 33, 33, 0.9), rgba(20, 82, 77, 0.86))",
+            }
+      }
+    >
+      <div className="home-hero__content">
+        <h1>
+          {hero.headline_lines.map((line, index) => (
+            <span className="home-hero__line" key={`${line}-${index}`}>
+              {line}
+            </span>
+          ))}
+        </h1>
+        <p className="home-hero__subhead">{hero.subhead}</p>
+        <div className="link-row home-hero__actions">
+          <Link className="button-link" href={localizePath(locale, "/calendar")}>
+            Discover What&apos;s On
+          </Link>
+          <Link className="button-link button-link--secondary" href={localizePath(locale, "/about")}>
+            About
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HomeMainHall({
+  mainHall,
+}: {
+  mainHall: HomePayload["main_hall"];
+}) {
+  const title = mainHall.title || "Main Hall";
+  const body = compactText(mainHall.body, 220);
+
+  return (
+    <section className="home-main-hall">
+      {mainHall.image_url ? (
+        <img alt={title} className="home-main-hall__image" loading="lazy" src={mainHall.image_url} />
+      ) : null}
+      <div className="home-main-hall__content">
+        <p className="home-section-kicker">Main Hall</p>
+        <h2>{title}</h2>
+        {body ? <p>{body}</p> : null}
+      </div>
+    </section>
+  );
+}
+
+function HomePillars({
+  locale,
+  pillars,
+}: {
+  locale: string;
+  pillars: HomePillar[];
+}) {
+  const tiles = buildEngageTiles(locale, pillars);
+
+  return (
+    <section className="home-section">
+      <h2>Ways to Engage</h2>
+      <div className="home-engage-grid">
+        {tiles.map((tile) => (
+          <article className={`home-engage-tile${tile.compact ? " home-engage-tile--compact" : ""}`} key={tile.key}>
+            <h3>{tile.title}</h3>
+            <p>{tile.description}</p>
+            <Link className="text-link" href={localizePath(locale, tile.href)}>
+              {tile.ctaLabel}
+            </Link>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function HomeWhatsOnPreview({
+  locale,
+  cards,
+}: {
+  locale: string;
+  cards: HomeOfferCard[];
+}) {
+  const previewCards = cards.slice(0, MAX_WHATS_ON_CARDS);
+
+  return (
+    <section className="home-section">
+      <div className="link-row home-section-head">
+        <h2>What&apos;s On</h2>
+        <Link className="text-link" href={localizePath(locale, "/calendar")}>
+          View full calendar
+        </Link>
+      </div>
+      <ul className="calendar-group-grid">
+        {previewCards.map((card) => {
+          const rawOfferPath =
+            getCanonicalOfferPathByTypeAndSlug(card.offer.type, card.offer.slug) || `/offer/${card.offer.slug}`;
+          const offerPath = localizePath(locale, rawOfferPath);
+          const primary = card.next_occurrences[0];
+          const domains = (card.offer.domains ?? []).map((domain) => domain.name).join(" · ");
+
+          return (
+            <li className="card calendar-group-card" key={`${card.offer.type}-${card.offer.slug}`}>
+              {card.offer.hero_image_url ? (
+                <div
+                  className="calendar-group-card__hero"
+                  style={{
+                    backgroundImage: `linear-gradient(120deg, rgba(7, 33, 33, 0.62), rgba(7, 33, 33, 0.25)), url(${card.offer.hero_image_url})`,
+                  }}
+                >
+                  <p className="offer-type-label">{card.offer.type.replaceAll("_", " ")}</p>
+                  <h2>{card.offer.title}</h2>
+                </div>
+              ) : (
+                <>
+                  <p className="offer-type-label">{card.offer.type.replaceAll("_", " ")}</p>
+                  <h2>{card.offer.title}</h2>
+                </>
+              )}
+
+              {domains ? <p className="calendar-group-card__domains">{domains}</p> : null}
+              {primary ? (
+                <p className="calendar-group-card__primary-time">
+                  {formatOccurrence(primary.start_datetime, locale, primary.timezone)}
+                </p>
+              ) : null}
+              <div className="link-row">
+                <Link className="text-link" href={offerPath}>
+                  Offer details
+                </Link>
+                {primary ? (
+                  <Link className="button-link" href={offerPath}>
+                    {card.cta_label || "Book"}
+                  </Link>
+                ) : null}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+function HomeDomainsTeaser({
+  locale,
+  domains,
+}: {
+  locale: string;
+  domains: HomeDomain[];
+}) {
+  return (
+    <section className="home-section home-domains-teaser">
+      <div className="link-row home-section-head">
+        <h2>Domains / Areas of Inquiry</h2>
+        <Link className="text-link" href={localizePath(locale, "/domains")}>
+          Explore all domains
+        </Link>
+      </div>
+      <ul className="home-domains-teaser__list">
+        {domains.slice(0, 3).map((domain) => (
+          <li key={domain.slug}>{domain.name}</li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 export default async function HomePage() {
   const home = await fetchHomePayload();
 
@@ -114,127 +387,11 @@ export default async function HomePage() {
 
   return (
     <section className="page-section home-page">
-      <section
-        className="home-hero"
-        style={
-          heroMediaUrl
-            ? {
-                backgroundImage: `linear-gradient(120deg, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.2)), url(${heroMediaUrl})`,
-              }
-            : undefined
-        }
-      >
-        <div className="home-hero__content">
-          {home.hero.headline_lines.map((line, index) => (
-            <h1 key={`${line}-${index}`}>{line}</h1>
-          ))}
-          <p>{home.hero.subhead}</p>
-          <div className="link-row">
-            <Link className="button-link" href="/calendar">
-              Discover What&apos;s On
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <section className="card home-main-hall">
-        <div>
-          <h2>{home.main_hall.title || "Main Hall"}</h2>
-          <p>{home.main_hall.body || ""}</p>
-        </div>
-        {home.main_hall.image_url ? (
-          <img
-            alt={home.main_hall.title || "Main hall"}
-            className="home-main-hall__image"
-            loading="lazy"
-            src={home.main_hall.image_url}
-          />
-        ) : null}
-      </section>
-
-      <section>
-        <h2>Ways to Engage</h2>
-        <div className="cards home-pillars">
-          {home.pillars.map((pillar) => (
-            <article className="card" key={pillar.key}>
-              <h3>{pillar.title}</h3>
-              <p>{pillar.description}</p>
-              <Link className="text-link" href={pillar.cta_href}>
-                {pillar.cta_label}
-              </Link>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section>
-        <div className="link-row home-section-head">
-          <h2>What&apos;s On</h2>
-          <Link className="text-link" href="/calendar">
-            View full calendar
-          </Link>
-        </div>
-        <ul className="calendar-group-grid">
-          {home.whats_on_preview.cards.map((card) => {
-            const offerPath =
-              getCanonicalOfferPathByTypeAndSlug(card.offer.type, card.offer.slug) || `/offer/${card.offer.slug}`;
-            const primary = card.next_occurrences[0];
-            const domains = (card.offer.domains ?? []).map((domain) => domain.name).join(" · ");
-
-            return (
-              <li className="card calendar-group-card" key={`${card.offer.type}-${card.offer.slug}`}>
-                {card.offer.hero_image_url ? (
-                  <div
-                    className="calendar-group-card__hero"
-                    style={{
-                      backgroundImage: `linear-gradient(120deg, rgba(0,0,0,0.48), rgba(0,0,0,0.18)), url(${card.offer.hero_image_url})`,
-                    }}
-                  >
-                    <p className="offer-type-label">{card.offer.type.replaceAll("_", " ")}</p>
-                    <h2>{card.offer.title}</h2>
-                  </div>
-                ) : (
-                  <>
-                    <p className="offer-type-label">{card.offer.type.replaceAll("_", " ")}</p>
-                    <h2>{card.offer.title}</h2>
-                  </>
-                )}
-
-                {domains ? <p className="calendar-group-card__domains">{domains}</p> : null}
-                {primary ? (
-                  <p className="calendar-group-card__primary-time">
-                    {formatOccurrence(primary.start_datetime, locale, primary.timezone)}
-                  </p>
-                ) : null}
-                <div className="link-row">
-                  <Link className="text-link" href={offerPath}>
-                    Offer details
-                  </Link>
-                  {primary ? (
-                    <Link className="button-link" href={offerPath}>
-                      {card.cta_label || "Book"}
-                    </Link>
-                  ) : null}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
-
-      <section className="card">
-        <div className="link-row home-section-head">
-          <h2>Domains / Areas of Inquiry</h2>
-          <Link className="text-link" href="/calendar">
-            Explore all domains
-          </Link>
-        </div>
-        <ul className="tag-list">
-          {home.domains_teaser.map((domain) => (
-            <li key={domain.slug}>{domain.name}</li>
-          ))}
-        </ul>
-      </section>
+      <HomeHero hero={home.hero} heroMediaUrl={heroMediaUrl} locale={locale} />
+      <HomeMainHall mainHall={home.main_hall} />
+      <HomePillars locale={locale} pillars={home.pillars} />
+      <HomeWhatsOnPreview cards={home.whats_on_preview.cards} locale={locale} />
+      <HomeDomainsTeaser domains={home.domains_teaser} locale={locale} />
     </section>
   );
 }
