@@ -1,51 +1,56 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useSiteContext } from "@/lib/site-context";
 
 type NavLink = { label: string; href: string };
 
-const FOREST_NAV_EN: NavLink[] = [
-  { label: "Explore", href: "/en" },
-  { label: "About", href: "/en/about" },
-  { label: "Class Schedule", href: "/en/classes" },
-  { label: "Pricing", href: "/en/pricing" },
-  { label: "Your visit", href: "/en/your-visit" },
-  { label: "Rent", href: "/en/rent" },
-  { label: "Contact", href: "/en/contact" },
-];
-
-const FOREST_NAV_FR: NavLink[] = [
-  { label: "Explorer", href: "/fr" },
-  { label: "À propos", href: "/fr/a-propos" },
-  { label: "Horaire", href: "/fr/cours" },
-  { label: "Tarifs", href: "/fr/prix" },
-  { label: "Votre visite", href: "/fr/votre-visite" },
-  { label: "Location", href: "/fr/location" },
-  { label: "Contact", href: "/fr/contact" },
-];
-
 const DEFAULT_NAV: NavLink[] = [
-  { label: "Home", href: "/" },
-  { label: "Workshops", href: "/workshops" },
+  { label: "What's On", href: "/calendar" },
   { label: "Classes", href: "/classes" },
-  { label: "Private Sessions", href: "/private-sessions" },
+  { label: "Private", href: "/private-sessions" },
   { label: "Training", href: "/trainings" },
-  { label: "Calendar", href: "/calendar" },
+  { label: "Rent", href: "/rent" },
+  { label: "About", href: "/about" },
 ];
 
 const LOGO_URL =
   "https://forest-lighthouse.be/wp-content/uploads/sites/12/2022/07/69289F3E-09F0-4D3A-AC4C-98B27501D6A5-e1657354348213.png";
 
+type LocaleCode = "en" | "fr";
+
+function getLocaleFromPathname(pathname: string): LocaleCode {
+  return pathname.startsWith("/fr") ? "fr" : "en";
+}
+
+function withLocalePrefix(locale: LocaleCode, path: string): string {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `/${locale}${normalizedPath}`;
+}
+
+function getForestNav(locale: LocaleCode): NavLink[] {
+  const isFr = locale === "fr";
+  return [
+    { label: isFr ? "À l'affiche" : "What's On", href: withLocalePrefix(locale, "/calendar") },
+    { label: isFr ? "Cours" : "Classes", href: withLocalePrefix(locale, "/classes") },
+    { label: isFr ? "Privé" : "Private", href: withLocalePrefix(locale, "/private-sessions") },
+    { label: isFr ? "Formation" : "Training", href: withLocalePrefix(locale, "/trainings") },
+    { label: isFr ? "Location" : "Rent", href: withLocalePrefix(locale, "/rent") },
+    { label: isFr ? "À propos" : "About", href: withLocalePrefix(locale, "/about") },
+  ];
+}
+
 function ForestHeader({
   navLinks,
-  isFr,
+  locale,
 }: {
   navLinks: NavLink[];
-  isFr: boolean;
+  locale: LocaleCode;
 }) {
+  const isFr = locale === "fr";
   const [menuOpen, setMenuOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -126,7 +131,7 @@ function ForestHeader({
         <Link
           aria-label="Forest Lighthouse Home"
           className="fl-logo"
-          href={isFr ? "/fr" : "/en"}
+          href={`/${locale}`}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img alt="Forest Lighthouse" loading="eager" src={LOGO_URL} />
@@ -169,7 +174,7 @@ function ForestHeader({
           <Link
             aria-label="Book a class"
             className="fl-book"
-            href={isFr ? "/fr/classes" : "/en/classes"}
+            href={withLocalePrefix(locale, "/classes")}
           >
             <span className="fl-book__text">{isFr ? "Réserver" : "Book"}</span>
           </Link>
@@ -202,7 +207,7 @@ function ForestHeader({
             <div className="fl-nav-mobile__cta">
               <Link
                 className="fl-nav-mobile__book"
-                href={isFr ? "/fr/classes" : "/en/classes"}
+                href={withLocalePrefix(locale, "/classes")}
                 onClick={closeMenu}
               >
                 {isFr ? "Réserver un cours" : "Book a class"}
@@ -246,14 +251,15 @@ function DefaultHeader({
 }
 
 export default function Header() {
-  const { siteName, centerSlug, defaultLocale } = useSiteContext();
+  const { siteName, centerSlug } = useSiteContext();
+  const pathname = usePathname() || "/";
 
   const isForest = centerSlug === "forest-lighthouse";
-  const isFr = defaultLocale?.startsWith("fr");
+  const locale = getLocaleFromPathname(pathname);
 
   if (isForest) {
-    const navLinks = isFr ? FOREST_NAV_FR : FOREST_NAV_EN;
-    return <ForestHeader isFr={!!isFr} navLinks={navLinks} />;
+    const navLinks = getForestNav(locale);
+    return <ForestHeader locale={locale} navLinks={navLinks} />;
   }
 
   return <DefaultHeader navLinks={DEFAULT_NAV} siteName={siteName} />;
