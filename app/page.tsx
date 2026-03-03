@@ -63,7 +63,6 @@ type EngageTile = {
   description: string;
   ctaLabel: string;
   href: string;
-  compact?: boolean;
 };
 
 const MAX_WHATS_ON_CARDS = 9;
@@ -142,8 +141,11 @@ function buildEngageTiles(locale: string, pillars: HomePillar[]): EngageTile[] {
     pillars.find((pillar) => pillar.key === "training") ??
     pillars.find((pillar) => pillar.cta_href.includes("training")) ??
     pillars[1];
+  const rentFromPayload = pillars.find(
+    (pillar) => pillar.key === "rent" || pillar.cta_href.includes("/rent")
+  );
 
-  return [
+  const baseTiles: EngageTile[] = [
     {
       key: "classes",
       title: practice?.title || (isFr ? "Cours" : "Classes"),
@@ -171,17 +173,23 @@ function buildEngageTiles(locale: string, pillars: HomePillar[]): EngageTile[] {
       ctaLabel: training?.cta_label || (isFr ? "Voir les formations" : "See trainings"),
       href: "/trainings",
     },
-    {
-      key: "rent",
-      title: isFr ? "Location" : "Rent",
-      description: isFr
-        ? "Accueillez ateliers et événements dans notre espace principal."
-        : "Host workshops and events in our main hall.",
-      ctaLabel: isFr ? "Demander un devis" : "Request a quote",
-      href: "/rent",
-      compact: true,
-    },
   ];
+
+  if (rentFromPayload) {
+    baseTiles.push({
+      key: "rent",
+      title: rentFromPayload.title || (isFr ? "Location" : "Rent"),
+      description:
+        compactText(rentFromPayload.description, 130) ||
+        (isFr
+          ? "Accueillez ateliers et événements dans notre espace principal."
+          : "Host workshops and events in our main hall."),
+      ctaLabel: rentFromPayload.cta_label || (isFr ? "Demander un devis" : "Request a quote"),
+      href: "/rent",
+    });
+  }
+
+  return baseTiles;
 }
 
 function HomeHero({
@@ -217,10 +225,10 @@ function HomeHero({
         </h1>
         <p className="home-hero__subhead">{hero.subhead}</p>
         <div className="link-row home-hero__actions">
-          <Link className="button-link" href={localizePath(locale, "/calendar")}>
+          <Link className="button-link home-hero__primary-cta" href={localizePath(locale, "/calendar")}>
             Discover What&apos;s On
           </Link>
-          <Link className="button-link button-link--secondary" href={localizePath(locale, "/about")}>
+          <Link className="home-hero__about-link" href={localizePath(locale, "/about")}>
             About
           </Link>
         </div>
@@ -239,14 +247,16 @@ function HomeMainHall({
 
   return (
     <section className="home-main-hall">
-      {mainHall.image_url ? (
-        <img alt={title} className="home-main-hall__image" loading="lazy" src={mainHall.image_url} />
-      ) : null}
       <div className="home-main-hall__content">
         <p className="home-section-kicker">Main Hall</p>
         <h2>{title}</h2>
         {body ? <p>{body}</p> : null}
       </div>
+      {mainHall.image_url ? (
+        <div className="home-main-hall__media">
+          <img alt={title} className="home-main-hall__image" loading="lazy" src={mainHall.image_url} />
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -265,7 +275,7 @@ function HomePillars({
       <h2>Ways to Engage</h2>
       <div className="home-engage-grid">
         {tiles.map((tile) => (
-          <article className={`home-engage-tile${tile.compact ? " home-engage-tile--compact" : ""}`} key={tile.key}>
+          <article className="home-engage-tile" key={tile.key}>
             <h3>{tile.title}</h3>
             <p>{tile.description}</p>
             <Link className="text-link" href={localizePath(locale, tile.href)}>

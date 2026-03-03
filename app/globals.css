@@ -180,10 +180,15 @@ a {
   display: inline-block;
   font-weight: 600;
   padding: 0.5rem 0.9rem;
+  transition: transform 180ms ease, background-color 180ms ease;
 }
 
 .button-link--secondary {
   background: var(--color-secondary);
+}
+
+.button-link:hover {
+  transform: translateY(-1px);
 }
 
 .link-row {
@@ -406,10 +411,32 @@ a {
   border-radius: 14px;
   color: #f3f8f8;
   display: grid;
-  gap: 2rem;
+  gap: 2.35rem;
   margin: 0 auto;
   max-width: 1240px;
-  padding: 1.2rem 1.1rem 1.45rem;
+  padding: 1.5rem 1.3rem 1.7rem;
+}
+
+.home-page > * {
+  animation: home-reveal 220ms ease-out both;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.home-page > *:nth-child(2) {
+  animation-delay: 30ms;
+}
+
+.home-page > *:nth-child(3) {
+  animation-delay: 60ms;
+}
+
+.home-page > *:nth-child(4) {
+  animation-delay: 90ms;
+}
+
+.home-page > *:nth-child(5) {
+  animation-delay: 120ms;
 }
 
 .home-hero {
@@ -419,15 +446,15 @@ a {
   border-radius: 14px;
   color: #ffffff;
   display: grid;
-  min-height: 460px;
+  min-height: 520px;
   overflow: hidden;
-  padding: 2rem;
+  padding: 2.3rem;
 }
 
 .home-hero__content {
   display: grid;
-  gap: 0.9rem;
-  max-width: 760px;
+  gap: 1rem;
+  max-width: 780px;
 }
 
 .home-hero__content h1 {
@@ -455,21 +482,46 @@ a {
   margin-top: 0.35rem;
 }
 
+.home-hero__primary-cta {
+  background: #aa3b3b;
+}
+
+.home-hero__primary-cta:hover {
+  background: #922f2f;
+}
+
+.home-hero__about-link {
+  color: rgba(250, 255, 255, 0.92);
+  font-weight: 600;
+  padding-top: 0.55rem;
+  transition: transform 180ms ease, color 180ms ease;
+}
+
+.home-hero__about-link:hover {
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
 .home-main-hall {
   background: rgba(255, 255, 255, 0.95);
   border: 1px solid rgba(221, 234, 232, 0.92);
   border-radius: 12px;
   align-items: start;
   display: grid;
-  gap: 1.25rem;
-  grid-template-columns: 1.05fr 1fr;
-  padding: 1rem;
+  gap: 1.4rem;
+  grid-template-columns: 1fr 1.05fr;
+  padding: 1.15rem;
 }
 
 .home-main-hall__content {
   color: #112424;
   display: grid;
-  gap: 0.55rem;
+  gap: 0.7rem;
+  max-width: 560px;
+}
+
+.home-main-hall__media {
+  display: block;
 }
 
 .home-section-kicker {
@@ -484,7 +536,7 @@ a {
   border-radius: 10px;
   display: block;
   height: 100%;
-  max-height: 320px;
+  max-height: 380px;
   object-fit: cover;
   width: 100%;
 }
@@ -501,8 +553,8 @@ a {
 
 .home-engage-grid {
   display: grid;
-  gap: 0.75rem;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
 }
 
 .home-engage-tile {
@@ -512,13 +564,7 @@ a {
   color: #122424;
   display: grid;
   gap: 0.5rem;
-  grid-column: span 4;
   padding: 0.95rem;
-}
-
-.home-engage-tile--compact {
-  background: rgba(236, 246, 245, 0.9);
-  grid-column: span 12;
 }
 
 .home-domains-teaser {
@@ -534,21 +580,58 @@ a {
 }
 
 .home-domains-teaser__list {
-  display: grid;
-  gap: 0.35rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
   list-style: none;
 }
 
 .home-domains-teaser__list li {
-  border-bottom: 1px solid rgba(14, 66, 65, 0.16);
   color: #123131;
-  font-size: 0.95rem;
-  padding: 0.25rem 0;
+  display: inline-flex;
+  font-size: 0.84rem;
+  letter-spacing: 0.02em;
+}
+
+.home-domains-teaser__list li:not(:last-child)::after {
+  color: rgba(18, 49, 49, 0.48);
+  content: "·";
+  margin-left: 0.75rem;
 }
 
 .home-section-head {
   align-items: baseline;
   justify-content: space-between;
+}
+
+@keyframes home-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-page > * {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .button-link,
+  .home-hero__about-link {
+    transition: none;
+  }
+
+  .button-link:hover,
+  .home-hero__about-link:hover {
+    transform: none;
+  }
 }
 
 .domains-page {
@@ -733,16 +816,12 @@ a {
     grid-template-columns: 1fr;
   }
 
+  .home-main-hall__media {
+    order: -1;
+  }
+
   .home-engage-grid {
     grid-template-columns: 1fr;
-  }
-
-  .home-engage-tile {
-    grid-column: span 1;
-  }
-
-  .home-engage-tile--compact {
-    grid-column: span 1;
   }
 
   .domains-room__links {
