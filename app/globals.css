@@ -478,6 +478,58 @@ a {
   justify-content: space-between;
 }
 
+.rent-page {
+  display: grid;
+  gap: 1.2rem;
+}
+
+.rent-page__header {
+  display: grid;
+  gap: 0.6rem;
+  max-width: 760px;
+}
+
+.rent-tier-grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.rent-tier {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.rent-tier__rate {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.rent-form {
+  max-width: 760px;
+}
+
+.rent-form__fields {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.rent-form__textarea {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--foreground);
+  font: inherit;
+  min-height: 120px;
+  padding: 0.55rem 0.65rem;
+  resize: vertical;
+}
+
+.rent-form__consent {
+  align-items: flex-start;
+  display: flex;
+  gap: 0.55rem;
+}
+
 @media (max-width: 768px) {
   .calendar-filter-form__controls {
     align-items: stretch;
