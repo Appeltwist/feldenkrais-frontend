@@ -370,6 +370,65 @@ a {
   border-color: var(--color-primary);
 }
 
+.home-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.home-hero {
+  align-items: end;
+  background-position: center;
+  background-size: cover;
+  border-radius: 12px;
+  color: #ffffff;
+  display: grid;
+  min-height: 340px;
+  overflow: hidden;
+  padding: 1.4rem;
+}
+
+.home-hero__content {
+  display: grid;
+  gap: 0.6rem;
+  max-width: 720px;
+}
+
+.home-hero__content h1 {
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  line-height: 1.05;
+  margin: 0;
+}
+
+.home-hero__content p {
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+.home-main-hall {
+  align-items: start;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1.2fr 1fr;
+}
+
+.home-main-hall__image {
+  border-radius: 8px;
+  display: block;
+  height: 100%;
+  max-height: 280px;
+  object-fit: cover;
+  width: 100%;
+}
+
+.home-pillars {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.home-section-head {
+  align-items: baseline;
+  justify-content: space-between;
+}
+
 @media (max-width: 768px) {
   .calendar-filter-form__controls {
     align-items: stretch;
@@ -405,6 +464,10 @@ a {
     align-items: flex-start;
     flex-direction: column;
     gap: 0.25rem;
+  }
+
+  .home-main-hall {
+    grid-template-columns: 1fr;
   }
 }
 
