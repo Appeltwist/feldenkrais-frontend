@@ -1,9 +1,10 @@
 # Pairing Note
 
-- Frontend baseline: `fe-next@b38562b`
-- Backend baseline: `fe-cms@e491794`
+- Frontend baseline: `fe-next@f257c0a`
+- Backend baseline: `fe-cms@af3625d`
 
-`fe-next@b38562b` expects `fe-cms@e491794` for:
+`fe-next@f257c0a` expects `fe-cms@af3625d` for:
 - Domains/Themes payloads on offers and calendar
-- Calendar `meta.domains` envelope and grouped mode support
+- Calendar `meta.domains` envelope + grouped cards and `limit` support
 - Offer PDF lead magnet (`/api/offers/<slug>/pdf`) and lead capture (`/api/leads`)
+- Homepage aggregate payload endpoint (`/api/home`)
