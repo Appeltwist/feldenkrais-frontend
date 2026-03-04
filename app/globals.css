@@ -411,7 +411,7 @@ a {
   border-radius: 14px;
   color: #f3f8f8;
   display: grid;
-  gap: 2.35rem;
+  gap: 2.15rem;
   margin: 0 auto;
   max-width: 1240px;
   padding: 1.5rem 1.3rem 1.7rem;
@@ -459,10 +459,10 @@ a {
 
 .home-hero__content h1 {
   display: grid;
-  font-size: clamp(2.35rem, 6.8vw, 5.2rem);
+  font-size: clamp(2.2rem, 5.6vw, 4.6rem);
   font-weight: 700;
   letter-spacing: -0.02em;
-  line-height: 0.96;
+  line-height: 0.98;
   margin: 0;
 }
 
@@ -506,14 +506,15 @@ a {
   background: rgba(255, 255, 255, 0.95);
   border: 1px solid rgba(221, 234, 232, 0.92);
   border-radius: 12px;
-  align-items: start;
+  align-items: stretch;
   display: grid;
   gap: 1.4rem;
-  grid-template-columns: 1fr 1.05fr;
+  grid-template-columns: minmax(280px, 0.95fr) minmax(0, 1.05fr);
   padding: 1.15rem;
 }
 
 .home-main-hall__content {
+  align-content: start;
   color: #112424;
   display: grid;
   gap: 0.7rem;
@@ -522,6 +523,7 @@ a {
 
 .home-main-hall__media {
   display: block;
+  min-width: 0;
 }
 
 .home-section-kicker {
@@ -539,6 +541,27 @@ a {
   max-height: 380px;
   object-fit: cover;
   width: 100%;
+}
+
+.home-main-hall__thumbs {
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  list-style: none;
+  margin: 0.7rem 0 0;
+  padding: 0;
+}
+
+.home-main-hall__thumbs li {
+  min-width: 0;
+}
+
+.home-main-hall__thumbs img {
+  border-radius: 8px;
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
 }
 
 .home-section {
@@ -799,7 +822,7 @@ a {
   }
 
   .home-hero__content h1 {
-    font-size: clamp(2rem, 11vw, 2.9rem);
+    font-size: clamp(2rem, 10vw, 2.8rem);
     line-height: 1;
   }
 
@@ -818,6 +841,10 @@ a {
 
   .home-main-hall__media {
     order: -1;
+  }
+
+  .home-main-hall__thumbs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .home-engage-grid {
@@ -1558,6 +1585,7 @@ a {
   max-width: 160px;
   height: auto;
   opacity: 0.85;
+  filter: drop-shadow(0 0 20px rgba(0, 201, 167, 0.15));
 }
 
 
@@ -1793,6 +1821,33 @@ a {
     radial-gradient(120% 90% at 14% 0%, rgba(170,59,59,0.38), transparent 64%),
     radial-gradient(95% 75% at 88% 28%, rgba(255,120,92,0.18), transparent 66%),
     linear-gradient(180deg, rgba(0,95,95,0.40), rgba(8,35,35,0.58));
+}
+
+/* Shared blue-green texture for passes/subscriptions cards */
+.fl-pricing--passes {
+  --fl-pass-card-bg:
+    radial-gradient(120% 90% at 14% 0%, rgba(2,112,124,0.46), transparent 62%),
+    radial-gradient(95% 75% at 86% 26%, rgba(89,208,189,0.18), transparent 64%),
+    linear-gradient(180deg, rgba(0,95,95,0.42), rgba(8,35,35,0.55));
+  --fl-pass-card-border: rgba(89,208,189,0.28);
+  --fl-pass-card-shadow: 0 20px 64px rgba(0,0,0,0.30);
+}
+
+.fl-pricing--passes .fl-card,
+.fl-pricing--passes .fl-card--featured,
+.fl-pricing--passes .fl-card--premium,
+.fl-pricing--passes .fl-card--lite,
+.fl-pricing--passes .fl-card.is-featured {
+  background: var(--fl-pass-card-bg);
+  border-color: var(--fl-pass-card-border);
+  box-shadow: var(--fl-pass-card-shadow);
+  transform: none;
+}
+
+.fl-pricing--passes .fl-card:hover {
+  border-color: rgba(89,208,189,0.40);
+  box-shadow: 0 24px 74px rgba(0,0,0,0.34);
+  transform: translateY(-2px);
 }
 
 /* Card header */
@@ -2259,7 +2314,7 @@ a {
 }
 
 .fp-schedule__day-name {
-  color: var(--fl-accent-gold);
+  color: #fff;
   font-family: var(--fl-display);
   font-size: 1rem;
   letter-spacing: 0.03em;
@@ -2276,13 +2331,20 @@ a {
 .fp-class-card {
   background: var(--card-bg, rgba(0,55,56,0.55));
   backdrop-filter: blur(6px);
-  border: 1px solid var(--fl-border);
+  border: 1px solid rgba(255,255,255,0.28);
   border-radius: 12px;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
   padding: 0.75rem 0.65rem;
   min-width: 0;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.fp-class-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,0.40);
+  box-shadow: 0 12px 36px rgba(0,0,0,0.30);
 }
 
 .fp-class-card__meta {
@@ -2299,7 +2361,7 @@ a {
 }
 
 .fp-class-card__time {
-  color: var(--fl-neon);
+  color: #fff;
   font-size: 0.78rem;
   font-weight: 700;
 }
@@ -2310,9 +2372,10 @@ a {
 }
 
 .fp-class-card__lang {
-  background: rgba(186,255,173,0.1);
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.24);
   border-radius: 3px;
-  color: var(--fl-text-dim);
+  color: #fff;
   font-size: 0.62rem;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -2321,9 +2384,10 @@ a {
 }
 
 .fp-class-card__level {
-  background: rgba(212,166,74,0.12);
+  background: rgba(255,255,255,0.22);
+  border: 1px solid rgba(255,255,255,0.3);
   border-radius: 3px;
-  color: var(--fl-accent-gold);
+  color: #fff;
   font-size: 0.62rem;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -2332,14 +2396,14 @@ a {
 }
 
 .fp-class-card__name {
-  color: var(--fl-text);
+  color: #fff;
   font-size: 0.82rem;
   font-weight: 600;
   line-height: 1.25;
 }
 
 .fp-class-card__teacher {
-  color: var(--fl-text-dim);
+  color: rgba(255,255,255,0.9);
   font-size: 0.72rem;
   display: flex;
   align-items: center;
@@ -2347,23 +2411,32 @@ a {
 }
 
 .fp-class-card__teacher strong {
-  color: var(--fl-text);
+  color: #fff;
   font-weight: 500;
 }
 
-/* Class details (expandable) */
+/* Class details (expandable) — animated with grid-template-rows */
 .fp-class-details {
   margin-top: 0.2rem;
+  display: grid;
+  grid-template-rows: auto 0fr;
+  transition: grid-template-rows 0.25s ease;
+}
+
+.fp-class-details[open] {
+  grid-template-rows: auto 1fr;
 }
 
 .fp-class-summary {
   align-items: center;
-  color: var(--fl-text-dim);
+  color: #fff;
   cursor: pointer;
   display: flex;
   font-size: 0.72rem;
-  gap: 0.3rem;
+  gap: 0.5rem;
+  justify-content: space-between;
   list-style: none;
+  margin-top: 0.1rem;
 }
 
 .fp-class-summary::-webkit-details-marker {
@@ -2371,49 +2444,82 @@ a {
 }
 
 .fp-class-summary__label {
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
 }
 
 .fp-class-plus {
+  align-items: center;
+  border: 1px solid rgba(255,255,255,0.45);
+  border-radius: 999px;
   display: inline-block;
-  height: 0.7rem;
+  flex: 0 0 auto;
+  height: 0.95rem;
   position: relative;
-  width: 0.7rem;
+  width: 0.95rem;
 }
 
 .fp-class-plus::before,
 .fp-class-plus::after {
-  background: var(--fl-text-dim);
+  background: #fff;
   content: "";
   position: absolute;
 }
 
 .fp-class-plus::before {
-  height: 1px;
-  left: 0;
+  height: 1.5px;
+  left: 20%;
   top: 50%;
-  width: 100%;
+  width: 60%;
 }
 
 .fp-class-plus::after {
-  height: 100%;
+  height: 60%;
   left: 50%;
-  top: 0;
-  width: 1px;
+  top: 20%;
+  width: 1.5px;
 }
 
-details[open] .fp-class-plus::after {
+.fp-class-details[open] .fp-class-plus::after {
   display: none;
 }
 
 .fp-class-desc {
-  color: var(--fl-text-dim);
+  overflow: hidden;
+  color: rgba(255,255,255,0.92);
   font-size: 0.75rem;
   line-height: 1.5;
   margin-top: 0.3rem;
   padding-top: 0.3rem;
-  border-top: 1px solid var(--fl-border);
+  border-top: 1px solid rgba(255,255,255,0.22);
+}
+
+.fp-class-desc__text {
+  margin: 0;
+}
+
+.fp-class-desc__book {
+  display: inline-flex;
+  margin-top: 0.45rem;
+  border: 1px solid rgba(255,255,255,0.42);
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 0.2rem 0.55rem;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.fp-class-desc__book:hover {
+  background: rgba(255,255,255,0.14);
+}
+
+.fp-class-summary:focus-visible,
+.fp-class-desc__book:focus-visible {
+  outline: 2px solid rgba(255,255,255,0.75);
+  outline-offset: 2px;
 }
 
 
@@ -2460,6 +2566,13 @@ details[open] .fp-class-plus::after {
   gap: 0.5rem;
   padding: 1.5rem 1rem;
   text-align: center;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.fp-platform__card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(186,255,173,0.24);
+  box-shadow: 0 14px 42px rgba(0,0,0,0.24);
 }
 
 .fp-platform__icon {
@@ -2508,13 +2621,47 @@ details[open] .fp-class-plus::after {
   gap: 0.75rem;
   padding: 1.5rem 1.25rem;
   text-align: left;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.fp-benefits__pack:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 52px rgba(0,0,0,0.30);
 }
 
 .fp-benefits__pack-name {
-  color: var(--fl-accent-teal);
+  color: #fff;
   font-family: var(--fl-display);
   font-size: 1.1rem;
   text-align: center;
+}
+
+.fp-benefits__pack--lite {
+  background:
+    radial-gradient(120% 90% at 14% 0%, rgba(2,112,124,0.46), transparent 62%),
+    radial-gradient(95% 75% at 86% 26%, rgba(89,208,189,0.18), transparent 64%),
+    linear-gradient(180deg, rgba(0,95,95,0.42), rgba(8,35,35,0.55));
+  border-color: rgba(89,208,189,0.28);
+}
+
+.fp-benefits__pack--featured {
+  background:
+    radial-gradient(120% 90% at 12% 0%, rgba(214,171,42,0.44), transparent 60%),
+    radial-gradient(90% 70% at 88% 18%, rgba(214,171,42,0.22), transparent 62%),
+    radial-gradient(110% 90% at 50% 118%, rgba(2,112,124,0.22), transparent 58%),
+    linear-gradient(180deg, rgba(0,120,120,0.55), rgba(8,35,35,0.60));
+  border-color: rgba(214,171,42,0.55);
+  box-shadow:
+    0 24px 74px rgba(0,0,0,0.34),
+    0 0 0 1px rgba(214,171,42,0.15) inset;
+}
+
+.fp-benefits__pack--premium {
+  background:
+    radial-gradient(120% 90% at 14% 0%, rgba(170,59,59,0.38), transparent 64%),
+    radial-gradient(95% 75% at 88% 28%, rgba(255,120,92,0.18), transparent 66%),
+    linear-gradient(180deg, rgba(0,95,95,0.40), rgba(8,35,35,0.58));
+  border-color: rgba(170,59,59,0.44);
 }
 
 .fp-benefits__pack-list {
@@ -2539,6 +2686,12 @@ details[open] .fp-class-plus::after {
   justify-content: center;
 }
 
+.fp-benefits__ctas .fl-btn {
+  width: auto;
+  min-width: 140px;
+  padding: 10px 28px;
+}
+
 
 /* ===================================================================
    FAQ — .fp-faq
@@ -2553,9 +2706,10 @@ details[open] .fp-class-plus::after {
 }
 
 .fp-faq__category-name {
-  color: var(--fl-accent-gold);
-  font-family: var(--fl-display);
+  color: #fff;
+  font-family: var(--fl-body);
   font-size: 1.1rem;
+  font-weight: 400;
   margin-bottom: 0.5rem;
 }
 
@@ -2563,17 +2717,52 @@ details[open] .fp-class-plus::after {
 .site-forest-lighthouse .faq-list details {
   background: rgba(0,55,56,0.35);
   border-color: var(--fl-border);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.site-forest-lighthouse .faq-list details:hover {
+  border-color: rgba(186,255,173,0.22);
+  background: rgba(0,55,56,0.45);
 }
 
 .site-forest-lighthouse .faq-list summary {
-  color: var(--fl-text);
+  color: #fff;
+  font-weight: 400;
 }
 
 .site-forest-lighthouse .faq-list details p {
-  color: var(--fl-text-dim);
+  color: rgba(255,255,255,0.88);
   font-size: 0.9rem;
+  font-weight: 400;
   line-height: 1.6;
   margin-top: 0.5rem;
+}
+
+/* Compact/discreet FAQ presentation for pricing section */
+.site-forest-lighthouse .fp-faq {
+  gap: 1rem;
+}
+
+.site-forest-lighthouse .fp-faq .faq-list {
+  gap: 0.45rem;
+}
+
+.site-forest-lighthouse .fp-faq .faq-list details {
+  padding: 0.52rem 0.62rem;
+}
+
+.site-forest-lighthouse .fp-faq .faq-list summary {
+  color: rgba(255,255,255,0.78);
+  font-size: 0.82rem;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+.site-forest-lighthouse .fp-faq .faq-list details p {
+  color: rgba(255,255,255,0.82);
+  font-size: 0.84rem;
+  line-height: 1.45;
+  margin-top: 0.32rem;
 }
 
 
@@ -2919,6 +3108,17 @@ details[open] .fp-class-plus::after {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   }
 
+  /* Class card touch targets */
+  .fp-class-summary {
+    padding: 0.35rem 0;
+    min-height: 44px;
+  }
+
+  .fp-class-desc__book {
+    padding: 0.45rem 0.85rem;
+    font-size: 0.75rem;
+  }
+
   /* Platform: 4-col → 2-col */
   .fp-platform__grid {
     grid-template-columns: repeat(2, 1fr);
@@ -3050,7 +3250,12 @@ details[open] .fp-class-plus::after {
   .fl-step-clickable,
   .fl-card,
   .fl-pricing-grid,
-  .fl-btn {
+  .fl-btn,
+  .fp-class-card,
+  .fp-class-details,
+  .fp-platform__card,
+  .fp-benefits__pack,
+  .site-forest-lighthouse .faq-list details {
     transition: none !important;
     animation: none !important;
   }

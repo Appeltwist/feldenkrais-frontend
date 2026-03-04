@@ -97,6 +97,12 @@ export default async function ForestPricingPage() {
   const c = getPricingContent(locale);
   const isFr = locale.toLowerCase().startsWith("fr");
   const swipeHint = isFr ? "\u2190 Glissez pour voir les options \u2192" : "\u2190 Swipe to view options \u2192";
+  const classDetailsLabel = isFr ? "Plus de détails" : "More details";
+  const classBookLabel = isFr ? "Réserver le cours" : "Book class";
+  const classFallbackDescription = isFr
+    ? "Un cours guidé pour développer aisance, conscience et coordination grâce au mouvement attentif."
+    : "A guided class to build ease, awareness, and coordination through attentive movement.";
+  const classTeacherPrefix = isFr ? "avec" : "w/";
 
   const packageIcons: Array<keyof typeof ICON_PATHS> = ["infinity", "compass", "star"];
   const passIcons: Array<keyof typeof ICON_PATHS> = ["compass", "calendar", "ticket"];
@@ -217,7 +223,7 @@ export default async function ForestPricingPage() {
       <Separator />
 
       {/* ═══ PASSES & SUBSCRIPTIONS ═══ */}
-      <section className="fl-pricing" aria-label={isFr ? "Pass et abonnements" : "Passes and subscriptions"}>
+      <section className="fl-pricing fl-pricing--passes" aria-label={isFr ? "Pass et abonnements" : "Passes and subscriptions"}>
         <h2 className="fp-section__heading">{c.passes.heading}</h2>
         <div className="fl-pricing-wrap">
           <div className="fl-pricing-grid" role="list">
@@ -276,7 +282,7 @@ export default async function ForestPricingPage() {
       <Separator label={isFr ? "En savoir plus sur les Programmes" : "Learn More about the Packs"} />
 
       {/* ═══ COMMITMENT ═══ */}
-      <section className="fp-commitment">
+      <section className="forest-panel fp-commitment">
         <h2 className="fp-commitment__heading">{c.commitment.heading}</h2>
         <p className="fp-commitment__subheading">{c.commitment.subheading}</p>
         {c.commitment.paragraphs.map((p, i) => (
@@ -321,42 +327,55 @@ export default async function ForestPricingPage() {
             <div className="fp-schedule__day" key={day.day}>
               <h3 className="fp-schedule__day-name">{day.day}</h3>
               <div className="fp-schedule__entries">
-                {day.entries.map((entry, i) => (
-                  <div
-                    className="fp-class-card"
-                    key={i}
-                    style={{ "--card-bg": entry.color || "rgba(0,55,56,0.55)" } as CSSProperties}
-                  >
-                    <div className="fp-class-card__meta">
-                      <div className="fp-class-card__meta-left">
-                        <span className="fp-class-card__time">{entry.time}</span>
-                        <span className="fp-class-card__langs">
-                          {entry.languages.map((lang) => (
-                            <span className="fp-class-card__lang" key={lang}>
-                              {lang}
-                            </span>
-                          ))}
-                        </span>
-                        {entry.level ? (
-                          <span className="fp-class-card__level">{entry.level}</span>
-                        ) : null}
+                {day.entries.map((entry, i) => {
+                  const classDescription = entry.description || classFallbackDescription;
+                  const classBookingUrl = entry.bookingUrl || BOOKING_URLS.book;
+
+                  return (
+                    <div
+                      className="fp-class-card"
+                      key={i}
+                      style={{ "--card-bg": entry.color || "rgba(0,55,56,0.55)" } as CSSProperties}
+                    >
+                      <div className="fp-class-card__meta">
+                        <div className="fp-class-card__meta-left">
+                          <span className="fp-class-card__time">{entry.time}</span>
+                          <span className="fp-class-card__langs">
+                            {entry.languages.map((lang) => (
+                              <span className="fp-class-card__lang" key={lang}>
+                                {lang}
+                              </span>
+                            ))}
+                          </span>
+                          {entry.level ? (
+                            <span className="fp-class-card__level">{entry.level}</span>
+                          ) : null}
+                        </div>
                       </div>
-                    </div>
-                    <h4 className="fp-class-card__name">{entry.className}</h4>
-                    <span className="fp-class-card__teacher">
-                      w/ <strong>{entry.instructor}</strong>
-                    </span>
-                    {entry.description ? (
+                      <h4 className="fp-class-card__name">{entry.className}</h4>
+                      <span className="fp-class-card__teacher">
+                        {classTeacherPrefix} <strong>{entry.instructor}</strong>
+                      </span>
                       <details className="fp-class-details">
                         <summary className="fp-class-summary">
-                          <span className="fp-class-summary__label">More</span>
-                          <span className="fp-class-plus" />
+                          <span className="fp-class-summary__label">{classDetailsLabel}</span>
+                          <span aria-hidden="true" className="fp-class-plus" />
                         </summary>
-                        <div className="fp-class-desc">{entry.description}</div>
+                        <div className="fp-class-desc">
+                          <p className="fp-class-desc__text">{classDescription}</p>
+                          <a
+                            className="fp-class-desc__book"
+                            href={classBookingUrl}
+                            rel="noopener noreferrer"
+                            target="_blank"
+                          >
+                            {classBookLabel}
+                          </a>
+                        </div>
                       </details>
-                    ) : null}
-                  </div>
-                ))}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ))}
@@ -420,16 +439,19 @@ export default async function ForestPricingPage() {
       <section className="forest-panel fp-benefits">
         <h2 className="fp-section__heading">{c.benefits.heading}</h2>
         <div className="fp-benefits__overview">
-          {c.benefits.overview.map((pack) => (
-            <div className="fp-benefits__pack" key={pack.tier}>
-              <h3 className="fp-benefits__pack-name">{pack.tier}</h3>
-              <ul className="fp-benefits__pack-list">
-                {pack.highlights.map((h, i) => (
-                  <li key={i}>✓ {h}</li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          {c.benefits.overview.map((pack, idx) => {
+            const variant = idx === 1 ? "featured" : idx === 2 ? "premium" : "lite";
+            return (
+              <div className={`fp-benefits__pack fp-benefits__pack--${variant}`} key={pack.tier}>
+                <h3 className="fp-benefits__pack-name">{pack.tier}</h3>
+                <ul className="fp-benefits__pack-list">
+                  {pack.highlights.map((h, i) => (
+                    <li key={i}>✓ {h}</li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
         </div>
         <div className="fp-benefits__ctas">
           <a className="fl-btn fl-btn--primary" href={BOOKING_URLS.book} rel="noopener noreferrer" target="_blank">
@@ -444,7 +466,7 @@ export default async function ForestPricingPage() {
       <Separator />
 
       {/* ═══ FAQ ═══ */}
-      <section className="fp-section">
+      <section className="forest-panel fp-section">
         <h2 className="fp-section__heading">{c.faq.heading}</h2>
         <div className="fp-faq">
           {c.faq.categories.map((cat) => (

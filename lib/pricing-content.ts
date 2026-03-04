@@ -55,6 +55,7 @@ export type ScheduleEntry = {
   languages: string[];
   level?: string;
   description?: string;
+  bookingUrl?: string;
   color?: string;
 };
 
@@ -149,19 +150,80 @@ const BOOKING = {
 
 /* ── class metadata ── */
 
+const EN_DEFAULT_CLASS_DESCRIPTION =
+  "A guided class to build ease, awareness, and coordination through attentive movement.";
+const FR_DEFAULT_CLASS_DESCRIPTION =
+  "Un cours guidé pour développer aisance, conscience et coordination grâce au mouvement attentif.";
+
+const CLASS_CARD_PALETTE = [
+  "linear-gradient(160deg, rgba(118, 73, 65, 0.94) 0%, rgba(76, 49, 45, 0.94) 100%)",  // terracotta brown
+  "linear-gradient(160deg, rgba(67, 76, 106, 0.94) 0%, rgba(47, 55, 82, 0.94) 100%)",   // slate blue
+  "linear-gradient(160deg, rgba(63, 93, 85, 0.94) 0%, rgba(45, 71, 66, 0.94) 100%)",    // moss green
+  "linear-gradient(160deg, rgba(113, 88, 68, 0.94) 0%, rgba(76, 61, 49, 0.94) 100%)",   // warm taupe
+  "linear-gradient(160deg, rgba(95, 72, 92, 0.94) 0%, rgba(67, 49, 67, 0.94) 100%)",    // muted plum
+  "linear-gradient(160deg, rgba(101, 90, 66, 0.94) 0%, rgba(69, 62, 47, 0.94) 100%)",   // olive earth
+] as const;
+
+const CLASS_COLOR_BY_NAME: Record<string, string> = {
+  "ashtanga yoga": "linear-gradient(160deg, rgba(118, 73, 65, 0.94) 0%, rgba(76, 49, 45, 0.94) 100%)",
+  "pilates": "linear-gradient(160deg, rgba(67, 76, 106, 0.94) 0%, rgba(47, 55, 82, 0.94) 100%)",
+  "hatha yoga": "linear-gradient(160deg, rgba(63, 93, 85, 0.94) 0%, rgba(45, 71, 66, 0.94) 100%)",
+  "vinyasa to yin yoga": "linear-gradient(160deg, rgba(113, 88, 68, 0.94) 0%, rgba(76, 61, 49, 0.94) 100%)",
+  "feldenkrais": "linear-gradient(160deg, rgba(95, 72, 92, 0.94) 0%, rgba(67, 49, 67, 0.94) 100%)",
+  "yoga vinyasa": "linear-gradient(160deg, rgba(125, 90, 68, 0.94) 0%, rgba(83, 61, 49, 0.94) 100%)",
+  "yoga vinyasa gentle flow": "linear-gradient(160deg, rgba(132, 95, 72, 0.94) 0%, rgba(88, 65, 53, 0.94) 100%)",
+  "yoga vinyasa space flow": "linear-gradient(160deg, rgba(108, 87, 65, 0.94) 0%, rgba(73, 60, 47, 0.94) 100%)",
+  "chant polyphonique": "linear-gradient(160deg, rgba(133, 77, 69, 0.94) 0%, rgba(84, 53, 50, 0.94) 100%)",
+};
+
+function withFallback(value: string | undefined, fallback: string) {
+  if (typeof value === "string" && value.trim().length > 0) {
+    return value.trim();
+  }
+  return fallback;
+}
+
+function hashClassName(className: string) {
+  let hash = 0;
+  for (const char of className) {
+    hash = (hash * 31 + char.charCodeAt(0)) % 2147483647;
+  }
+  return hash;
+}
+
+function normalizeClassNameForColor(className: string) {
+  return className.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function classColorFromName(className: string) {
+  const normalized = normalizeClassNameForColor(className);
+  if (!normalized) {
+    return CLASS_CARD_PALETTE[0];
+  }
+  const mappedColor = CLASS_COLOR_BY_NAME[normalized];
+  if (mappedColor) {
+    return mappedColor;
+  }
+  return CLASS_CARD_PALETTE[hashClassName(normalized) % CLASS_CARD_PALETTE.length];
+}
+
 function applyClassMeta(entries: ScheduleEntry[]): ScheduleEntry[] {
   return entries.map((e) => ({
     ...e,
-    level: e.level ?? "All levels",
-    color: e.color ?? "rgba(0,55,56,0.55)",
+    level: withFallback(e.level, "All levels"),
+    description: withFallback(e.description, EN_DEFAULT_CLASS_DESCRIPTION),
+    bookingUrl: withFallback(e.bookingUrl, BOOKING.book),
+    color: withFallback(e.color, classColorFromName(e.className)),
   }));
 }
 
 function applyClassMetaFr(entries: ScheduleEntry[]): ScheduleEntry[] {
   return entries.map((e) => ({
     ...e,
-    level: e.level ?? "Tous niveaux",
-    color: e.color ?? "rgba(0,55,56,0.55)",
+    level: withFallback(e.level, "Tous niveaux"),
+    description: withFallback(e.description, FR_DEFAULT_CLASS_DESCRIPTION),
+    bookingUrl: withFallback(e.bookingUrl, BOOKING.book),
+    color: withFallback(e.color, classColorFromName(e.className)),
   }));
 }
 
