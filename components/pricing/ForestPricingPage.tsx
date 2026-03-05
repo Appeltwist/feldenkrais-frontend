@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import { getRequestLocale } from "@/lib/get-locale";
 import type { FeatureItem } from "@/lib/pricing-content";
 import { getPricingContent } from "@/lib/pricing-content";
+import RevealObserver from "@/components/motion/RevealObserver";
 import FeatureSlider from "./FeatureSlider";
 import StrategyCarousel from "./StrategyCarousel";
 
@@ -92,6 +93,19 @@ function Separator({ label }: { label?: string }) {
   );
 }
 
+function RhythmBanner({ image, label }: { image: string; label: string }) {
+  return (
+    <section
+      aria-label={label}
+      className="fp-rhythm fp-rhythm--parallax"
+      data-reveal="section"
+      style={{ "--fp-banner-image": `url('${image}')` } as CSSProperties}
+    >
+      <p className="fp-rhythm__label">{label}</p>
+    </section>
+  );
+}
+
 export default async function ForestPricingPage() {
   const locale = await getRequestLocale();
   const c = getPricingContent(locale);
@@ -108,11 +122,42 @@ export default async function ForestPricingPage() {
   const passIcons: Array<keyof typeof ICON_PATHS> = ["compass", "calendar", "ticket"];
   const passDashed: Array<number[] | undefined> = [undefined, undefined, [0, 2]];
   const platformIcons: Array<keyof typeof ICON_PATHS> = ["grid", "video", "film", "book"];
+  const motionScopeId = "fp-page-motion";
+  const rhythmBanners = isFr
+    ? [
+        {
+          image: "/brands/forest-lighthouse/home/hero-main-hall.jpg",
+          label: "Un espace vivant pour apprendre et pratiquer",
+        },
+        {
+          image: "/brands/forest-lighthouse/home/community-practice.jpg",
+          label: "Des pratiques guidées, semaine après semaine",
+        },
+        {
+          image: "/brands/forest-lighthouse/home/terrace.jpg",
+          label: "Des moments de pause pour intégrer en douceur",
+        },
+      ]
+    : [
+        {
+          image: "/brands/forest-lighthouse/home/hero-main-hall.jpg",
+          label: "A living space to learn and practice",
+        },
+        {
+          image: "/brands/forest-lighthouse/home/community-practice.jpg",
+          label: "Guided practices, week after week",
+        },
+        {
+          image: "/brands/forest-lighthouse/home/terrace.jpg",
+          label: "Moments to pause and integrate gently",
+        },
+      ];
 
   return (
-    <div className="fp-page">
+    <div className="fp-page" id={motionScopeId}>
+      <RevealObserver scopeId={motionScopeId} />
       {/* ═══ HERO ═══ */}
-      <section className="fp-hero">
+      <section className="fp-hero" data-reveal="section">
         <h1 className="fp-hero__title">{c.hero.title}</h1>
         <p className="fp-hero__subtitle">{c.hero.subtitle}</p>
 
@@ -152,18 +197,27 @@ export default async function ForestPricingPage() {
             );
           })}
         </div>
+
       </section>
+
+      <RhythmBanner image={rhythmBanners[0].image} label={rhythmBanners[0].label} />
 
       <Separator />
 
       {/* ═══ 8-WEEK PACKAGES ═══ */}
-      <section className="fl-pricing" id="fl-pricing-8w" aria-label={isFr ? "Programmes 8 semaines" : "8-week packages"}>
+      <section
+        className="fl-pricing"
+        data-reveal="section"
+        id="fl-pricing-8w"
+        aria-label={isFr ? "Programmes 8 semaines" : "8-week packages"}
+      >
         <h2 className="fp-section__heading">{c.packages.heading}</h2>
         <div className="fl-pricing-wrap">
-          <div className="fl-pricing-grid" role="list">
+          <div className="fl-pricing-grid" data-reveal="stagger" role="list">
             {c.packages.cards.map((card, idx) => (
               <article
                 className={`fl-card fl-card--${card.cardVariant || "lite"}${card.recommended ? " is-featured" : ""}`}
+                data-hover-lift="true"
                 data-featured={card.recommended ? "true" : undefined}
                 key={card.tier}
                 role="listitem"
@@ -223,13 +277,18 @@ export default async function ForestPricingPage() {
       <Separator />
 
       {/* ═══ PASSES & SUBSCRIPTIONS ═══ */}
-      <section className="fl-pricing fl-pricing--passes" aria-label={isFr ? "Pass et abonnements" : "Passes and subscriptions"}>
+      <section
+        className="fl-pricing fl-pricing--passes"
+        data-reveal="section"
+        aria-label={isFr ? "Pass et abonnements" : "Passes and subscriptions"}
+      >
         <h2 className="fp-section__heading">{c.passes.heading}</h2>
         <div className="fl-pricing-wrap">
-          <div className="fl-pricing-grid" role="list">
+          <div className="fl-pricing-grid" data-reveal="stagger" role="list">
             {c.passes.cards.map((card, idx) => (
               <article
                 className={`fl-card fl-card--${card.cardVariant || "lite"}`}
+                data-hover-lift="true"
                 key={card.name}
                 role="listitem"
               >
@@ -279,10 +338,12 @@ export default async function ForestPricingPage() {
         <p className="fl-swipe-hint" aria-hidden="true">{swipeHint}</p>
       </section>
 
+      <RhythmBanner image={rhythmBanners[1].image} label={rhythmBanners[1].label} />
+
       <Separator label={isFr ? "En savoir plus sur les Programmes" : "Learn More about the Packs"} />
 
       {/* ═══ COMMITMENT ═══ */}
-      <section className="forest-panel fp-commitment">
+      <section className="forest-panel fp-commitment" data-reveal="section">
         <h2 className="fp-commitment__heading">{c.commitment.heading}</h2>
         <p className="fp-commitment__subheading">{c.commitment.subheading}</p>
         {c.commitment.paragraphs.map((p, i) => (
@@ -300,14 +361,16 @@ export default async function ForestPricingPage() {
       </section>
 
       {/* ═══ FEATURE SLIDER ═══ */}
-      <section className="fp-section">
+      <section className="fp-section" data-reveal="section">
         <FeatureSlider slides={c.features.columns} />
       </section>
+
+      <RhythmBanner image={rhythmBanners[2].image} label={rhythmBanners[2].label} />
 
       <Separator />
 
       {/* ═══ WEEKLY SCHEDULE ═══ */}
-      <section className="fp-section">
+      <section className="fp-section" data-reveal="section">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           alt=""
@@ -322,7 +385,7 @@ export default async function ForestPricingPage() {
         {c.features.columns[0] && (
           <p className="fp-section__subtitle">{c.features.columns[0].paragraphs[0]}</p>
         )}
-        <div className="fp-schedule">
+        <div className="fp-schedule" data-reveal="stagger">
           {c.schedule.days.map((day) => (
             <div className="fp-schedule__day" key={day.day}>
               <h3 className="fp-schedule__day-name">{day.day}</h3>
@@ -334,6 +397,7 @@ export default async function ForestPricingPage() {
                   return (
                     <div
                       className="fp-class-card"
+                      data-hover-lift="true"
                       key={i}
                       style={{ "--card-bg": entry.color || "rgba(0,55,56,0.55)" } as CSSProperties}
                     >
@@ -385,7 +449,7 @@ export default async function ForestPricingPage() {
       <Separator />
 
       {/* ═══ INDIVIDUAL SESSION ═══ */}
-      <section className="fp-section">
+      <section className="fp-section" data-reveal="section">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           alt=""
@@ -407,7 +471,7 @@ export default async function ForestPricingPage() {
       <Separator />
 
       {/* ═══ PLATFORM ═══ */}
-      <section className="fp-platform">
+      <section className="fp-platform" data-reveal="section">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           alt=""
@@ -420,9 +484,9 @@ export default async function ForestPricingPage() {
           <p className="fp-platform__subtitle">{c.features.columns[2].paragraphs[0]}</p>
         )}
         <p className="fp-platform__subtitle">{c.platform.subtitle}</p>
-        <div className="fp-platform__grid">
+        <div className="fp-platform__grid" data-reveal="stagger">
           {c.platform.features.map((f, idx) => (
-            <div className="fp-platform__card" key={f.title}>
+            <div className="fp-platform__card" data-hover-lift="true" key={f.title}>
               <div className="fp-platform__icon">
                 <IconSvg paths={ICON_PATHS[platformIcons[idx] || "grid"]} />
               </div>
@@ -436,13 +500,17 @@ export default async function ForestPricingPage() {
       <Separator />
 
       {/* ═══ BENEFITS SUMMARY ═══ */}
-      <section className="forest-panel fp-benefits">
+      <section className="forest-panel fp-benefits" data-reveal="section">
         <h2 className="fp-section__heading">{c.benefits.heading}</h2>
-        <div className="fp-benefits__overview">
+        <div className="fp-benefits__overview" data-reveal="stagger">
           {c.benefits.overview.map((pack, idx) => {
             const variant = idx === 1 ? "featured" : idx === 2 ? "premium" : "lite";
             return (
-              <div className={`fp-benefits__pack fp-benefits__pack--${variant}`} key={pack.tier}>
+              <div
+                className={`fp-benefits__pack fp-benefits__pack--${variant}`}
+                data-hover-lift="true"
+                key={pack.tier}
+              >
                 <h3 className="fp-benefits__pack-name">{pack.tier}</h3>
                 <ul className="fp-benefits__pack-list">
                   {pack.highlights.map((h, i) => (
@@ -466,7 +534,7 @@ export default async function ForestPricingPage() {
       <Separator />
 
       {/* ═══ FAQ ═══ */}
-      <section className="forest-panel fp-section">
+      <section className="forest-panel fp-section" data-reveal="section">
         <h2 className="fp-section__heading">{c.faq.heading}</h2>
         <div className="fp-faq">
           {c.faq.categories.map((cat) => (

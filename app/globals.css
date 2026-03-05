@@ -1096,7 +1096,7 @@ a {
   --fl-space-surface: #033;
   --fl-text: #e0ece8;
   --fl-text-dim: #a0b5ae;
-  --fl-accent-teal: #00c9a7;
+  --fl-accent-teal: #f4f2eb;
   --fl-accent-gold: #D4A64A;
   --fl-accent-warm: #C97A50;
   --fl-border: rgba(186,255,173,0.12);
@@ -1550,6 +1550,32 @@ a {
   min-width: 0;
 }
 
+/* ── Pricing motion primitives ── */
+
+#fp-page-motion.motion-active [data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, 20px, 0);
+  transition: opacity 220ms ease-out, transform 220ms ease-out;
+  will-change: opacity, transform;
+}
+
+#fp-page-motion.motion-active [data-reveal].is-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+#fp-page-motion.motion-active [data-reveal="stagger"] > * {
+  opacity: 0;
+  transform: translate3d(0, 20px, 0);
+  transition: opacity 220ms ease-out, transform 220ms ease-out;
+  transition-delay: calc(var(--i, 0) * 70ms);
+}
+
+#fp-page-motion.motion-active [data-reveal="stagger"].is-visible > * {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
 /* ── Section ── */
 
 .fp-section {
@@ -1615,6 +1641,50 @@ a {
   font-size: clamp(1rem, 2vw, 1.25rem);
   line-height: 1.6;
   max-width: 680px;
+}
+
+.fp-rhythm {
+  --fp-banner-image: none;
+  align-items: end;
+  background-image:
+    linear-gradient(to bottom, rgba(0, 20, 19, 0.16), rgba(0, 20, 19, 0.62)),
+    var(--fp-banner-image);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  border: 1px solid var(--fl-border);
+  border-radius: 20px;
+  box-shadow: 0 22px 62px rgba(0,0,0,0.28);
+  display: flex;
+  min-height: clamp(180px, 24vw, 280px);
+  overflow: hidden;
+  padding: 1rem 1.1rem;
+  position: relative;
+  width: 100%;
+}
+
+.fp-rhythm::before {
+  background: radial-gradient(120% 80% at 82% 18%, rgba(255,255,255,0.15), rgba(255,255,255,0));
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+.fp-rhythm__label {
+  color: rgba(255,255,255,0.95);
+  font-family: var(--fl-display);
+  font-size: clamp(0.95rem, 1.4vw, 1.15rem);
+  letter-spacing: 0.01em;
+  margin: 0;
+  max-width: min(72ch, 100%);
+  position: relative;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  z-index: 1;
+}
+
+.fp-rhythm--parallax {
+  background-attachment: scroll, scroll;
 }
 
 
@@ -2765,6 +2835,47 @@ a {
   margin-top: 0.32rem;
 }
 
+/* Subtle hover lift for pricing cards */
+#fp-page-motion .fl-card[data-hover-lift],
+#fp-page-motion .fp-class-card[data-hover-lift],
+#fp-page-motion .fp-platform__card[data-hover-lift],
+#fp-page-motion .fp-benefits__pack[data-hover-lift] {
+  transition: transform 180ms ease-out;
+}
+
+#fp-page-motion .fl-card[data-hover-lift]:hover,
+#fp-page-motion .fl-card[data-hover-lift]:focus-within {
+  transform: translateY(-1px);
+  box-shadow: var(--fl-pr-shadow);
+}
+
+#fp-page-motion .fl-card--featured[data-hover-lift]:hover,
+#fp-page-motion .fl-card--featured[data-hover-lift]:focus-within,
+#fp-page-motion .fl-card.is-featured[data-hover-lift]:hover,
+#fp-page-motion .fl-card.is-featured[data-hover-lift]:focus-within {
+  transform: translateY(-7px);
+  box-shadow:
+    0 28px 85px rgba(0,0,0,0.36),
+    0 0 0 1px rgba(214,171,42,0.15) inset,
+    0 0 90px rgba(214,171,42,0.18);
+}
+
+#fp-page-motion .fl-pricing--passes .fl-card[data-hover-lift]:hover,
+#fp-page-motion .fl-pricing--passes .fl-card[data-hover-lift]:focus-within {
+  transform: translateY(-1px);
+  box-shadow: var(--fl-pass-card-shadow);
+}
+
+#fp-page-motion .fp-class-card[data-hover-lift]:hover,
+#fp-page-motion .fp-class-card[data-hover-lift]:focus-within,
+#fp-page-motion .fp-platform__card[data-hover-lift]:hover,
+#fp-page-motion .fp-platform__card[data-hover-lift]:focus-within,
+#fp-page-motion .fp-benefits__pack[data-hover-lift]:hover,
+#fp-page-motion .fp-benefits__pack[data-hover-lift]:focus-within {
+  transform: translateY(-1px);
+  box-shadow: none;
+}
+
 
 /* ===================================================================
    SEPARATOR — .fl-separator
@@ -2884,10 +2995,10 @@ a {
 }
 
 .fl-footer__submit {
-  background: var(--fl-accent-teal);
+  background: #aa3b3b;
   border: none;
   border-radius: 6px;
-  color: var(--fl-space-deep);
+  color: #f4f2eb;
   cursor: pointer;
   font-family: var(--fl-body);
   font-size: 0.85rem;
@@ -3042,6 +3153,15 @@ a {
     padding: 2rem 0 0.5rem;
   }
 
+  .fp-rhythm {
+    min-height: 190px;
+    padding: 0.9rem 0.9rem;
+  }
+
+  .fp-rhythm__label {
+    font-size: 0.9rem;
+  }
+
   /* Steps: vertical timeline on mobile */
   .fl-steps {
     grid-template-columns: 1fr;
@@ -3162,9 +3282,9 @@ a {
   }
 
   .fl-mobile-footer__link--cta {
-    background: var(--fl-accent-teal);
-    border-color: var(--fl-accent-teal);
-    color: var(--fl-space-deep);
+    background: #aa3b3b;
+    border-color: #aa3b3b;
+    color: #f4f2eb;
   }
 
 }
@@ -3197,6 +3317,12 @@ a {
     padding: 1.5rem 1rem;
     border-radius: 14px;
   }
+
+  .fp-rhythm {
+    background-attachment: scroll, scroll;
+    border-radius: 14px;
+    min-height: 170px;
+  }
 }
 
 
@@ -3226,18 +3352,6 @@ a {
     background: linear-gradient(to left, var(--hintFade, rgba(0,20,19,0.92)), var(--hintFadeTransparent, transparent));
   }
 
-  /* Initial nudge animation for pricing grid */
-  .fl-pricing-grid {
-    animation: fl-nudge 1.8s ease 0.6s 1;
-  }
-}
-
-@keyframes fl-nudge {
-  0%   { transform: translateX(0); }
-  22%  { transform: translateX(-18px); }
-  44%  { transform: translateX(6px); }
-  66%  { transform: translateX(-3px); }
-  100% { transform: translateX(0); }
 }
 
 
@@ -3246,6 +3360,23 @@ a {
    =================================================================== */
 
 @media (prefers-reduced-motion: reduce) {
+  #fp-page-motion.motion-active [data-reveal],
+  #fp-page-motion.motion-active [data-reveal].is-visible,
+  #fp-page-motion.motion-active [data-reveal="stagger"] > *,
+  #fp-page-motion.motion-active [data-reveal="stagger"].is-visible > * {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    transition-delay: 0ms !important;
+    animation: none !important;
+  }
+
+  #fp-page-motion [data-hover-lift]:hover,
+  #fp-page-motion [data-hover-lift]:focus-within {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
   .fl-step,
   .fl-step-clickable,
   .fl-card,
