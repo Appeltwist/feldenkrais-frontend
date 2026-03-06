@@ -87,6 +87,8 @@ export default async function RootLayout({
   } as CSSProperties;
 
   const bodyClass = isForestLighthouse ? "site-forest-lighthouse" : "";
+  const showDebugBar =
+    process.env.NODE_ENV === "development" && process.env.NEXT_PUBLIC_SHOW_DEBUG_BAR === "1";
 
   return (
     <html lang={locale}>
@@ -102,7 +104,7 @@ export default async function RootLayout({
         <div className="page-wrapper">
           <SiteProvider hostname={hostname} initialSiteConfig={siteConfig}>
             {isForestLighthouse && <AnnouncementBar locale={locale} />}
-            {process.env.NODE_ENV === "development" ? (
+            {showDebugBar ? (
               <div className="dev-debug-bar">
                 hostname: {hostname} | centerSlug: {siteConfig.centerSlug} | defaultLocale:{" "}
                 {siteConfig.defaultLocale} | locale: {locale}

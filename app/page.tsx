@@ -65,10 +65,40 @@ type EngageTile = {
   href: string;
 };
 
-const MAX_WHATS_ON_CARDS = 9;
+type HomeDetailImage = {
+  src: string;
+  alt: string;
+};
 
-async function fetchHomePayload() {
-  const hostname = await getHostname();
+type ForestHomeMedia = {
+  hero: string;
+  mainHall: string;
+  detailImages: HomeDetailImage[];
+};
+
+const MAX_WHATS_ON_CARDS = 9;
+const FOREST_HOST_MATCHERS = ["forest-lighthouse.local", "forest-lighthouse"];
+
+const FOREST_HOME_MEDIA: ForestHomeMedia = {
+  hero: "/brands/forest-lighthouse/home/hero-main-hall.jpg",
+  mainHall: "/brands/forest-lighthouse/home/main-hall-wide.jpg",
+  detailImages: [
+    {
+      src: "/brands/forest-lighthouse/home/community-practice.jpg",
+      alt: "Group practice at Forest Lighthouse",
+    },
+    {
+      src: "/brands/forest-lighthouse/home/terrace.jpg",
+      alt: "Forest Lighthouse terrace and gathering space",
+    },
+    {
+      src: "/brands/forest-lighthouse/home/cafe.jpg",
+      alt: "Forest Lighthouse cafe and social room",
+    },
+  ],
+};
+
+async function fetchHomePayload(hostname: string) {
   const requestHeaders = await headers();
   const forwardedHost = requestHeaders.get("x-forwarded-host");
   const host = forwardedHost ?? requestHeaders.get("host") ?? `${hostname}:3000`;
@@ -87,6 +117,13 @@ async function fetchHomePayload() {
     return null;
   }
   return (await response.json()) as HomePayload;
+}
+
+function getForestHomeMedia(hostname: string): ForestHomeMedia | null {
+  const normalizedHostname = hostname.toLowerCase();
+  return FOREST_HOST_MATCHERS.some((host) => normalizedHostname.includes(host))
+    ? FOREST_HOME_MEDIA
+    : null;
 }
 
 function getLocalePrefix(locale: string): "/fr" | "/en" {
@@ -132,6 +169,10 @@ function compactText(value: string | null | undefined, limit = 190): string {
     return text;
   }
   return `${text.slice(0, limit).trimEnd()}...`;
+}
+
+function normalizeHeadlineLine(value: string): string {
+  return value.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/\s+/g, " ").trim();
 }
 
 function buildEngageTiles(locale: string, pillars: HomePillar[]): EngageTile[] {
@@ -219,7 +260,7 @@ function HomeHero({
         <h1>
           {hero.headline_lines.map((line, index) => (
             <span className="home-hero__line" key={`${line}-${index}`}>
-              {line}
+              {normalizeHeadlineLine(line)}
             </span>
           ))}
         </h1>
@@ -239,8 +280,12 @@ function HomeHero({
 
 function HomeMainHall({
   mainHall,
+  imageUrl,
+  detailImages,
 }: {
   mainHall: HomePayload["main_hall"];
+  imageUrl?: string | null;
+  detailImages?: HomeDetailImage[];
 }) {
   const title = mainHall.title || "Main Hall";
   const body = compactText(mainHall.body, 220);
@@ -252,9 +297,18 @@ function HomeMainHall({
         <h2>{title}</h2>
         {body ? <p>{body}</p> : null}
       </div>
-      {mainHall.image_url ? (
+      {imageUrl ? (
         <div className="home-main-hall__media">
-          <img alt={title} className="home-main-hall__image" loading="lazy" src={mainHall.image_url} />
+          <img alt={title} className="home-main-hall__image" loading="lazy" src={imageUrl} />
+          {detailImages?.length ? (
+            <ul className="home-main-hall__thumbs">
+              {detailImages.slice(0, 3).map((image) => (
+                <li key={image.src}>
+                  <img alt={image.alt} loading="lazy" src={image.src} />
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       ) : null}
     </section>
@@ -381,7 +435,8 @@ function HomeDomainsTeaser({
 }
 
 export default async function HomePage() {
-  const home = await fetchHomePayload();
+  const hostname = await getHostname();
+  const home = await fetchHomePayload(hostname);
 
   if (!home) {
     return (
@@ -393,12 +448,15 @@ export default async function HomePage() {
   }
 
   const locale = home.meta.locale || "en";
-  const heroMediaUrl = home.hero.media_url || home.main_hall.image_url || "";
+  const forestHomeMedia = getForestHomeMedia(hostname);
+  const heroMediaUrl = forestHomeMedia?.hero || home.hero.media_url || home.main_hall.image_url || "";
+  const mainHallImageUrl = forestHomeMedia?.mainHall || home.main_hall.image_url || "";
+  const mainHallDetailImages = forestHomeMedia?.detailImages || [];
 
   return (
     <section className="page-section home-page">
       <HomeHero hero={home.hero} heroMediaUrl={heroMediaUrl} locale={locale} />
-      <HomeMainHall mainHall={home.main_hall} />
+      <HomeMainHall detailImages={mainHallDetailImages} imageUrl={mainHallImageUrl} mainHall={home.main_hall} />
       <HomePillars locale={locale} pillars={home.pillars} />
       <HomeWhatsOnPreview cards={home.whats_on_preview.cards} locale={locale} />
       <HomeDomainsTeaser domains={home.domains_teaser} locale={locale} />

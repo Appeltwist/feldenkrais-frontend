@@ -41,3 +41,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env.local
+
+# local/raw image drops (curated assets live in public/brands/forest-lighthouse/home)
+public/brands/forest-lighthouse/photos/
