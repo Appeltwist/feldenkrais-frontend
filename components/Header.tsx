@@ -174,7 +174,7 @@ function ForestHeader({
           <Link
             aria-label="Book a class"
             className="fl-book"
-            href={withLocalePrefix(locale, "/classes")}
+            href={withLocalePrefix(locale, "/calendar")}
           >
             <span className="fl-book__text">{isFr ? "Réserver" : "Book"}</span>
           </Link>
@@ -207,7 +207,7 @@ function ForestHeader({
             <div className="fl-nav-mobile__cta">
               <Link
                 className="fl-nav-mobile__book"
-                href={withLocalePrefix(locale, "/classes")}
+                href={withLocalePrefix(locale, "/calendar")}
                 onClick={closeMenu}
               >
                 {isFr ? "Réserver un cours" : "Book a class"}

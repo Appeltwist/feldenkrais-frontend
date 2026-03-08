@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 
+import { ForestPageShell } from "@/components/forest/ForestPageShell";
 import { getHostname } from "@/lib/get-hostname";
 import { getCanonicalOfferPathByTypeAndSlug } from "@/lib/offers";
+import { localizePath } from "@/lib/locale-path";
 
 type HomeDomain = {
   slug: string;
@@ -126,20 +128,6 @@ function getForestHomeMedia(hostname: string): ForestHomeMedia | null {
     : null;
 }
 
-function getLocalePrefix(locale: string): "/fr" | "/en" {
-  return locale.toLowerCase().startsWith("fr") ? "/fr" : "/en";
-}
-
-function localizePath(locale: string, path: string): string {
-  if (!path || !path.startsWith("/")) {
-    return path;
-  }
-  if (path.startsWith("/fr/") || path.startsWith("/en/")) {
-    return path;
-  }
-  return `${getLocalePrefix(locale)}${path}`;
-}
-
 function formatOccurrence(value: string, locale: string, timezone?: string) {
   if (!value) {
     return "";
@@ -242,6 +230,7 @@ function HomeHero({
   heroMediaUrl: string;
   locale: string;
 }) {
+  const isFr = locale.toLowerCase().startsWith("fr");
   return (
     <section
       className="home-hero"
@@ -267,10 +256,10 @@ function HomeHero({
         <p className="home-hero__subhead">{hero.subhead}</p>
         <div className="link-row home-hero__actions">
           <Link className="button-link home-hero__primary-cta" href={localizePath(locale, "/calendar")}>
-            Discover What&apos;s On
+            {isFr ? "Découvrir ce qui se passe" : "Discover What's On"}
           </Link>
           <Link className="home-hero__about-link" href={localizePath(locale, "/about")}>
-            About
+            {isFr ? "À propos" : "About"}
           </Link>
         </div>
       </div>
@@ -282,18 +271,21 @@ function HomeMainHall({
   mainHall,
   imageUrl,
   detailImages,
+  locale,
 }: {
   mainHall: HomePayload["main_hall"];
   imageUrl?: string | null;
   detailImages?: HomeDetailImage[];
+  locale: string;
 }) {
+  const isFr = locale.toLowerCase().startsWith("fr");
   const title = mainHall.title || "Main Hall";
   const body = compactText(mainHall.body, 220);
 
   return (
     <section className="home-main-hall">
       <div className="home-main-hall__content">
-        <p className="home-section-kicker">Main Hall</p>
+        <p className="home-section-kicker">{isFr ? "Salle principale" : "Main Hall"}</p>
         <h2>{title}</h2>
         {body ? <p>{body}</p> : null}
       </div>
@@ -322,11 +314,12 @@ function HomePillars({
   locale: string;
   pillars: HomePillar[];
 }) {
+  const isFr = locale.toLowerCase().startsWith("fr");
   const tiles = buildEngageTiles(locale, pillars);
 
   return (
     <section className="home-section">
-      <h2>Ways to Engage</h2>
+      <h2>{isFr ? "Façons d’entrer dans la pratique" : "Ways to Engage"}</h2>
       <div className="home-engage-grid">
         {tiles.map((tile) => (
           <article className="home-engage-tile" key={tile.key}>
@@ -349,14 +342,15 @@ function HomeWhatsOnPreview({
   locale: string;
   cards: HomeOfferCard[];
 }) {
+  const isFr = locale.toLowerCase().startsWith("fr");
   const previewCards = cards.slice(0, MAX_WHATS_ON_CARDS);
 
   return (
     <section className="home-section">
       <div className="link-row home-section-head">
-        <h2>What&apos;s On</h2>
+        <h2>{isFr ? "À l’affiche" : "What's On"}</h2>
         <Link className="text-link" href={localizePath(locale, "/calendar")}>
-          View full calendar
+          {isFr ? "Voir le calendrier complet" : "View full calendar"}
         </Link>
       </div>
       <ul className="calendar-group-grid">
@@ -394,7 +388,7 @@ function HomeWhatsOnPreview({
               ) : null}
               <div className="link-row">
                 <Link className="text-link" href={offerPath}>
-                  Offer details
+                  {isFr ? "Voir le détail" : "Offer details"}
                 </Link>
                 {primary ? (
                   <Link className="button-link" href={offerPath}>
@@ -417,12 +411,13 @@ function HomeDomainsTeaser({
   locale: string;
   domains: HomeDomain[];
 }) {
+  const isFr = locale.toLowerCase().startsWith("fr");
   return (
     <section className="home-section home-domains-teaser">
       <div className="link-row home-section-head">
-        <h2>Domains / Areas of Inquiry</h2>
+        <h2>{isFr ? "Domaines / champs de recherche" : "Domains / Areas of Inquiry"}</h2>
         <Link className="text-link" href={localizePath(locale, "/domains")}>
-          Explore all domains
+          {isFr ? "Explorer tous les domaines" : "Explore all domains"}
         </Link>
       </div>
       <ul className="home-domains-teaser__list">
@@ -452,14 +447,24 @@ export default async function HomePage() {
   const heroMediaUrl = forestHomeMedia?.hero || home.hero.media_url || home.main_hall.image_url || "";
   const mainHallImageUrl = forestHomeMedia?.mainHall || home.main_hall.image_url || "";
   const mainHallDetailImages = forestHomeMedia?.detailImages || [];
-
-  return (
+  const homeContent = (
     <section className="page-section home-page">
       <HomeHero hero={home.hero} heroMediaUrl={heroMediaUrl} locale={locale} />
-      <HomeMainHall detailImages={mainHallDetailImages} imageUrl={mainHallImageUrl} mainHall={home.main_hall} />
+      <HomeMainHall
+        detailImages={mainHallDetailImages}
+        imageUrl={mainHallImageUrl}
+        locale={locale}
+        mainHall={home.main_hall}
+      />
       <HomePillars locale={locale} pillars={home.pillars} />
       <HomeWhatsOnPreview cards={home.whats_on_preview.cards} locale={locale} />
       <HomeDomainsTeaser domains={home.domains_teaser} locale={locale} />
     </section>
   );
+
+  if (forestHomeMedia) {
+    return <ForestPageShell className="forest-site-shell--home">{homeContent}</ForestPageShell>;
+  }
+
+  return homeContent;
 }

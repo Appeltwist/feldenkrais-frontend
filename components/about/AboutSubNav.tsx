@@ -5,14 +5,15 @@ import { usePathname } from "next/navigation";
 
 type AboutNavItem = {
   label: string;
+  labelFr: string;
   path: string;
 };
 
 const ABOUT_NAV_ITEMS: AboutNavItem[] = [
-  { label: "About", path: "/about" },
-  { label: "Domains", path: "/domains" },
-  { label: "Visit", path: "/visit" },
-  { label: "Contact", path: "/contact" },
+  { label: "About", labelFr: "À propos", path: "/about" },
+  { label: "Domains", labelFr: "Domaines", path: "/domains" },
+  { label: "Visit", labelFr: "Visiter", path: "/visit" },
+  { label: "Contact", labelFr: "Contact", path: "/contact" },
 ];
 
 function getLocalePrefix(pathname: string): string {
@@ -49,6 +50,7 @@ export default function AboutSubNav() {
   const pathname = usePathname() || "/";
   const localePrefix = getLocalePrefix(pathname);
   const barePathname = stripLocalePrefix(pathname);
+  const isFrench = localePrefix === "/fr";
 
   if (!isAboutRoute(barePathname)) {
     return null;
@@ -62,7 +64,7 @@ export default function AboutSubNav() {
           const isActive = barePathname === item.path;
           return (
             <Link className={`about-subnav__link${isActive ? " is-active" : ""}`} href={href} key={item.path}>
-              {item.label}
+              {isFrench ? item.labelFr : item.label}
             </Link>
           );
         })}

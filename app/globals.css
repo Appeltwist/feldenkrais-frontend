@@ -1489,6 +1489,10 @@ a {
     display: flex;
   }
 
+  .fl-lang {
+    display: none;
+  }
+
   .fl-nav-mobile {
     display: none;
   }
@@ -1546,6 +1550,121 @@ a {
   width: 100%;
   position: relative;
   z-index: 2;
+}
+
+/* Botanical illustrations — decorative transition elements */
+.fp-botanical {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.08;
+  filter: invert(1) brightness(1.3) saturate(0);
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+
+.fp-botanical__img {
+  object-fit: contain;
+}
+
+/* ── Pair A: hero exit — bird of paradise (large) + fan palm companion ── */
+.fp-botanical--1a {
+  top: 88vh; right: 1%;
+  width: 320px; height: 380px;
+  opacity: 0.10;
+  transform: rotate(-15deg);
+}
+.fp-botanical--1b {
+  top: 96vh; right: 22%;
+  width: 140px; height: 140px;
+  opacity: 0.06;
+  transform: rotate(25deg);
+}
+
+/* ── Pair: passes → packages — hibiscus (left) + calathea companion (right) ── */
+.fp-botanical--2 {
+  left: -2%;
+  width: 300px; height: 280px;
+  opacity: 0.09;
+  transform: rotate(10deg);
+}
+.fp-botanical--2b {
+  right: 3%;
+  width: 150px; height: 160px;
+  opacity: 0.06;
+  transform: rotate(-18deg) scaleX(-1);
+}
+
+/* ── Pair B: packages → commitment — fan palm (large) + small monstera ── */
+.fp-botanical--3a {
+  right: -1%;
+  width: 340px; height: 310px;
+  opacity: 0.10;
+  transform: rotate(-8deg);
+}
+.fp-botanical--3b {
+  right: 20%;
+  width: 150px; height: 150px;
+  opacity: 0.06;
+  transform: rotate(30deg);
+}
+
+/* ── Pair: commitment → schedule — monstera (left) + hibiscus companion (right) ── */
+.fp-botanical--4 {
+  left: -3%;
+  width: 360px; height: 360px;
+  opacity: 0.10;
+  transform: rotate(5deg);
+}
+.fp-botanical--4b {
+  right: 1%;
+  width: 170px; height: 180px;
+  opacity: 0.06;
+  transform: rotate(22deg);
+}
+
+/* ── Pair D: schedule → session — calathea (right) + small calathea companion (left) ── */
+.fp-botanical--7a {
+  right: -1%;
+  width: 300px; height: 340px;
+  opacity: 0.09;
+  transform: rotate(-12deg);
+}
+.fp-botanical--7b {
+  left: 15%;
+  width: 140px; height: 150px;
+  opacity: 0.06;
+  transform: rotate(28deg) scaleX(-1);
+}
+
+/* ── Single: session → platform — fan palm, flipped ── */
+.fp-botanical--8 {
+  left: -2%;
+  width: 280px; height: 300px;
+  opacity: 0.08;
+  transform: scaleX(-1) rotate(8deg);
+}
+
+/* ── Pair C: platform → benefits — calathea (large) + small bird of paradise ── */
+.fp-botanical--5a {
+  right: 0;
+  width: 330px; height: 400px;
+  opacity: 0.09;
+  transform: rotate(-20deg);
+}
+.fp-botanical--5b {
+  right: 24%;
+  width: 160px; height: 200px;
+  opacity: 0.06;
+  transform: rotate(12deg);
+}
+
+/* ── Single: near FAQ — hibiscus repeat, flipped ── */
+.fp-botanical--6 {
+  left: 0;
+  width: 280px; height: 260px;
+  opacity: 0.08;
+  transform: scaleX(-1) rotate(-12deg);
 }
 
 /* Prevent grid blowout from children */
@@ -1753,6 +1872,33 @@ a {
   margin: 0 auto;
 }
 
+/* ── Hero leaves zoom overlay ── */
+.fp-hero-leaves {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  margin-top: -100vh;
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform, opacity;
+  z-index: 1;
+  filter: invert(1) brightness(1.3) saturate(0);
+  mix-blend-mode: screen;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fp-hero-leaves__img {
+  width: 55%;
+  height: 55%;
+  position: relative !important;
+  object-fit: contain;
+  object-position: center;
+}
+
 
 /* ===================================================================
    JOURNEY STEPS (standalone after hero) — .fp-journey-steps
@@ -1777,15 +1923,81 @@ a {
   gap: 2.5rem;
   align-items: start;
   overflow: visible;
+  position: relative;
+  isolation: isolate;
+  padding: 4.5rem 0 2.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Full-bleed darker background zone */
+.fp-commitment-reveal::before {
+  content: "";
+  position: absolute;
+  top: -2rem;
+  bottom: -2rem;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  z-index: -1;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(1,11,10,0.3) 3%,
+    rgba(1,11,10,0.7) 6%,
+    #010b0a 12%,
+    #010b0a 88%,
+    rgba(1,11,10,0.7) 94%,
+    rgba(1,11,10,0.3) 97%,
+    transparent 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(186,255,173,0.06),
+    inset 0 -1px 0 rgba(186,255,173,0.06);
+  opacity: var(--zone-opacity, 1);
+}
+
+/* Atmospheric radial glows */
+.fp-commitment-reveal::after {
+  content: "";
+  position: absolute;
+  top: 10%;
+  bottom: 10%;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 40% 60% at 25% 35%, rgba(170,59,59,0.04), transparent),
+    radial-gradient(ellipse 50% 55% at 70% 50%, rgba(0,80,75,0.08), transparent);
+  opacity: var(--zone-opacity, 1);
 }
 
 .fp-commitment-reveal__lede {
   display: grid;
   gap: 0.5rem;
   max-width: 72ch;
-  position: sticky;
-  top: 6rem;
   align-self: start;
+  position: relative;
+  z-index: 2;
+}
+
+.fp-commitment-reveal__lede::after {
+  content: "";
+  position: absolute;
+  top: -3rem;
+  bottom: -4rem;
+  left: 50%;
+  width: 200vw;
+  transform: translateX(-50%);
+  z-index: -1;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    #010b0a 8%,
+    #010b0a 92%,
+    transparent 100%
+  );
+  pointer-events: none;
 }
 
 .fp-commitment-reveal__subheading {
@@ -1804,7 +2016,9 @@ a {
 .fp-feature-reveal {
   display: grid;
   gap: 2.5rem;
-  padding-bottom: 4rem;
+  padding-bottom: 1.25rem;
+  position: relative;
+  z-index: 3;
 }
 
 .fp-feature-card {
@@ -1814,10 +2028,12 @@ a {
   align-items: center;
   padding: 1.5rem;
   border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(186,255,173,0.10);
   background:
-    radial-gradient(110% 80% at 50% -5%, rgba(255,255,255,0.05), rgba(255,255,255,0)),
-    rgba(255,255,255,0.03);
+    radial-gradient(110% 80% at 50% -5%, rgba(255,255,255,0.08), transparent),
+    rgba(0,55,56,0.28);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 2px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
   transition: transform 0.18s ease, border-color 0.18s ease;
 }
 
@@ -1870,7 +2086,7 @@ a {
 }
 
 .fp-detail-section--schedule {
-  grid-template-columns: minmax(0, 0.25fr) minmax(0, 0.75fr);
+  grid-template-columns: minmax(140px, 0.18fr) minmax(0, 0.82fr);
 }
 
 .fp-detail-section--reverse {
@@ -1924,7 +2140,7 @@ a {
    =================================================================== */
 
 .fp-detail-section--platform {
-  grid-template-columns: minmax(0, 0.52fr) minmax(0, 0.48fr);
+  grid-template-columns: minmax(0, 0.22fr) minmax(0, 0.42fr) minmax(0, 0.36fr);
 }
 
 .fp-detail-section__phones {
@@ -1936,9 +2152,9 @@ a {
   will-change: transform;
 }
 
-.fp-detail-section__illus-img--headphones {
-  position: absolute !important;
-  opacity: 0.15;
+.fp-detail-section--platform {
+  position: relative;
+  isolation: isolate;
 }
 
 .fp-phone-mockups {
@@ -2435,22 +2651,20 @@ a {
 }
 
 .fp-schedule-wrap {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.2) transparent;
+  overflow: visible;
 }
 
 .fp-schedule {
   display: grid;
-  gap: 1.15rem;
-  grid-template-columns: repeat(5, minmax(260px, 1fr));
-  width: max-content;
+  gap: 0.9rem;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  width: 100%;
   align-items: start;
   padding-bottom: 0.5rem;
 }
 
 .fp-schedule__hint {
+  display: none;
   margin-top: 0.75rem;
   font-size: 0.85rem;
   color: rgba(255,255,255,0.45);
@@ -2875,7 +3089,7 @@ a {
 }
 
 .fp-session-section__illus-img {
-  width: 220px;
+  width: 300px;
   height: auto;
   object-fit: contain;
 }
@@ -3224,6 +3438,9 @@ a {
     0 0 14px rgba(255,255,255,0.15);
 }
 
+.fp-commitment-reveal + .fl-separator {
+  margin: 32px auto;
+}
 
 /* ===================================================================
    FOREST FOOTER — .fl-footer
@@ -3438,6 +3655,9 @@ a {
    =================================================================== */
 
 @media (max-width: 900px) {
+  .fp-botanical { display: none; }
+  .fp-hero-leaves { display: none; }
+
   .fp-page {
     gap: 2.25rem;
   }
@@ -3448,10 +3668,15 @@ a {
 
   .fp-commitment-reveal {
     grid-template-columns: 1fr;
+    padding: 3.5rem 0 4rem;
   }
 
   .fp-commitment-reveal__lede {
     position: static;
+  }
+
+  .fp-commitment-reveal__lede::after {
+    display: none;
   }
 
   .fp-session-section__header {
@@ -3509,9 +3734,20 @@ a {
     max-height: 160px;
   }
 
+  .fp-schedule-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.2) transparent;
+  }
+
   .fp-schedule {
     grid-template-columns: repeat(5, minmax(200px, 1fr));
     width: max-content;
+  }
+
+  .fp-schedule__hint {
+    display: block;
   }
 }
 
@@ -3538,14 +3774,14 @@ a {
     top: auto;
     width: 100%;
     height: auto;
-    min-height: 420px;
+    min-height: 340px;
     border-radius: 18px;
     border: 1px solid var(--fl-border);
     box-shadow: 0 18px 46px rgba(0,0,0,0.24);
   }
 
   .fp-hero-fade__content {
-    padding: 2rem 1rem 2rem;
+    padding: 1.4rem 1rem 1.35rem;
   }
 
   .fp-hero__title {
@@ -3591,6 +3827,7 @@ a {
   .fl-pricing-grid {
     display: flex !important;
     flex-wrap: nowrap !important;
+    align-items: flex-start !important;
     gap: 14px !important;
     overflow-x: auto !important;
     overflow-y: hidden !important;
@@ -3600,23 +3837,36 @@ a {
   }
 
   .fl-card {
-    flex: 0 0 88% !important;
-    max-width: 88% !important;
+    flex: 0 0 82% !important;
+    max-width: 82% !important;
     scroll-snap-align: center !important;
+    padding: 1.1rem 1.1rem 1rem;
   }
 
-  .fl-title { font-size: 1.25rem; }
-  .fl-price-main { font-size: 1.75rem; }
+  .fl-card-head { gap: 8px; }
+  .fl-title { font-size: 1.15rem; }
+  .fl-sub { font-size: 0.84rem; line-height: 1.4; }
+  .fl-price-main { font-size: 1.55rem; }
+  .fl-price-suffix,
+  .fl-price-old { font-size: 0.82rem; }
+  .fl-badge { padding: 5px 10px; font-size: 0.72rem; }
+  .fl-illus { width: 32px; height: 32px; border-radius: 10px; }
+  .fl-illus svg { width: 15px; height: 15px; }
+  .fl-divider { margin: 10px 0; }
+  .fl-list { gap: 0.55rem; }
+  .fl-item { font-size: 0.84rem; gap: 8px; line-height: 1.35; }
+  .fl-icon { width: 16px; height: 16px; font-size: 10px; }
+  .fl-btn { margin-top: 12px; padding: 8px 14px; font-size: 0.75rem; }
 
-  /* Schedule: 5-col → 1-col stacked */
+  /* Schedule: keep horizontal scroll on mobile */
   .fp-schedule {
-    grid-template-columns: 1fr !important;
-    width: 100% !important;
-    gap: 1.25rem;
+    grid-template-columns: repeat(5, minmax(200px, 1fr)) !important;
+    width: max-content !important;
+    gap: 0.85rem;
   }
 
   .fp-schedule__entries {
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.6rem;
   }
 
   .fp-phone-mockups {
@@ -3710,8 +3960,8 @@ a {
   }
 
   .fl-card {
-    flex: 0 0 92% !important;
-    max-width: 92% !important;
+    flex: 0 0 86% !important;
+    max-width: 86% !important;
   }
 
   .fp-hero__title {
@@ -3731,8 +3981,8 @@ a {
     min-height: 100px;
   }
 
-  .fp-schedule__entries {
-    grid-template-columns: 1fr;
+  .fp-schedule {
+    grid-template-columns: repeat(5, minmax(180px, 1fr)) !important;
   }
 }
 
@@ -3775,7 +4025,7 @@ a {
     top: auto;
     width: 100%;
     height: auto;
-    min-height: 380px;
+    min-height: 320px;
   }
 
 }
@@ -3851,5 +4101,1260 @@ a {
     opacity: 1 !important;
     transform: none !important;
     will-change: auto !important;
+  }
+}
+
+/* ===================================================================
+   FOREST SITEWIDE ROLLOUT FROM PRICING
+   =================================================================== */
+
+.site-forest-lighthouse {
+  --fl-display: "Manrope", "Noto Sans", system-ui, sans-serif;
+  --fl-body: "Noto Sans", system-ui, sans-serif;
+  background:
+    radial-gradient(circle at 50% -10%, rgba(212, 166, 74, 0.06), transparent 18%),
+    radial-gradient(circle at 14% 8%, rgba(8, 52, 49, 0.12), transparent 24%),
+    radial-gradient(circle at 86% 12%, rgba(8, 44, 41, 0.1), transparent 22%),
+    linear-gradient(180deg, #001413 0%, #011a19 42%, #001110 100%);
+}
+
+.site-forest-lighthouse .page-wrapper {
+  background: transparent;
+  min-height: 100vh;
+}
+
+.site-forest-lighthouse main {
+  max-width: none;
+  overflow: clip;
+  padding: 0 0 6rem;
+}
+
+.site-forest-lighthouse .dev-debug-bar {
+  background: rgba(2, 17, 18, 0.88);
+  backdrop-filter: blur(16px);
+  color: rgba(244, 242, 235, 0.92);
+}
+
+.site-forest-lighthouse .button-link,
+.site-forest-lighthouse .forest-secondary-cta,
+.site-forest-lighthouse .rent-form button[type="submit"] {
+  align-items: center;
+  background: linear-gradient(135deg, #ba5a55 0%, #9f3d3d 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  box-shadow: 0 16px 34px rgba(99, 21, 21, 0.28);
+  color: #fff9f2;
+  display: inline-flex;
+  font-weight: 700;
+  justify-content: center;
+  letter-spacing: 0.02em;
+  min-height: 48px;
+  padding: 0.82rem 1.35rem;
+  text-decoration: none;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease,
+    border-color 180ms ease;
+}
+
+.site-forest-lighthouse .button-link--secondary,
+.site-forest-lighthouse .forest-secondary-cta,
+.site-forest-lighthouse .fl-btn--secondary {
+  background: rgba(6, 39, 39, 0.72);
+  border-color: rgba(212, 166, 74, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(212, 166, 74, 0.12);
+  color: #f4f2eb;
+}
+
+.site-forest-lighthouse .button-link:hover,
+.site-forest-lighthouse .forest-secondary-cta:hover,
+.site-forest-lighthouse .rent-form button[type="submit"]:hover,
+.site-forest-lighthouse .fl-btn:hover {
+  box-shadow: 0 22px 42px rgba(99, 21, 21, 0.34);
+  transform: translateY(-2px);
+}
+
+.site-forest-lighthouse .button-link--secondary:hover,
+.site-forest-lighthouse .forest-secondary-cta:hover,
+.site-forest-lighthouse .fl-btn--secondary:hover {
+  background: rgba(8, 46, 46, 0.86);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+}
+
+.site-forest-lighthouse .text-link {
+  color: #f4d58a;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 160ms ease, opacity 160ms ease;
+}
+
+.site-forest-lighthouse .text-link:hover {
+  color: #fff0c0;
+}
+
+.site-forest-lighthouse a:focus-visible,
+.site-forest-lighthouse button:focus-visible,
+.site-forest-lighthouse input:focus-visible,
+.site-forest-lighthouse select:focus-visible,
+.site-forest-lighthouse textarea:focus-visible,
+.site-forest-lighthouse summary:focus-visible {
+  outline: 2px solid rgba(244, 213, 138, 0.9);
+  outline-offset: 3px;
+}
+
+.forest-site-shell {
+  display: grid;
+  gap: 1.75rem;
+  isolation: isolate;
+  padding: 1.5rem 1rem 4.5rem;
+  position: relative;
+}
+
+.forest-site-shell > * {
+  margin: 0 auto;
+  max-width: 1120px;
+  position: relative;
+  width: min(100%, 1120px);
+  z-index: 1;
+}
+
+.forest-site-shell__backdrop {
+  background:
+    radial-gradient(circle at 8% 0%, rgba(212, 166, 74, 0.05), transparent 18%),
+    radial-gradient(circle at 92% 6%, rgba(9, 58, 54, 0.12), transparent 24%),
+    linear-gradient(180deg, rgba(0, 20, 19, 0.94), rgba(0, 15, 14, 0.76) 26%, rgba(0, 14, 13, 0.94));
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 0;
+}
+
+.forest-site-shell__botanical {
+  filter: brightness(0) invert(1) saturate(0) opacity(0.9);
+  mix-blend-mode: screen;
+  opacity: 0.08;
+  pointer-events: none;
+  position: absolute;
+  z-index: 0;
+}
+
+.forest-site-shell__botanical img {
+  display: block;
+  height: auto;
+  width: 100%;
+}
+
+.forest-site-shell__botanical--one {
+  right: -3rem;
+  top: 6rem;
+  width: min(28vw, 320px);
+}
+
+.forest-site-shell__botanical--two {
+  left: -4rem;
+  top: 38rem;
+  width: min(26vw, 280px);
+}
+
+.forest-site-shell__botanical--three {
+  bottom: 12rem;
+  right: -2rem;
+  width: min(24vw, 260px);
+}
+
+.forest-site-shell__botanical--four {
+  bottom: 34rem;
+  left: 3rem;
+  width: min(16vw, 180px);
+}
+
+.forest-page-hero {
+  align-items: stretch;
+  background:
+    linear-gradient(145deg, rgba(3, 34, 35, 0.88), rgba(3, 24, 24, 0.94)),
+    radial-gradient(circle at top left, rgba(212, 166, 74, 0.12), transparent 32%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 30px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.24);
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: minmax(280px, 0.92fr) minmax(0, 1.08fr);
+  overflow: hidden;
+  padding: 1.25rem;
+  position: relative;
+}
+
+.forest-page-hero::after {
+  background: linear-gradient(90deg, rgba(212, 166, 74, 0.42), rgba(212, 166, 74, 0));
+  content: "";
+  height: 1px;
+  left: 1.25rem;
+  position: absolute;
+  right: 1.25rem;
+  top: calc(100% - 1.25rem);
+}
+
+.forest-page-hero--compact {
+  grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.2fr);
+}
+
+.forest-page-hero__media {
+  background-position: center;
+  background-size: cover;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  min-height: 390px;
+  overflow: hidden;
+  position: relative;
+}
+
+.forest-page-hero__content {
+  align-content: end;
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+  padding: clamp(1.4rem, 2vw, 2rem);
+}
+
+.forest-page-hero__eyebrow,
+.forest-page-section__eyebrow,
+.home-section-kicker,
+.site-forest-lighthouse .offer-type-label {
+  color: #f4d58a;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.forest-page-hero__title,
+.forest-page-section__title,
+.forest-site-shell--home h2,
+.forest-offer-page h2,
+.forest-offer-page h3 {
+  color: #f4f2eb;
+  font-family: var(--fl-display);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 0.94;
+  margin: 0;
+}
+
+.forest-page-hero__title {
+  font-size: clamp(2.7rem, 6vw, 5.4rem);
+  max-width: 12ch;
+}
+
+.forest-page-hero__subtitle,
+.forest-page-hero__body,
+.forest-page-section__subtitle,
+.forest-copy-grid p,
+.forest-info-grid p,
+.forest-content-card p,
+.forest-collection-card__body p,
+.forest-offer-page p,
+.forest-offer-page li,
+.forest-offer-page dd,
+.site-forest-lighthouse .calendar-group-card__primary-time,
+.site-forest-lighthouse .calendar-group-card__next-list,
+.site-forest-lighthouse .calendar-group-card__domains,
+.site-forest-lighthouse .schedule-view-toggle,
+.site-forest-lighthouse .rent-form,
+.site-forest-lighthouse .lead-magnet,
+.site-forest-lighthouse .about-subnav__link {
+  color: rgba(235, 240, 236, 0.84);
+}
+
+.forest-page-hero__subtitle {
+  font-size: clamp(1.06rem, 1.8vw, 1.3rem);
+  line-height: 1.55;
+  margin: 0;
+  max-width: 56ch;
+}
+
+.forest-page-hero__body {
+  display: grid;
+  gap: 0.85rem;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.forest-page-hero__actions,
+.forest-page-hero__extra,
+.forest-collection-card__actions,
+.forest-link-stack,
+.site-forest-lighthouse .link-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+
+.forest-page-section {
+  display: grid;
+  gap: 1rem;
+  position: relative;
+}
+
+.forest-page-section__title {
+  font-size: clamp(2rem, 3vw, 2.8rem);
+}
+
+.forest-page-section__subtitle {
+  font-size: 1rem;
+  line-height: 1.65;
+  margin: 0;
+  max-width: 68ch;
+}
+
+.forest-copy-grid,
+.forest-info-grid,
+.forest-card-grid,
+.forest-collection-grid,
+.forest-content-pair,
+.forest-promo-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.forest-copy-grid,
+.forest-info-grid,
+.forest-content-pair,
+.forest-promo-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.forest-card-grid,
+.forest-collection-grid {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.forest-link-stack {
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.forest-bullet-list,
+.site-forest-lighthouse .tag-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.forest-empty-state {
+  background: rgba(6, 37, 37, 0.6);
+  border: 1px dashed rgba(212, 166, 74, 0.26);
+  border-radius: 20px;
+  color: rgba(244, 242, 235, 0.78);
+  margin: 0;
+  padding: 1.2rem 1.25rem;
+}
+
+.forest-content-card,
+.forest-collection-card,
+.site-forest-lighthouse .card,
+.site-forest-lighthouse .content-block,
+.site-forest-lighthouse .feature-stack__item,
+.site-forest-lighthouse .program-highlights__item,
+.site-forest-lighthouse .faq-list details,
+.site-forest-lighthouse .lead-magnet,
+.site-forest-lighthouse .calendar-group-card,
+.site-forest-lighthouse .rent-tier {
+  background:
+    linear-gradient(160deg, rgba(6, 45, 44, 0.9), rgba(4, 25, 25, 0.94)),
+    radial-gradient(circle at top left, rgba(212, 166, 74, 0.1), transparent 36%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 24px;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.18);
+  color: #f4f2eb;
+}
+
+.forest-collection-card,
+.site-forest-lighthouse .calendar-group-card {
+  overflow: hidden;
+}
+
+.forest-content-card,
+.forest-collection-card__body,
+.site-forest-lighthouse .calendar-group-card,
+.site-forest-lighthouse .content-block,
+.site-forest-lighthouse .lead-magnet,
+.site-forest-lighthouse .rent-tier {
+  padding: 1.4rem;
+}
+
+.forest-collection-card__media,
+.site-forest-lighthouse .calendar-group-card__hero {
+  background-position: center;
+  background-size: cover;
+  min-height: 220px;
+}
+
+.forest-collection-card__body,
+.site-forest-lighthouse .calendar-group-card {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.forest-collection-card__body h2,
+.site-forest-lighthouse .calendar-group-card h2,
+.home-main-hall__content h2,
+.home-engage-tile h3,
+.domains-room__preview-card h3 {
+  color: #f4f2eb;
+  font-family: var(--fl-display);
+  font-size: clamp(1.5rem, 2vw, 2rem);
+  line-height: 1.02;
+  margin: 0;
+}
+
+.forest-collection-card__meta {
+  font-size: 0.94rem;
+}
+
+.site-forest-lighthouse .calendar-group-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.site-forest-lighthouse .calendar-group-grid--list {
+  grid-template-columns: 1fr;
+}
+
+.site-forest-lighthouse .calendar-group-card__next-list,
+.site-forest-lighthouse .calendar-group-card__session-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.site-forest-lighthouse .calendar-group-card__next-list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.site-forest-lighthouse .calendar-group-card__expanded {
+  background: rgba(3, 24, 24, 0.46);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 18px;
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+}
+
+.site-forest-lighthouse .calendar-group-card__session-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.site-forest-lighthouse .calendar-group-card__session-button,
+.site-forest-lighthouse .schedule-view-toggle__button,
+.site-forest-lighthouse .calendar-filter-form__select,
+.site-forest-lighthouse .lead-magnet__input,
+.site-forest-lighthouse .rent-form__textarea,
+.site-forest-lighthouse .fl-footer__input {
+  background: rgba(2, 24, 24, 0.78);
+  border: 1px solid rgba(212, 166, 74, 0.18);
+  border-radius: 16px;
+  color: #f4f2eb;
+}
+
+.site-forest-lighthouse .calendar-group-card__session-button {
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  justify-content: space-between;
+  padding: 0.9rem 1rem;
+  text-align: left;
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+  width: 100%;
+}
+
+.site-forest-lighthouse .calendar-group-card__session-button.is-selected,
+.site-forest-lighthouse .schedule-view-toggle__button.is-active {
+  background: linear-gradient(135deg, rgba(15, 83, 76, 0.9), rgba(6, 45, 44, 0.95));
+  border-color: rgba(244, 213, 138, 0.4);
+  box-shadow: inset 0 0 0 1px rgba(244, 213, 138, 0.12);
+}
+
+.site-forest-lighthouse .schedule-view-toggle {
+  display: inline-flex;
+  gap: 0.6rem;
+  margin-bottom: 1.15rem;
+}
+
+.site-forest-lighthouse .schedule-view-toggle__button {
+  cursor: pointer;
+  font: inherit;
+  min-height: 44px;
+  padding: 0.65rem 1rem;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.site-forest-lighthouse .calendar-filter-form {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.site-forest-lighthouse .calendar-filter-form__controls {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+
+.site-forest-lighthouse .calendar-filter-form__label {
+  color: rgba(244, 242, 235, 0.82);
+  font-size: 0.94rem;
+  font-weight: 600;
+}
+
+.site-forest-lighthouse .calendar-filter-form__select {
+  min-height: 48px;
+  min-width: min(320px, 100%);
+  padding: 0 1rem;
+}
+
+.forest-site-shell--home .home-page {
+  display: grid;
+  gap: 1.5rem;
+  max-width: none;
+  padding: 0;
+}
+
+.forest-site-shell--home .home-hero,
+.forest-site-shell--home .home-main-hall,
+.forest-site-shell--home .home-section {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 30px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.forest-site-shell--home .home-hero {
+  align-items: end;
+  background-position: center;
+  background-size: cover;
+  display: grid;
+  min-height: 560px;
+  padding: clamp(1.6rem, 4vw, 3rem);
+  position: relative;
+}
+
+.forest-site-shell--home .home-hero::after {
+  background:
+    linear-gradient(180deg, rgba(1, 11, 12, 0.1), rgba(2, 22, 22, 0.64) 55%, rgba(3, 24, 24, 0.88));
+  content: "";
+  inset: 0;
+  position: absolute;
+}
+
+.forest-site-shell--home .home-hero__content {
+  display: grid;
+  gap: 1rem;
+  max-width: 42rem;
+  position: relative;
+  z-index: 1;
+}
+
+.forest-site-shell--home .home-hero__content h1 {
+  color: #f4f2eb;
+  font-family: var(--fl-display);
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 0.9;
+  margin: 0;
+}
+
+.forest-site-shell--home .home-hero__line {
+  display: block;
+}
+
+.forest-site-shell--home .home-hero__subhead {
+  color: rgba(244, 242, 235, 0.86);
+  font-size: clamp(1.05rem, 2vw, 1.28rem);
+  line-height: 1.65;
+  margin: 0;
+  max-width: 56ch;
+}
+
+.forest-site-shell--home .home-hero__about-link {
+  color: #f4f2eb;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.forest-site-shell--home .home-main-hall,
+.forest-site-shell--home .home-section {
+  background:
+    linear-gradient(160deg, rgba(6, 45, 44, 0.88), rgba(4, 25, 25, 0.94)),
+    radial-gradient(circle at top left, rgba(212, 166, 74, 0.12), transparent 34%);
+  padding: 1.5rem;
+}
+
+.forest-site-shell--home .home-main-hall {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: minmax(0, 0.95fr) minmax(280px, 1.05fr);
+}
+
+.forest-site-shell--home .home-main-hall__content {
+  align-content: start;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.forest-site-shell--home .home-main-hall__media {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.forest-site-shell--home .home-main-hall__image,
+.forest-site-shell--home .home-main-hall__thumbs img {
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 22px;
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.forest-site-shell--home .home-main-hall__thumbs {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.forest-site-shell--home .home-section-head {
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.forest-site-shell--home .home-engage-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.forest-site-shell--home .home-engage-tile {
+  background: linear-gradient(160deg, rgba(6, 39, 39, 0.9), rgba(4, 24, 24, 0.96));
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 24px;
+  display: grid;
+  gap: 0.8rem;
+  padding: 1.35rem;
+}
+
+.forest-site-shell--home .home-domains-teaser__list {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.forest-site-shell--home .home-domains-teaser__list li {
+  background: rgba(2, 27, 27, 0.8);
+  border: 1px solid rgba(212, 166, 74, 0.14);
+  border-radius: 999px;
+  color: #f4f2eb;
+  padding: 0.85rem 1rem;
+  text-align: center;
+}
+
+.forest-site-shell--offer .forest-offer-page {
+  display: grid;
+  gap: 1.25rem;
+  max-width: none;
+  padding: 0;
+}
+
+.forest-site-shell--offer .forest-hero {
+  display: grid;
+  gap: 1.15rem;
+}
+
+.forest-hero-media {
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 26px;
+  min-height: clamp(280px, 44vw, 520px);
+  overflow: hidden;
+  position: relative;
+}
+
+.forest-hero-media__image,
+.forest-hero-media__video,
+.forest-hero-media__gradient,
+.forest-hero-media__overlay {
+  inset: 0;
+  position: absolute;
+}
+
+.forest-hero-media__image,
+.forest-hero-media__video {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.forest-hero-media__gradient {
+  background: linear-gradient(135deg, rgba(5, 31, 31, 0.92), rgba(16, 75, 72, 0.85));
+}
+
+.forest-hero-media__overlay {
+  background: linear-gradient(180deg, rgba(4, 18, 19, 0.14), rgba(4, 18, 19, 0.7));
+}
+
+.forest-site-shell--offer .forest-hero__title {
+  color: #f4f2eb;
+  font-family: var(--fl-display);
+  font-size: clamp(2.4rem, 5vw, 4.8rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 0.94;
+  margin: 0;
+  max-width: 12ch;
+}
+
+.forest-site-shell--offer .forest-hero__subtitle,
+.forest-site-shell--offer .forest-hero__facilitator {
+  margin: 0;
+}
+
+.forest-site-shell--offer .forest-hero__facts {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.forest-site-shell--offer .forest-hero__fact {
+  background: rgba(2, 24, 24, 0.76);
+  border: 1px solid rgba(212, 166, 74, 0.14);
+  border-radius: 20px;
+  display: grid;
+  gap: 0.4rem;
+  min-height: 120px;
+  padding: 1rem;
+}
+
+.forest-site-shell--offer .forest-hero__fact svg {
+  color: #f4d58a;
+}
+
+.forest-site-shell--offer .forest-hero__fact-label {
+  color: rgba(244, 242, 235, 0.62);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.forest-site-shell--offer .forest-hero__fact-value {
+  color: #f4f2eb;
+  font-size: 0.98rem;
+  line-height: 1.55;
+}
+
+.forest-site-shell--offer .forest-hero__schedule {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+}
+
+.forest-site-shell--offer .forest-hero__schedule-card {
+  align-content: start;
+  background: linear-gradient(180deg, rgba(6, 54, 52, 0.92), rgba(2, 24, 24, 0.96));
+  border: 1px solid rgba(212, 166, 74, 0.18);
+  border-radius: 20px;
+  display: grid;
+  gap: 0.2rem;
+  min-height: 144px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.forest-site-shell--offer .forest-hero__schedule-label,
+.forest-site-shell--offer .forest-hero__schedule-day,
+.forest-site-shell--offer .forest-hero__schedule-month,
+.forest-site-shell--offer .forest-hero__schedule-time {
+  color: rgba(244, 242, 235, 0.84);
+}
+
+.forest-site-shell--offer .forest-hero__schedule-num {
+  color: #f4f2eb;
+  font-family: var(--fl-display);
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.forest-site-shell--offer .forest-hero__themes,
+.site-forest-lighthouse .tag-list {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  padding: 0;
+}
+
+.forest-site-shell--offer .forest-hero__themes-title {
+  color: rgba(244, 242, 235, 0.72);
+  margin: 0;
+}
+
+.forest-site-shell--offer .forest-hero__theme-pill,
+.site-forest-lighthouse .tag-list li {
+  background: rgba(244, 242, 235, 0.08);
+  border: 1px solid rgba(244, 213, 138, 0.18);
+  border-radius: 999px;
+  color: #f4f2eb;
+  list-style: none;
+  padding: 0.65rem 0.9rem;
+}
+
+.forest-section-divider {
+  background: linear-gradient(90deg, rgba(244, 213, 138, 0), rgba(244, 213, 138, 0.55), rgba(244, 213, 138, 0));
+  border: 0;
+  height: 1px;
+  margin: 0.3rem 0;
+}
+
+.forest-section--blocks,
+.site-forest-lighthouse .block-renderer {
+  display: grid;
+  gap: 1rem;
+}
+
+.site-forest-lighthouse .content-block {
+  gap: 1rem;
+}
+
+.site-forest-lighthouse .content-block h2,
+.site-forest-lighthouse .content-block h3 {
+  color: #f4f2eb;
+  font-family: var(--fl-display);
+  margin: 0;
+}
+
+.site-forest-lighthouse .feature-stack,
+.site-forest-lighthouse .program-highlights,
+.site-forest-lighthouse .gallery-grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.site-forest-lighthouse .gallery-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.site-forest-lighthouse .gallery-image,
+.site-forest-lighthouse .gallery-grid figure img {
+  border-radius: 18px;
+}
+
+.forest-site-shell--offer .forest-facilitators__grid,
+.forest-site-shell--offer .forest-pricing__grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.forest-site-shell--offer .forest-facilitator-card,
+.forest-site-shell--offer .forest-pricing__card {
+  background: rgba(4, 24, 24, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+.forest-site-shell--offer .forest-facilitator-card__link,
+.forest-site-shell--offer .forest-facilitator-card {
+  color: inherit;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 112px minmax(0, 1fr);
+  padding: 1rem;
+  text-decoration: none;
+}
+
+.forest-site-shell--offer .forest-facilitator-card__avatar,
+.forest-site-shell--offer .forest-facilitator-card__avatar-placeholder {
+  aspect-ratio: 1;
+  border-radius: 20px;
+  object-fit: cover;
+  width: 100%;
+}
+
+.forest-site-shell--offer .forest-facilitator-card__avatar-placeholder {
+  align-items: center;
+  background: linear-gradient(135deg, rgba(15, 83, 76, 0.9), rgba(6, 45, 44, 0.95));
+  color: #f4f2eb;
+  display: flex;
+  justify-content: center;
+}
+
+.forest-site-shell--offer .forest-facilitator-card__info {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.forest-site-shell--offer .forest-pricing__card {
+  display: grid;
+  gap: 0.45rem;
+  min-height: 140px;
+  padding: 1rem;
+}
+
+.forest-site-shell--offer .forest-pricing__label {
+  color: rgba(244, 242, 235, 0.68);
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.forest-site-shell--offer .forest-pricing__amount {
+  color: #f4f2eb;
+  font-family: var(--fl-display);
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.forest-newsletter__controls {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.forest-newsletter__controls input,
+.site-forest-lighthouse .lead-magnet__input,
+.site-forest-lighthouse .rent-form__textarea,
+.site-forest-lighthouse .fl-footer__input {
+  color: #f4f2eb;
+  font: inherit;
+  min-height: 50px;
+  padding: 0.85rem 1rem;
+}
+
+.forest-newsletter__controls input::placeholder,
+.site-forest-lighthouse .lead-magnet__input::placeholder,
+.site-forest-lighthouse .rent-form__textarea::placeholder,
+.site-forest-lighthouse .fl-footer__input::placeholder {
+  color: rgba(244, 242, 235, 0.45);
+}
+
+.forest-newsletter__controls button,
+.site-forest-lighthouse .fl-footer__submit {
+  align-items: center;
+  background: linear-gradient(135deg, #ba5a55 0%, #9f3d3d 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  color: #fff9f2;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-weight: 700;
+  justify-content: center;
+  min-height: 50px;
+  padding: 0 1.25rem;
+}
+
+.forest-discover__mini-card {
+  background: rgba(4, 24, 24, 0.78);
+  border: 1px solid rgba(212, 166, 74, 0.18);
+  border-radius: 20px;
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem;
+}
+
+.site-forest-lighthouse .faq-list details {
+  padding: 1rem 1.1rem;
+}
+
+.site-forest-lighthouse .faq-list summary {
+  color: #f4f2eb;
+}
+
+.site-forest-lighthouse .domains-room__preview {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.site-forest-lighthouse .domains-room__links {
+  margin-top: 0.6rem;
+}
+
+.site-forest-lighthouse .rent-form__fields {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.site-forest-lighthouse .rent-form__textarea,
+.site-forest-lighthouse .rent-form__consent,
+.site-forest-lighthouse .rent-form button[type="submit"],
+.site-forest-lighthouse .lead-magnet__error,
+.site-forest-lighthouse .rent-form__fields > p {
+  grid-column: 1 / -1;
+}
+
+.site-forest-lighthouse .rent-form__textarea {
+  min-height: 140px;
+  resize: vertical;
+}
+
+.site-forest-lighthouse .rent-form__consent {
+  align-items: start;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.site-forest-lighthouse .about-subnav-wrap {
+  background: rgba(2, 16, 17, 0.72);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  position: sticky;
+  top: 76px;
+  z-index: 150;
+}
+
+.site-forest-lighthouse .about-subnav {
+  gap: 0.65rem;
+  justify-content: center;
+  margin: 0 auto;
+  max-width: 1120px;
+  overflow-x: auto;
+  padding: 0.75rem 1rem;
+}
+
+.site-forest-lighthouse .about-subnav__link {
+  background: rgba(244, 242, 235, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 999px;
+  min-height: 42px;
+  padding: 0.65rem 1rem;
+}
+
+.site-forest-lighthouse .about-subnav__link.is-active {
+  background: rgba(244, 213, 138, 0.12);
+  border-color: rgba(244, 213, 138, 0.24);
+  color: #f4f2eb;
+}
+
+.site-forest-lighthouse .fl-header {
+  background: rgba(1, 16, 17, 0.82);
+  backdrop-filter: blur(16px);
+}
+
+.site-forest-lighthouse .fl-header__inner {
+  max-width: 1280px;
+  padding: 0.85rem 1.4rem;
+}
+
+.site-forest-lighthouse .fl-logo img {
+  height: auto;
+  max-height: 70px;
+  object-fit: contain;
+  width: min(240px, 28vw);
+}
+
+.site-forest-lighthouse .fl-nav-desktop a,
+.site-forest-lighthouse .fl-lang__btn,
+.site-forest-lighthouse .fl-nav-mobile__links a {
+  font-family: var(--fl-display);
+}
+
+.site-forest-lighthouse .fl-book {
+  border-radius: 999px;
+  box-shadow: 0 16px 34px rgba(99, 21, 21, 0.28);
+  min-height: 44px;
+}
+
+.site-forest-lighthouse .fl-footer {
+  background:
+    linear-gradient(180deg, rgba(2, 17, 18, 0), rgba(2, 17, 18, 0.86) 18%, rgba(2, 17, 18, 0.98)),
+    radial-gradient(circle at top, rgba(212, 166, 74, 0.1), transparent 30%);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  margin-top: 2rem;
+}
+
+.site-forest-lighthouse .fl-footer__inner {
+  gap: 1.5rem;
+  max-width: 1120px;
+  padding: 2rem 1rem 1.5rem;
+}
+
+.site-forest-lighthouse .fl-footer__heading {
+  color: #f4f2eb;
+  font-family: var(--fl-display);
+}
+
+.site-forest-lighthouse .fl-footer__input {
+  min-width: 0;
+}
+
+.site-forest-lighthouse .fl-mobile-footer {
+  backdrop-filter: blur(18px);
+  background: rgba(2, 17, 18, 0.9);
+}
+
+.site-forest-lighthouse .fl-mobile-footer__link {
+  background: rgba(244, 242, 235, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f4f2eb;
+}
+
+.site-forest-lighthouse .fl-mobile-footer__link--cta {
+  background: linear-gradient(135deg, #ba5a55 0%, #9f3d3d 100%);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+@media (max-width: 960px) {
+  .forest-page-hero,
+  .forest-page-hero--compact,
+  .forest-copy-grid,
+  .forest-info-grid,
+  .forest-content-pair,
+  .forest-promo-grid,
+  .forest-site-shell--home .home-main-hall {
+    grid-template-columns: 1fr;
+  }
+
+  .forest-page-hero__media {
+    min-height: 300px;
+  }
+
+  .forest-site-shell__botanical--one,
+  .forest-site-shell__botanical--three {
+    width: 220px;
+  }
+
+  .site-forest-lighthouse .fl-logo img {
+    width: min(210px, 34vw);
+  }
+}
+
+@media (max-width: 768px) {
+  .forest-site-shell {
+    gap: 1.1rem;
+    padding: 1rem 0.75rem 5.75rem;
+  }
+
+  .forest-page-hero,
+  .forest-site-shell--home .home-hero,
+  .forest-site-shell--home .home-main-hall,
+  .forest-site-shell--home .home-section,
+  .forest-panel,
+  .forest-content-card,
+  .forest-collection-card,
+  .site-forest-lighthouse .card,
+  .site-forest-lighthouse .content-block,
+  .site-forest-lighthouse .lead-magnet,
+  .site-forest-lighthouse .rent-tier {
+    border-radius: 24px;
+  }
+
+  .forest-page-hero,
+  .forest-panel,
+  .forest-site-shell--home .home-main-hall,
+  .forest-site-shell--home .home-section,
+  .site-forest-lighthouse .content-block,
+  .site-forest-lighthouse .lead-magnet,
+  .site-forest-lighthouse .rent-tier,
+  .site-forest-lighthouse .calendar-group-card {
+    padding: 1rem;
+  }
+
+  .forest-page-hero__title,
+  .forest-site-shell--offer .forest-hero__title,
+  .forest-site-shell--home .home-hero__content h1 {
+    max-width: none;
+  }
+
+  .forest-newsletter__controls,
+  .site-forest-lighthouse .calendar-filter-form__controls,
+  .site-forest-lighthouse .rent-form__fields {
+    grid-template-columns: 1fr;
+  }
+
+  .site-forest-lighthouse .calendar-filter-form__select {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .forest-site-shell--home .home-main-hall__thumbs,
+  .forest-site-shell--offer .forest-facilitator-card,
+  .forest-site-shell--offer .forest-facilitator-card__link {
+    grid-template-columns: 1fr;
+  }
+
+  .site-forest-lighthouse .calendar-group-grid,
+  .forest-card-grid,
+  .forest-collection-grid,
+  .forest-site-shell--offer .forest-facilitators__grid,
+  .forest-site-shell--offer .forest-pricing__grid,
+  .site-forest-lighthouse .domains-room__preview {
+    grid-template-columns: 1fr;
+  }
+
+  .site-forest-lighthouse .about-subnav-wrap {
+    top: 68px;
+  }
+
+  .site-forest-lighthouse .about-subnav {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .forest-page-hero,
+  .forest-site-shell--home .home-hero {
+    min-height: unset;
+  }
+
+  .forest-page-hero__title,
+  .forest-site-shell--offer .forest-hero__title {
+    font-size: clamp(2.2rem, 11vw, 3rem);
+  }
+
+  .forest-page-section__title,
+  .forest-site-shell--home h2,
+  .forest-offer-page h2 {
+    font-size: clamp(1.7rem, 8vw, 2.2rem);
+  }
+
+  .forest-site-shell__botanical {
+    display: none;
+  }
+
+  .forest-site-shell--offer .forest-hero__facts,
+  .forest-site-shell--offer .forest-hero__schedule {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .forest-site-shell *,
+  .site-forest-lighthouse .button-link,
+  .site-forest-lighthouse .text-link,
+  .site-forest-lighthouse .calendar-group-card__session-button,
+  .site-forest-lighthouse .schedule-view-toggle__button,
+  .site-forest-lighthouse .fl-book,
+  .site-forest-lighthouse .fl-nav-desktop a::after {
+    animation: none !important;
+    scroll-behavior: auto !important;
+    transition: none !important;
   }
 }

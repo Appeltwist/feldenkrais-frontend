@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { localizePath } from "@/lib/locale-path";
 import { useSiteContext } from "@/lib/site-context";
 
 export default function MobileFixedFooter({ locale }: { locale: string }) {
@@ -16,7 +17,7 @@ export default function MobileFixedFooter({ locale }: { locale: string }) {
 
   return (
     <div className="fl-mobile-footer">
-      <Link className="fl-mobile-footer__link" href={isEn ? "/en/pricing" : "/fr/prix"}>
+      <Link className="fl-mobile-footer__link" href={localizePath(locale, "/pricing")}>
         {isEn ? "Pricing" : "Tarifs"}
       </Link>
       <a

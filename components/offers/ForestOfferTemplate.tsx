@@ -1,9 +1,11 @@
 import Link from "next/link";
 
 import BlockRenderer from "@/components/blocks/BlockRenderer";
+import { ForestPageShell } from "@/components/forest/ForestPageShell";
 import ForestHeroMedia from "@/components/offers/ForestHeroMedia";
 import { FOREST_DEFAULT_HERO_IMAGE } from "@/lib/brand-assets";
 import { getForestPlaceholderCopy, getOfferLabels, resolveLocale } from "@/lib/i18n";
+import { localizePath } from "@/lib/locale-path";
 import {
   getFacilitatorBio,
   getFacilitatorImageUrl,
@@ -173,105 +175,108 @@ export default function ForestOfferTemplate({ offer, locale, offerType }: Forest
   const groupedSections = groupSectionsForLayout(sections);
 
   return (
-    <section className="page-section forest-offer-page">
-      {/* ── HERO ── */}
-      <section className="forest-hero forest-panel">
-        <ForestHeroMedia
-          defaultImageUrl={FOREST_DEFAULT_HERO_IMAGE}
-          imageUrl={heroImageUrl}
-          title={title}
-          videoUrl={heroVideoUrl}
-        />
-        <p className="offer-type-label">{typeLabel}</p>
-        <h1 className="forest-hero__title">{title}</h1>
+    <ForestPageShell className="forest-site-shell--offer">
+      <section className="page-section forest-offer-page">
+        {/* ── HERO ── */}
+        <section className="forest-hero forest-panel">
+          <ForestHeroMedia
+            defaultImageUrl={FOREST_DEFAULT_HERO_IMAGE}
+            imageUrl={heroImageUrl}
+            title={title}
+            videoUrl={heroVideoUrl}
+          />
+          <p className="offer-type-label">{typeLabel}</p>
+          <h1 className="forest-hero__title">{title}</h1>
 
-        {subtitle ? <p className="offer-subtitle forest-hero__subtitle">{subtitle}</p> : null}
+          {subtitle ? <p className="offer-subtitle forest-hero__subtitle">{subtitle}</p> : null}
 
-        {facilitatorNames.length > 0 ? (
-          <p className="forest-hero__facilitator">w/ {facilitatorNames.join(", ")}</p>
-        ) : null}
+          {facilitatorNames.length > 0 ? (
+            <p className="forest-hero__facilitator">
+              {localeCode === "fr" ? "avec" : "w/"} {facilitatorNames.join(", ")}
+            </p>
+          ) : null}
 
-        {primaryCta ? (
-          <p>
-            <a
-              className={`button-link forest-primary-cta ${
-                primaryCta.style ? `button-link--${primaryCta.style.toLowerCase()}` : ""
-              }`.trim()}
-              href={primaryCta.url}
-              rel="noreferrer"
-              target="_blank"
-            >
-              {primaryCta.label || labels.book}
-            </a>
-          </p>
-        ) : null}
+          {primaryCta ? (
+            <p>
+              <a
+                className={`button-link forest-primary-cta ${
+                  primaryCta.style ? `button-link--${primaryCta.style.toLowerCase()}` : ""
+                }`.trim()}
+                href={primaryCta.url}
+                rel="noreferrer"
+                target="_blank"
+              >
+                {primaryCta.label || labels.book}
+              </a>
+            </p>
+          ) : null}
 
-        {bodyHtml ? (
-          <div className="rich-text forest-hero__body" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
-        ) : null}
+          {bodyHtml ? (
+            <div className="rich-text forest-hero__body" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
+          ) : null}
 
-        {/* quick facts icon cards */}
-        {factRows.length > 0 ? (
-          <div className="forest-hero__facts">
-            {factRows.map((row) => (
-              <div className="forest-hero__fact" key={row.key}>
-                <FactIcon iconKey={row.key} />
-                <span className="forest-hero__fact-label">
-                  {FACT_LABELS[row.key]?.[localeCode] ?? row.key}
-                </span>
-                <span className="forest-hero__fact-value">{row.value}</span>
-              </div>
-            ))}
-          </div>
-        ) : null}
-
-        {/* schedule date cards */}
-        {showScheduleCards && scheduleCards.length > 0 ? (
-          <div className="forest-hero__schedule">
-            {scheduleCards.map((card, index) => {
-              const startParsed = card.start_datetime
-                ? parseCompactDate(card.start_datetime, locale)
-                : null;
-              const endParsed = card.end_datetime
-                ? parseCompactDate(card.end_datetime, locale)
-                : null;
-              const label = typeof card.date_label === "string" ? card.date_label.trim() : "";
-              const timeRange = [startParsed?.time, endParsed?.time].filter(Boolean).join(" – ");
-
-              return (
-                <div className="forest-hero__schedule-card" key={`schedule-${index}`}>
-                  {label ? (
-                    <span className="forest-hero__schedule-label">{label}</span>
-                  ) : startParsed ? (
-                    <>
-                      <span className="forest-hero__schedule-day">{startParsed.dayOfWeek}</span>
-                      <span className="forest-hero__schedule-num">{startParsed.dayNum}</span>
-                      <span className="forest-hero__schedule-month">{startParsed.month}</span>
-                    </>
-                  ) : null}
-                  {timeRange ? (
-                    <span className="forest-hero__schedule-time">{timeRange}</span>
-                  ) : null}
+          {/* quick facts icon cards */}
+          {factRows.length > 0 ? (
+            <div className="forest-hero__facts">
+              {factRows.map((row) => (
+                <div className="forest-hero__fact" key={row.key}>
+                  <FactIcon iconKey={row.key} />
+                  <span className="forest-hero__fact-label">
+                    {FACT_LABELS[row.key]?.[localeCode] ?? row.key}
+                  </span>
+                  <span className="forest-hero__fact-value">{row.value}</span>
                 </div>
-              );
-            })}
-          </div>
-        ) : null}
+              ))}
+            </div>
+          ) : null}
 
-        {/* theme pills */}
-        {themes.length > 0 ? (
-          <div className="forest-hero__themes">
-            <p className="forest-hero__themes-title">{labels.themes}:</p>
-            {themes.map((theme) => (
-              <span className="forest-hero__theme-pill" key={String(theme.id)}>
-                {theme.name}
-              </span>
-            ))}
-          </div>
-        ) : null}
-      </section>
+          {/* schedule date cards */}
+          {showScheduleCards && scheduleCards.length > 0 ? (
+            <div className="forest-hero__schedule">
+              {scheduleCards.map((card, index) => {
+                const startParsed = card.start_datetime
+                  ? parseCompactDate(card.start_datetime, locale)
+                  : null;
+                const endParsed = card.end_datetime
+                  ? parseCompactDate(card.end_datetime, locale)
+                  : null;
+                const label = typeof card.date_label === "string" ? card.date_label.trim() : "";
+                const timeRange = [startParsed?.time, endParsed?.time].filter(Boolean).join(" – ");
 
-      <hr aria-hidden="true" className="forest-section-divider" />
+                return (
+                  <div className="forest-hero__schedule-card" key={`schedule-${index}`}>
+                    {label ? (
+                      <span className="forest-hero__schedule-label">{label}</span>
+                    ) : startParsed ? (
+                      <>
+                        <span className="forest-hero__schedule-day">{startParsed.dayOfWeek}</span>
+                        <span className="forest-hero__schedule-num">{startParsed.dayNum}</span>
+                        <span className="forest-hero__schedule-month">{startParsed.month}</span>
+                      </>
+                    ) : null}
+                    {timeRange ? (
+                      <span className="forest-hero__schedule-time">{timeRange}</span>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
+
+          {/* theme pills */}
+          {themes.length > 0 ? (
+            <div className="forest-hero__themes">
+              <p className="forest-hero__themes-title">{labels.themes}:</p>
+              {themes.map((theme) => (
+                <span className="forest-hero__theme-pill" key={String(theme.id)}>
+                  {theme.name}
+                </span>
+              ))}
+            </div>
+          ) : null}
+        </section>
+
+        <hr aria-hidden="true" className="forest-section-divider" />
 
       {/* ── CONTENT BLOCKS ── */}
       {groupedSections.length > 0 ? (
@@ -327,7 +332,10 @@ export default function ForestOfferTemplate({ offer, locale, offerType }: Forest
               return (
                 <article className="forest-facilitator-card" key={`facilitator-${name}-${i}`}>
                   {facilitatorSlug ? (
-                    <Link className="forest-facilitator-card__link" href={`/teachers/${facilitatorSlug}`}>
+                    <Link
+                      className="forest-facilitator-card__link"
+                      href={localizePath(localeCode, `/teachers/${facilitatorSlug}`)}
+                    >
                       {cardContent}
                     </Link>
                   ) : (
@@ -382,7 +390,7 @@ export default function ForestOfferTemplate({ offer, locale, offerType }: Forest
             <strong>{title}</strong>
             <span>{subtitle || labels.upcomingDates}</span>
           </div>
-          <Link className="button-link forest-secondary-cta" href="/workshops">
+          <Link className="button-link forest-secondary-cta" href={localizePath(localeCode, "/workshops")}>
             {placeholderCopy.discoverCta}
           </Link>
         </section>
@@ -414,6 +422,7 @@ export default function ForestOfferTemplate({ offer, locale, offerType }: Forest
           </ul>
         </section>
       ) : null}
-    </section>
+      </section>
+    </ForestPageShell>
   );
 }
