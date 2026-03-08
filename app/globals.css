@@ -4817,6 +4817,169 @@ a {
   background: linear-gradient(180deg, rgba(4, 18, 19, 0.14), rgba(4, 18, 19, 0.7));
 }
 
+/* ── cinematic hero (MasterClass-inspired) ── */
+
+.forest-hero--cinematic {
+  border: 0;
+  border-radius: 0;
+  overflow: hidden;
+  padding: 0;
+  position: relative;
+}
+
+.forest-hero--cinematic .forest-hero-media {
+  border: 0;
+  border-radius: 0;
+  min-height: 85vh;
+}
+
+.forest-hero--cinematic .forest-hero-media__overlay {
+  background: linear-gradient(
+    180deg,
+    rgba(4, 18, 19, 0.12) 0%,
+    rgba(4, 18, 19, 0.35) 40%,
+    rgba(4, 18, 19, 0.82) 100%
+  );
+}
+
+.forest-hero__overlay-content {
+  align-items: center;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  left: 0;
+  padding: 3rem 2rem 3.5rem;
+  position: absolute;
+  right: 0;
+  text-align: center;
+  z-index: 2;
+}
+
+.forest-hero__divider {
+  background: rgba(212, 166, 74, 0.45);
+  border: 0;
+  height: 1px;
+  margin: 0.15rem 0;
+  width: 48px;
+}
+
+.forest-hero--cinematic .offer-type-label {
+  letter-spacing: 0.15em;
+}
+
+.forest-hero--cinematic .forest-hero__title {
+  max-width: 18ch;
+  text-align: center;
+}
+
+.forest-hero--cinematic .forest-hero__subtitle {
+  max-width: 42ch;
+  color: #fff;
+  opacity: 0.95;
+}
+
+.forest-hero--cinematic .forest-hero__facilitator {
+  color: rgba(244, 242, 235, 0.65);
+  font-size: 0.88rem;
+  letter-spacing: 0.04em;
+}
+
+/* cinematic action bar */
+
+.offer-action-bar--cinematic {
+  align-items: stretch;
+  display: flex;
+  gap: 0;
+  justify-content: center;
+  margin: 0.4rem 0;
+  width: 340px;
+}
+
+.offer-action-bar--cinematic .offer-action-bar__item {
+  align-items: center;
+  background: none;
+  border: 0;
+  color: #f4f2eb;
+  cursor: pointer;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.4rem;
+  text-decoration: none;
+}
+
+.offer-action-bar--cinematic .offer-action-bar__icon {
+  align-items: center;
+  background: rgba(244, 242, 235, 0.08);
+  border: 1px solid rgba(244, 242, 235, 0.15);
+  border-radius: 50%;
+  display: flex;
+  height: 44px;
+  justify-content: center;
+  transition: background 0.2s ease;
+  width: 44px;
+}
+
+.offer-action-bar--cinematic .offer-action-bar__item:hover .offer-action-bar__icon {
+  background: rgba(244, 242, 235, 0.18);
+}
+
+.offer-action-bar--cinematic .offer-action-bar__label {
+  color: rgba(244, 242, 235, 0.58);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.offer-action-bar--cinematic .offer-action-bar__item--disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+
+/* CTA pill button */
+
+.forest-hero__cta {
+  align-items: center;
+  background: linear-gradient(135deg, #ba5a55 0%, #9f3d3d 100%);
+  border: 1px solid rgba(212, 166, 74, 0.3);
+  border-radius: 999px;
+  box-shadow: 0 12px 32px rgba(99, 21, 21, 0.3);
+  color: #f4f2eb;
+  display: inline-flex;
+  font-size: 1rem;
+  font-weight: 700;
+  justify-content: center;
+  letter-spacing: 0.02em;
+  padding: 0.7rem 3rem;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  width: 340px;
+}
+
+.forest-hero__cta:hover {
+  box-shadow: 0 16px 40px rgba(99, 21, 21, 0.45);
+  transform: translateY(-2px);
+}
+
+/* price hint */
+
+.forest-hero__price-hint {
+  color: rgba(244, 242, 235, 0.44);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+/* details section below cinematic hero */
+
+.forest-hero__details {
+  display: grid;
+  gap: 1.15rem;
+}
+
+/* ── end cinematic hero ── */
+
 .forest-site-shell--offer .forest-hero__title {
   color: #f4f2eb;
   font-family: var(--fl-display);
@@ -4834,68 +4997,86 @@ a {
 }
 
 .forest-site-shell--offer .forest-hero__facts {
-  display: grid;
-  gap: 0.9rem;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: center;
 }
 
 .forest-site-shell--offer .forest-hero__fact {
-  background: rgba(2, 24, 24, 0.76);
-  border: 1px solid rgba(212, 166, 74, 0.14);
-  border-radius: 20px;
-  display: grid;
-  gap: 0.4rem;
-  min-height: 120px;
-  padding: 1rem;
+  align-items: center;
+  background: none;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0;
 }
 
 .forest-site-shell--offer .forest-hero__fact svg {
   color: #f4d58a;
+  margin-bottom: 0.15rem;
+}
+
+.forest-hero__fact-link {
+  color: #f4f2eb;
+  text-decoration: underline;
+  text-decoration-color: rgba(244, 213, 138, 0.4);
+  text-underline-offset: 2px;
+  transition: text-decoration-color 0.2s ease;
+}
+
+.forest-hero__fact-link:hover {
+  text-decoration-color: #f4d58a;
 }
 
 .forest-site-shell--offer .forest-hero__fact-label {
-  color: rgba(244, 242, 235, 0.62);
-  font-size: 0.78rem;
+  color: rgba(244, 242, 235, 0.5);
+  font-size: 0.68rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .forest-site-shell--offer .forest-hero__fact-value {
   color: #f4f2eb;
-  font-size: 0.98rem;
-  line-height: 1.55;
+  font-size: 0.88rem;
+  line-height: 1.4;
 }
 
 .forest-site-shell--offer .forest-hero__schedule {
-  display: grid;
-  gap: 0.85rem;
-  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
 }
 
 .forest-site-shell--offer .forest-hero__schedule-card {
-  align-content: start;
-  background: linear-gradient(180deg, rgba(6, 54, 52, 0.92), rgba(2, 24, 24, 0.96));
-  border: 1px solid rgba(212, 166, 74, 0.18);
-  border-radius: 20px;
-  display: grid;
-  gap: 0.2rem;
-  min-height: 144px;
-  padding: 1rem;
-  text-align: center;
+  align-items: center;
+  background: rgba(244, 213, 138, 0.08);
+  border: 1px solid rgba(244, 213, 138, 0.2);
+  border-radius: 10px;
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.55rem 1rem;
 }
 
-.forest-site-shell--offer .forest-hero__schedule-label,
-.forest-site-shell--offer .forest-hero__schedule-day,
-.forest-site-shell--offer .forest-hero__schedule-month,
-.forest-site-shell--offer .forest-hero__schedule-time {
-  color: rgba(244, 242, 235, 0.84);
+.forest-site-shell--offer .forest-hero__schedule-day {
+  color: #f4d58a;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
-.forest-site-shell--offer .forest-hero__schedule-num {
+.forest-site-shell--offer .forest-hero__schedule-date {
   color: #f4f2eb;
-  font-family: var(--fl-display);
-  font-size: 2rem;
-  font-weight: 800;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.forest-site-shell--offer .forest-hero__schedule-time {
+  color: rgba(244, 242, 235, 0.6);
+  font-size: 0.82rem;
 }
 
 .forest-site-shell--offer .forest-hero__themes,
@@ -4912,14 +5093,30 @@ a {
   margin: 0;
 }
 
+.forest-hero__themes-label {
+  color: rgba(244, 242, 235, 0.45);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  width: 100%;
+}
+
 .forest-site-shell--offer .forest-hero__theme-pill,
 .site-forest-lighthouse .tag-list li {
-  background: rgba(244, 242, 235, 0.08);
-  border: 1px solid rgba(244, 213, 138, 0.18);
+  background: rgba(244, 242, 235, 0.05);
+  border: 1px solid rgba(244, 213, 138, 0.12);
   border-radius: 999px;
-  color: #f4f2eb;
+  color: rgba(244, 242, 235, 0.5);
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
   list-style: none;
-  padding: 0.65rem 0.9rem;
+  padding: 0.25rem 0.65rem;
+}
+
+.forest-hero__domain-pill {
+  background: rgba(244, 213, 138, 0.06);
+  border-color: rgba(244, 213, 138, 0.15);
+  color: rgba(244, 213, 138, 0.55);
 }
 
 .forest-section-divider {
@@ -4927,6 +5124,173 @@ a {
   border: 0;
   height: 1px;
   margin: 0.3rem 0;
+}
+
+/* ── Aperçu two-column layout ── */
+
+.forest-apercu {
+  display: grid;
+  gap: 1rem;
+}
+
+.forest-apercu--two-col {
+  align-items: start;
+  grid-template-columns: 1fr 1fr;
+}
+
+.forest-apercu__media {
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.forest-apercu__content {
+  align-content: start;
+  display: grid;
+  gap: 1rem;
+}
+
+.forest-apercu__content h2 {
+  color: #f4f2eb;
+  font-family: var(--fl-display);
+  margin: 0;
+}
+
+.forest-apercu__content .rich-text {
+  color: rgba(244, 242, 235, 0.85);
+  line-height: 1.7;
+}
+
+.forest-apercu__content .forest-hero__themes {
+  margin-top: 0.5rem;
+}
+
+/* ── Media embed — video ── */
+
+.forest-media-embed--video .forest-media-embed__ratio {
+  aspect-ratio: 16 / 9;
+  border-radius: 18px;
+  overflow: hidden;
+  position: relative;
+}
+
+.forest-media-embed--video iframe {
+  border: 0;
+  height: 100%;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100%;
+}
+
+/* poster thumbnail + play overlay */
+.forest-media-embed__poster {
+  display: block;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  cursor: pointer;
+  padding: 0;
+  background: #0a1a1a;
+}
+
+.forest-media-embed__thumb {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease, filter 0.4s ease;
+  filter: brightness(0.75);
+}
+
+.forest-media-embed__poster:hover .forest-media-embed__thumb {
+  transform: scale(1.03);
+  filter: brightness(0.6);
+}
+
+.forest-media-embed__play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  opacity: 0.85;
+}
+
+.forest-media-embed__poster:hover .forest-media-embed__play {
+  transform: translate(-50%, -50%) scale(1.1);
+  opacity: 1;
+}
+
+.forest-media-embed__play svg circle {
+  transition: fill 0.25s ease;
+}
+
+.forest-media-embed__poster:hover .forest-media-embed__play svg circle {
+  fill: rgba(0, 0, 0, 0.7);
+}
+
+/* ── Media embed — single image ── */
+
+.forest-media-embed__image {
+  border-radius: 18px;
+  display: block;
+  height: auto;
+  object-fit: cover;
+  width: 100%;
+}
+
+/* ── Media embed — carousel ── */
+
+.forest-media-embed__track {
+  -webkit-overflow-scrolling: touch;
+  border-radius: 18px;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.forest-media-embed__track::-webkit-scrollbar {
+  display: none;
+}
+
+.forest-media-embed__slide {
+  flex: 0 0 100%;
+  scroll-snap-align: center;
+}
+
+.forest-media-embed__slide img {
+  border-radius: 18px;
+  display: block;
+  height: auto;
+  object-fit: cover;
+  width: 100%;
+}
+
+.forest-media-embed__dots {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 0.75rem;
+}
+
+.forest-media-embed__dot {
+  background: rgba(244, 213, 138, 0.25);
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  height: 8px;
+  padding: 0;
+  transition: background 0.2s ease;
+  width: 8px;
+}
+
+.forest-media-embed__dot--active {
+  background: #f4d58a;
 }
 
 .forest-section--blocks,
@@ -5006,6 +5370,274 @@ a {
 .forest-site-shell--offer .forest-facilitator-card__info {
   display: grid;
   gap: 0.65rem;
+}
+
+/* ===================================================================
+   FACILITATOR SHOWCASE
+   =================================================================== */
+
+.forest-facilitator-showcase {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 3.5rem;
+}
+
+.forest-facilitator-showcase .forest-facilitator-showcase__heading {
+  color: #f4f2eb;
+  font-family: var(--fl-display);
+  font-size: 1.6rem;
+  margin: 0 0 2.75rem;
+  text-align: center;
+}
+
+/* single facilitator card (two-col layout) */
+/* single facilitator card — two-col: identity | quote */
+.forest-facilitator-slide {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 2rem 2.5rem;
+  align-items: center;
+}
+
+.forest-facilitator-slide--no-quote {
+  grid-template-columns: 1fr;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+/* identity: avatar stacked above name + bio */
+.forest-facilitator-slide__identity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.forest-facilitator-slide__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.forest-facilitator-slide__bio {
+  color: rgba(244, 242, 235, 0.5);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  margin-top: 0.25rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.forest-facilitator-slide__bio p {
+  margin: 0;
+}
+
+.forest-facilitator-slide__avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(244, 213, 138, 0.25);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.forest-facilitator-slide__avatar-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, rgba(15, 83, 76, 0.9), rgba(6, 45, 44, 0.95));
+  border: 2px solid rgba(244, 213, 138, 0.15);
+  color: rgba(244, 242, 235, 0.45);
+}
+
+.forest-facilitator-slide__name {
+  color: #f4f2eb;
+  font-family: var(--fl-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.forest-facilitator-slide__name-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.forest-facilitator-slide__name-link:hover .forest-facilitator-slide__name {
+  color: #f4d58a;
+}
+
+.forest-facilitator-slide__title {
+  color: rgba(244, 242, 235, 0.45);
+  font-size: 0.78rem;
+  margin: 0;
+}
+
+/* quote block */
+.forest-facilitator-slide__quote {
+  position: relative;
+  margin: 0;
+  padding: 0.5rem 0 0 1.4rem;
+  border-left: 2px solid rgba(244, 213, 138, 0.2);
+}
+
+.forest-facilitator-slide__quote-mark {
+  position: absolute;
+  top: -0.6rem;
+  left: -0.2rem;
+  font-size: 3rem;
+  line-height: 1;
+  color: rgba(244, 213, 138, 0.25);
+  font-family: Georgia, serif;
+  pointer-events: none;
+}
+
+.forest-facilitator-slide__quote p {
+  color: rgba(244, 242, 235, 0.7);
+  font-size: 1rem;
+  font-style: italic;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* slider */
+.forest-facilitator-slider {
+  position: relative;
+}
+
+.forest-facilitator-slider__track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.forest-facilitator-slider__track::-webkit-scrollbar {
+  display: none;
+}
+
+.forest-facilitator-slider__slide {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  padding: 0 0.5rem;
+}
+
+.forest-facilitator-slider__arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(244, 213, 138, 0.2);
+  background: rgba(4, 24, 24, 0.7);
+  color: #f4f2eb;
+  font-size: 1.3rem;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  backdrop-filter: blur(4px);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.forest-facilitator-slider__arrow:hover:not(:disabled) {
+  border-color: rgba(244, 213, 138, 0.45);
+  background: rgba(244, 213, 138, 0.1);
+}
+
+.forest-facilitator-slider__arrow:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.forest-facilitator-slider__arrow--prev {
+  left: -3rem;
+}
+
+.forest-facilitator-slider__arrow--next {
+  right: -3rem;
+}
+
+.forest-facilitator-slider__dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.forest-facilitator-slider__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(244, 242, 235, 0.2);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.forest-facilitator-slider__dot--active {
+  background: #f4d58a;
+  transform: scale(1.3);
+}
+
+/* ── Journey section ── */
+
+.forest-journey {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.forest-journey__heading {
+  color: #f4f2eb;
+  font-family: var(--fl-display);
+  font-size: 1.6rem;
+  margin: 0 0 1.5rem;
+  text-align: center;
+}
+
+.fl-step-desc {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.55);
+  margin-top: 0.35rem;
+  line-height: 1.35;
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 768px) {
+  .forest-facilitator-slide {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .forest-facilitator-slide__bio {
+    grid-column: 1 / -1;
+  }
+
+  .forest-facilitator-slide__quote {
+    border-left: none;
+    padding: 0 1rem;
+    text-align: center;
+  }
+
+  .forest-facilitator-slide__quote-mark {
+    position: static;
+    display: block;
+    margin-bottom: -1rem;
+  }
+
+  .forest-facilitator-slider__arrow {
+    display: none;
+  }
 }
 
 .forest-site-shell--offer .forest-pricing__card {
@@ -5228,6 +5860,7 @@ a {
   .forest-info-grid,
   .forest-content-pair,
   .forest-promo-grid,
+  .forest-apercu--two-col,
   .forest-site-shell--home .home-main-hall {
     grid-template-columns: 1fr;
   }
@@ -5316,6 +5949,33 @@ a {
   .site-forest-lighthouse .about-subnav {
     justify-content: flex-start;
   }
+
+  /* cinematic hero mobile */
+  .forest-hero--cinematic {
+    border-radius: 0;
+  }
+
+  .forest-hero--cinematic .forest-hero-media {
+    min-height: 75vh;
+  }
+
+  .forest-hero__overlay-content {
+    padding: 2rem 1.25rem 2.5rem;
+  }
+
+  .forest-hero__cta {
+    min-width: unset;
+    width: 100%;
+  }
+
+  .offer-action-bar--cinematic {
+    gap: 1.8rem;
+  }
+
+  .offer-action-bar--cinematic .offer-action-bar__icon {
+    height: 38px;
+    width: 38px;
+  }
 }
 
 @media (max-width: 640px) {
@@ -5339,10 +5999,10 @@ a {
     display: none;
   }
 
-  .forest-site-shell--offer .forest-hero__facts,
-  .forest-site-shell--offer .forest-hero__schedule {
-    grid-template-columns: 1fr 1fr;
+  .forest-site-shell--offer .forest-hero__facts {
+    gap: 1.2rem 1.5rem;
   }
+
 }
 
 @media (prefers-reduced-motion: reduce) {

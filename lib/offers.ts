@@ -244,6 +244,11 @@ export function getFacilitatorBio(facilitator: Facilitator) {
   return pickString(record, ["bio", "short_bio", "shortBio", "description"]);
 }
 
+export function getFacilitatorQuote(facilitator: Facilitator) {
+  const record = asRecord(facilitator);
+  return pickString(record, ["quote", "citation", "inspirational_sentence"]);
+}
+
 export function getTags(offer: OfferDetail) {
   const record = asRecord(offer);
   if (!record) {

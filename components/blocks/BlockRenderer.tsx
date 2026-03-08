@@ -213,6 +213,47 @@ export default function BlockRenderer({ blocks, locale }: BlockRendererProps) {
           );
         }
 
+        if (type === "journey_steps") {
+          const rawItems = asRecordList(value?.items);
+          /* Wagtail ListBlock wraps each item as {type:"item", value:{…}} — unwrap */
+          const items = rawItems.map((item) => {
+            const inner = asRecord(item.value);
+            return inner ?? item;
+          });
+          if (!heading && items.length === 0) {
+            return null;
+          }
+
+          return (
+            <section className="content-block" key={key}>
+              {heading ? <h2>{heading}</h2> : null}
+              <div
+                className="fl-steps"
+                style={{ gridTemplateColumns: `repeat(${Math.min(items.length, 5)}, 1fr)` }}
+              >
+                {items.map((item, itemIndex) => {
+                  const title = pickString(item, ["title", "heading", "name"]);
+                  const description = pickString(item, ["description", "body", "text"]);
+                  return (
+                    <div className="fl-step" key={`${key}-step-${itemIndex}`}>
+                      <div className="fl-step-num">{itemIndex + 1}</div>
+                      <div className="fl-step-text">
+                        {title ? <strong>{title}</strong> : null}
+                        {description ? (
+                          <div
+                            className="fl-step-desc rich-text"
+                            dangerouslySetInnerHTML={{ __html: description }}
+                          />
+                        ) : null}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        }
+
         if (type === "cta_section") {
           const body = pickString(value, ["body", "text", "content"]);
           const buttonLabel = pickString(value, ["button_label", "buttonLabel"], labels.book);
