@@ -30,6 +30,16 @@ export type ThemeTag = {
   name: string;
 };
 
+export type SiteFaqItem = {
+  question: string;
+  answer: string;
+};
+
+export type SiteFaqSection = {
+  title: string;
+  items: SiteFaqItem[];
+};
+
 export type Occurrence = {
   id?: number | string | null;
   start?: string | null;
@@ -144,6 +154,17 @@ export type JourneyStepsBlock = {
   };
 };
 
+export type OfferBenefitsBlock = {
+  type: "offer_benefits";
+  value: {
+    heading?: string | null;
+    items?: Array<{
+      title?: string | null;
+      description?: string | null;
+    }>;
+  };
+};
+
 export type SectionBlock =
   | RichSectionBlock
   | FeatureStackBlock
@@ -152,6 +173,7 @@ export type SectionBlock =
   | GalleryBlock
   | CtaSectionBlock
   | JourneyStepsBlock
+  | OfferBenefitsBlock
   | {
       type: string;
       value?: unknown;

@@ -2,9 +2,9 @@ import { notFound, permanentRedirect } from "next/navigation";
 
 import ForestOfferTemplate from "@/components/offers/ForestOfferTemplate";
 import WorkshopTemplate from "@/components/offers/WorkshopTemplate";
-import { ApiError, fetchOfferDetail, fetchSiteConfig, type OfferDetail } from "@/lib/api";
+import { ApiError, fetchOfferDetail, fetchOffers, fetchSiteConfig, fetchSiteFaq, type OfferDetail, type OfferSummary } from "@/lib/api";
 import { getHostname } from "@/lib/get-hostname";
-import { getCanonicalOfferPath, getOfferType } from "@/lib/offers";
+import { getCanonicalOfferPath, getDomains, getOfferType } from "@/lib/offers";
 
 type OfferPageProps = {
   params: Promise<{ slug: string }>;
@@ -54,7 +54,29 @@ export default async function WorkshopDetailPage({ params }: OfferPageProps) {
   }
 
   if (siteConfig.centerSlug === "forest-lighthouse") {
-    return <ForestOfferTemplate locale={siteConfig.defaultLocale} offer={offer} offerType={offerType} />;
+    const [siteFaqSections, allOffers] = await Promise.all([
+      fetchSiteFaq(hostname).catch(() => []),
+      fetchOffers({ hostname, center: siteConfig.centerSlug, locale: siteConfig.defaultLocale }).catch(() => [] as OfferSummary[]),
+    ]);
+
+    const currentDomainSlugs = new Set(getDomains(offer).map((d) => String(d.id)));
+    const relatedOffers = allOffers.filter((o) => {
+      if (String(o.slug) === slug) return false;
+      const oDomains = Array.isArray(o.domains)
+        ? (o.domains as Array<{ slug?: string }>)
+        : [];
+      return oDomains.some((d) => d.slug && currentDomainSlugs.has(d.slug));
+    });
+
+    return (
+      <ForestOfferTemplate
+        locale={siteConfig.defaultLocale}
+        offer={offer}
+        offerType={offerType}
+        relatedOffers={relatedOffers}
+        siteFaqSections={siteFaqSections}
+      />
+    );
   }
 
   return <WorkshopTemplate offer={offer} locale={siteConfig.defaultLocale} />;

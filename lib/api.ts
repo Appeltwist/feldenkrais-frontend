@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { CalendarItem, OfferDetail, OfferSummary } from "@/lib/types";
+import type { CalendarItem, OfferDetail, OfferSummary, SiteFaqSection } from "@/lib/types";
 
 export type QueryValue = string | number | boolean | null | undefined;
 
@@ -79,7 +79,7 @@ export type CalendarResponse = {
   meta: CalendarMeta;
 };
 
-export type { CalendarItem, OfferDetail, OfferSummary } from "@/lib/types";
+export type { CalendarItem, OfferDetail, OfferSummary, SiteFaqSection } from "@/lib/types";
 
 export class ApiError extends Error {
   status: number;
@@ -270,6 +270,39 @@ function normalizeSiteConfig(payload: unknown, hostname: string): SiteConfig {
   };
 }
 
+function normalizeSiteFaq(payload: unknown) {
+  const record = asRecord(payload);
+  const rawSections = toArray<unknown>(record?.sections);
+  const sections: SiteFaqSection[] = [];
+
+  for (const rawSection of rawSections) {
+    const sectionRecord = asRecord(rawSection);
+    const title = pickString(sectionRecord, ["title", "heading", "name"]);
+    if (!title) {
+      continue;
+    }
+
+    const items: SiteFaqSection["items"] = [];
+    for (const rawItem of toArray<unknown>(sectionRecord?.items)) {
+      const itemRecord = asRecord(rawItem);
+      const question = pickString(itemRecord, ["question", "title", "heading"]);
+      const answer = pickString(itemRecord, ["answer", "body", "text"]);
+      if (!question || !answer) {
+        continue;
+      }
+      items.push({ question, answer });
+    }
+
+    if (items.length === 0) {
+      continue;
+    }
+
+    sections.push({ title, items });
+  }
+
+  return sections;
+}
+
 export async function fetchSiteConfig(hostname: string) {
   const normalizedHostname = normalizeHostname(hostname);
   const payload = await requestJson<unknown>("/site-config", {
@@ -277,6 +310,15 @@ export async function fetchSiteConfig(hostname: string) {
   });
 
   return normalizeSiteConfig(payload, normalizedHostname);
+}
+
+export async function fetchSiteFaq(hostname: string) {
+  const normalizedHostname = normalizeHostname(hostname);
+  const payload = await requestJson<unknown>("/site-faq", {
+    domain: normalizedHostname,
+  });
+
+  return normalizeSiteFaq(payload);
 }
 
 export async function fetchOffers({

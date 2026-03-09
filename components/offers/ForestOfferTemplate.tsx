@@ -13,6 +13,7 @@ import {
   getCanonicalOfferPath,
   getDomains,
   getFacilitatorBio,
+  getFaqItems,
   getFacilitatorImageUrl,
   getFacilitatorName,
   getFacilitatorQuote,
@@ -28,13 +29,14 @@ import {
   getPrimaryCta,
   getQuickFacts,
   getScheduleCards,
+  getBenefits,
   getSections,
   getTags,
   getThemes,
   normalizeText,
   pickString,
 } from "@/lib/offers";
-import type { OfferDetail, OfferType, SectionBlock } from "@/lib/types";
+import type { OfferDetail, OfferSummary, OfferType, SectionBlock, SiteFaqSection } from "@/lib/types";
 
 /* ── props ── */
 
@@ -42,6 +44,8 @@ type ForestOfferTemplateProps = {
   offer: OfferDetail;
   locale: string;
   offerType: OfferType;
+  relatedOffers?: OfferSummary[];
+  siteFaqSections?: SiteFaqSection[];
 };
 
 /* ── constants ── */
@@ -129,7 +133,13 @@ function FactIcon({ iconKey }: { iconKey: string }) {
 
 /* ── component ── */
 
-export default function ForestOfferTemplate({ offer, locale, offerType }: ForestOfferTemplateProps) {
+export default function ForestOfferTemplate({
+  offer,
+  locale,
+  offerType,
+  relatedOffers = [],
+  siteFaqSections = [],
+}: ForestOfferTemplateProps) {
   const localeCode = resolveLocale(locale);
   const labels = getOfferLabels(localeCode);
   const placeholderCopy = getForestPlaceholderCopy(localeCode);
@@ -147,8 +157,10 @@ export default function ForestOfferTemplate({ offer, locale, offerType }: Forest
   const sections = getSections(offer);
   const mediaUrl = getMediaUrl(offer);
   const priceOptions = getPriceOptions(offer);
+  const benefits = getBenefits(offer);
   const facilitators = getFacilitators(offer);
   const tags = getTags(offer);
+  const faqItems = getFaqItems(offer);
   const showScheduleCards = offerType === "WORKSHOP" || offerType === "CLASS";
 
   /* split first rich_section (Aperçu) from remaining sections */
@@ -161,7 +173,6 @@ export default function ForestOfferTemplate({ offer, locale, offerType }: Forest
 
   /* pull out journey_steps section if present */
   const journeySection = afterApercu.find((s) => s.type === "journey_steps") ?? null;
-  const journeyHeading = (journeySection?.value as Record<string, unknown> | undefined)?.heading as string | undefined;
   const rawJourneyItems = (
     (journeySection?.value as Record<string, unknown> | undefined)?.items as
       Array<Record<string, unknown>> | undefined
@@ -220,6 +231,7 @@ export default function ForestOfferTemplate({ offer, locale, offerType }: Forest
 
   /* section grouping for paired layout (remaining after Aperçu + journey) */
   const groupedSections = groupSectionsForLayout(remainingSections);
+  const faqSections = siteFaqSections.filter((section) => section.items.length > 0);
 
   /* price hint for cinematic hero */
   const priceHint = priceOptions.length > 0
@@ -436,101 +448,201 @@ export default function ForestOfferTemplate({ offer, locale, offerType }: Forest
         </>
       ) : null}
 
-      {/* ── JOURNEY STEPS ── */}
+      {/* ── WHAT YOU'LL LEARN ── */}
       {journeyItems.length > 0 ? (
         <>
           <div aria-hidden="true" className="fl-separator" role="separator">
             <span className="fl-separator__dot" />
           </div>
           <section className="forest-journey">
-            {journeyHeading ? (
-              <h2 className="forest-journey__heading">{journeyHeading}</h2>
-            ) : null}
-            <div
-              className="fl-steps"
-              style={{ gridTemplateColumns: `repeat(${Math.min(journeyItems.length, 5)}, 1fr)` } as React.CSSProperties}
-            >
+            <h2 className="forest-journey__heading">
+              {localeCode === "fr" ? "Ce que vous apprendrez" : "What you\u2019ll learn"}
+            </h2>
+            <ol className="forest-journey__trail">
               {journeyItems.map((step, index) => (
-                <div className="fl-step" key={`step-${index}`}>
-                  <div className="fl-step-num">{index + 1}</div>
-                  <div className="fl-step-text">
-                    {step.title ? <strong>{step.title}</strong> : null}
+                <li className="forest-journey__waypoint" key={`step-${index}`}>
+                  <span aria-hidden="true" className="forest-journey__marker">{index + 1}</span>
+                  <div className="forest-journey__content">
+                    {step.title ? <h3 className="forest-journey__title">{step.title}</h3> : null}
                     {step.description ? (
                       <div
-                        className="fl-step-desc rich-text"
+                        className="forest-journey__desc rich-text"
                         dangerouslySetInnerHTML={{ __html: step.description }}
                       />
                     ) : null}
                   </div>
-                </div>
+                </li>
               ))}
-            </div>
+            </ol>
+            {primaryCta ? (
+              <div className="forest-journey__cta">
+                <a className="fl-btn fl-btn--primary" href={primaryCta.url}>
+                  {primaryCta.label || labels.book}
+                </a>
+              </div>
+            ) : null}
           </section>
         </>
       ) : null}
 
-      {/* ── PRICING ── */}
-      {priceOptions.length > 0 ? (
-        <section className="forest-panel forest-pricing">
-          <h2>{labels.pricing}</h2>
-          <div className="forest-pricing__grid">
-            {priceOptions.map((price, index) => {
-              const label = pickString(price, ["label", "name", "title"], "Option");
-              const amount = normalizeText(price.amount ?? price.price ?? price.value ?? price.formatted);
-              const currency = normalizeText(price.currency ?? price.currency_code);
-              const detail = [amount, currency].filter(Boolean).join(" ");
-
-              return (
-                <div className="forest-pricing__card" key={`price-${label}-${index}`}>
-                  <span className="forest-pricing__label">{label}</span>
-                  {detail ? <span className="forest-pricing__amount">{detail}</span> : null}
-                </div>
-              );
-            })}
+      {/* ── FEATURED IMAGE + EVENT FAQ ── */}
+      {(heroImageUrl || faqItems.length > 0) ? (
+        <>
+          <div aria-hidden="true" className="fl-separator" role="separator">
+            <span className="fl-separator__dot" />
           </div>
+          <section className="forest-image-faq">
+            {heroImageUrl ? (
+              <div className="forest-image-faq__media">
+                <img
+                  alt={title}
+                  className="forest-image-faq__img"
+                  loading="lazy"
+                  src={heroImageUrl}
+                />
+              </div>
+            ) : null}
+            {faqItems.length > 0 ? (
+              <div className="forest-image-faq__questions fp-faq">
+                <h2>{labels.eventFaq}</h2>
+                <div className="fp-faq__category">
+                  <div className="faq-list">
+                    {faqItems.map((item) => (
+                      <details key={item.question}>
+                        <summary>{item.question}</summary>
+                        <div dangerouslySetInnerHTML={{ __html: item.answer }} />
+                      </details>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </section>
+        </>
+      ) : null}
+
+      {/* ── PRICING & BENEFITS ── */}
+      {priceOptions.length > 0 ? (
+        <section className={`forest-pricing-benefits${benefits ? " forest-pricing-benefits--two-col" : ""}`}>
+          {/* compact pricing box */}
+          <div className="forest-panel forest-pricing-compact">
+            <h2>{labels.pricing}</h2>
+            <div className="forest-pricing-compact__list">
+              {priceOptions.map((price, index) => {
+                const label = pickString(price, ["label", "name", "title"], "Option");
+                const amount = normalizeText(price.amount ?? price.price ?? price.value ?? price.formatted);
+                const currency = normalizeText(price.currency ?? price.currency_code);
+                const detail = [amount, currency].filter(Boolean).join(" ");
+
+                return (
+                  <div className="forest-pricing-compact__row" key={`price-${label}-${index}`}>
+                    <span className="forest-pricing-compact__label">{label}</span>
+                    {detail ? <span className="forest-pricing-compact__amount">{detail}</span> : null}
+                  </div>
+                );
+              })}
+            </div>
+            {primaryCta ? (
+              <a className="fl-btn fl-btn--primary forest-pricing-compact__cta" href={primaryCta.url}>
+                {primaryCta.label || labels.book}
+              </a>
+            ) : null}
+          </div>
+
+          {/* benefits column */}
+          {benefits && benefits.items.length > 0 ? (
+            <div className="forest-benefits">
+              <h2 className="forest-benefits__heading">
+                {benefits.heading || labels.benefits}
+              </h2>
+              <ul className="forest-benefits__list">
+                {benefits.items.map((item, index) => (
+                  <li className="forest-benefits__item" key={`benefit-${index}`}>
+                    <svg aria-hidden="true" className="forest-benefits__icon" fill="currentColor" height="20" viewBox="0 0 24 24" width="20">
+                      <path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66.95-2.3c.48.17.98.3 1.34.3C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z" />
+                    </svg>
+                    <div className="forest-benefits__content">
+                      {item.title ? <h3 className="forest-benefits__title">{item.title}</h3> : null}
+                      {item.description ? (
+                        <div className="forest-benefits__desc rich-text" dangerouslySetInnerHTML={{ __html: item.description }} />
+                      ) : null}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </section>
       ) : null}
 
-      <section className="forest-promo-grid">
-        {/* ── NEWSLETTER ── */}
-        <section className="forest-panel forest-newsletter">
-          <h2>{placeholderCopy.newsletterTitle}</h2>
-          <p>{placeholderCopy.newsletterBody}</p>
-          <div className="forest-newsletter__controls">
-            <input aria-label={placeholderCopy.newsletterPlaceholder} placeholder={placeholderCopy.newsletterPlaceholder} />
-            <button type="button">{placeholderCopy.newsletterCta}</button>
-          </div>
-        </section>
+      {/* ── NEWSLETTER ── */}
+      <section className="forest-panel forest-newsletter forest-newsletter--standalone">
+        <h2>{placeholderCopy.newsletterTitle}</h2>
+        <p>{placeholderCopy.newsletterBody}</p>
+        <div className="forest-newsletter__controls">
+          <input aria-label={placeholderCopy.newsletterPlaceholder} placeholder={placeholderCopy.newsletterPlaceholder} />
+          <button type="button">{placeholderCopy.newsletterCta}</button>
+        </div>
+      </section>
 
-        {/* ── DISCOVER ── */}
-        <section className="forest-panel forest-discover">
-          <h2>{placeholderCopy.discoverTitle}</h2>
-          <p>{placeholderCopy.discoverDescription}</p>
-          <div className="forest-discover__mini-card">
-            <small>{typeLabel}</small>
-            <strong>{title}</strong>
-            <span>{subtitle || labels.upcomingDates}</span>
+      {/* ── DISCOVER / RELATED OFFERS ── */}
+      {relatedOffers.length > 0 ? (
+        <section className="forest-discover-slider">
+          <h2 className="forest-discover-slider__heading">{placeholderCopy.discoverTitle}</h2>
+          <div className="forest-discover-slider__track">
+            {relatedOffers.slice(0, 6).map((ro) => {
+              const roType = (ro.type ?? "WORKSHOP").toString().toUpperCase();
+              const roLabel = TYPE_LABELS[roType as OfferType]?.[localeCode] ?? TYPE_LABELS.WORKSHOP[localeCode];
+              const roTitle = ro.title ?? "Offer";
+              const roExcerpt = typeof ro.excerpt === "string" ? ro.excerpt : "";
+              const roImage = getOfferHeroImageUrl(ro as OfferDetail);
+              const roPath = getCanonicalOfferPath(ro);
+              return (
+                <Link className="forest-discover-slider__card" href={localizePath(localeCode, roPath)} key={ro.slug}>
+                  {roImage ? (
+                    <img alt={roTitle} className="forest-discover-slider__img" loading="lazy" src={roImage} />
+                  ) : (
+                    <div className="forest-discover-slider__img-placeholder" />
+                  )}
+                  <div className="forest-discover-slider__body">
+                    <small>{roLabel}</small>
+                    <strong>{roTitle}</strong>
+                    {roExcerpt ? <p>{roExcerpt}</p> : null}
+                  </div>
+                </Link>
+              );
+            })}
           </div>
           <Link className="button-link forest-secondary-cta" href={localizePath(localeCode, "/workshops")}>
             {placeholderCopy.discoverCta}
           </Link>
         </section>
-      </section>
+      ) : null}
 
-      {/* ── EXTRA FAQ ── */}
-      <section className="forest-panel forest-section">
-        <h2>{placeholderCopy.extraFaqHeading}</h2>
-        <div className="faq-list forest-faq-placeholder">
-          {placeholderCopy.extraFaqItems.map((item) => (
-            <details key={item.question}>
-              <summary>{item.question}</summary>
-              <div>
-                <p>{item.answer}</p>
+      {/* ── SITE FAQ ── */}
+      {faqSections.length > 0 ? (
+        <section className="forest-panel fp-section fp-section--faq forest-site-faq">
+          <div className="fp-chapter__intro fp-chapter__intro--faq">
+            <p className="fp-chapter__eyebrow">Questions</p>
+            <h2 className="fp-section__heading fp-section__heading--left">{placeholderCopy.extraFaqHeading}</h2>
+          </div>
+          <div className="fp-faq">
+            {faqSections.map((section) => (
+              <div className="fp-faq__category" key={section.title}>
+                <h3 className="fp-faq__category-name">{section.title}</h3>
+                <div className="faq-list">
+                  {section.items.map((item) => (
+                    <details key={`${section.title}-${item.question}`}>
+                      <summary>{item.question}</summary>
+                      <div dangerouslySetInnerHTML={{ __html: item.answer }} />
+                    </details>
+                  ))}
+                </div>
               </div>
-            </details>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {/* ── TAGS ── */}
       {tags.length > 0 ? (

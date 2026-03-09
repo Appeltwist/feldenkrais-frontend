@@ -398,6 +398,36 @@ export function getSections(offer: OfferDetail) {
     .filter((block): block is SectionBlock => block !== null);
 }
 
+export type BenefitItem = { title: string; description: string };
+
+export function getBenefits(
+  offer: OfferDetail,
+): { heading: string; items: BenefitItem[] } | null {
+  const sections = getSections(offer);
+  const section = sections.find((s) => s.type === "offer_benefits");
+  if (!section) return null;
+
+  const value = section.value as Record<string, unknown> | undefined;
+  const heading = (value?.heading as string) || "";
+  const rawItems =
+    (value?.items as Array<Record<string, unknown>>) || [];
+
+  const items = rawItems
+    .map((item) => {
+      const inner = ((item as Record<string, unknown>).value ?? item) as {
+        title?: string;
+        description?: string;
+      };
+      return {
+        title: inner.title || "",
+        description: inner.description || "",
+      };
+    })
+    .filter((item) => item.title || item.description);
+
+  return items.length > 0 ? { heading, items } : null;
+}
+
 export function readNextOccurrence(offer: OfferSummary | OfferDetail) {
   const record = asRecord(offer);
   if (!record) {

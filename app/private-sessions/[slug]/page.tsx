@@ -2,7 +2,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 
 import ForestOfferTemplate from "@/components/offers/ForestOfferTemplate";
 import PrivateSessionTemplate from "@/components/offers/PrivateSessionTemplate";
-import { ApiError, fetchOfferDetail, fetchSiteConfig, type OfferDetail } from "@/lib/api";
+import { ApiError, fetchOfferDetail, fetchSiteConfig, fetchSiteFaq, type OfferDetail } from "@/lib/api";
 import { getHostname } from "@/lib/get-hostname";
 import { getCanonicalOfferPath, getOfferType } from "@/lib/offers";
 
@@ -54,7 +54,15 @@ export default async function PrivateSessionDetailPage({ params }: OfferPageProp
   }
 
   if (siteConfig.centerSlug === "forest-lighthouse") {
-    return <ForestOfferTemplate locale={siteConfig.defaultLocale} offer={offer} offerType={offerType} />;
+    const siteFaqSections = await fetchSiteFaq(hostname).catch(() => []);
+    return (
+      <ForestOfferTemplate
+        locale={siteConfig.defaultLocale}
+        offer={offer}
+        offerType={offerType}
+        siteFaqSections={siteFaqSections}
+      />
+    );
   }
 
   return <PrivateSessionTemplate offer={offer} locale={siteConfig.defaultLocale} />;

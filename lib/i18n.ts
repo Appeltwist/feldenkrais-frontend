@@ -13,6 +13,8 @@ export type OfferLabels = {
   noFacilitators: string;
   noThemes: string;
   openDetails: string;
+  benefits: string;
+  eventFaq: string;
 };
 
 export type ForestPlaceholderCopy = {
@@ -24,7 +26,6 @@ export type ForestPlaceholderCopy = {
   discoverDescription: string;
   discoverCta: string;
   extraFaqHeading: string;
-  extraFaqItems: Array<{ question: string; answer: string }>;
 };
 
 const LABELS: Record<LocaleCode, OfferLabels> = {
@@ -41,6 +42,8 @@ const LABELS: Record<LocaleCode, OfferLabels> = {
     noFacilitators: "Aucun\u00b7e intervenant\u00b7e indiqu\u00e9\u00b7e.",
     noThemes: "Aucun th\u00e8me.",
     openDetails: "Voir d\u00e9tails",
+    benefits: "Pourquoi participer",
+    eventFaq: "En savoir plus",
   },
   en: {
     book: "Book",
@@ -55,6 +58,8 @@ const LABELS: Record<LocaleCode, OfferLabels> = {
     noFacilitators: "No facilitators listed.",
     noThemes: "No themes.",
     openDetails: "Open details",
+    benefits: "Why join",
+    eventFaq: "More about this program",
   },
 };
 
@@ -70,20 +75,6 @@ const FOREST_PLACEHOLDER_COPY: Record<LocaleCode, ForestPlaceholderCopy> = {
       "Retrouvez d'autres ateliers, cours et parcours publiés dans le calendrier Forest Lighthouse.",
     discoverCta: "Voir les autres offres",
     extraFaqHeading: "Questions fréquentes",
-    extraFaqItems: [
-      {
-        question: "Faut-il déjà avoir une expérience ?",
-        answer: "Non. Quand un niveau particulier est requis, il est indiqué directement dans l'offre.",
-      },
-      {
-        question: "Comment choisir entre atelier, cours et formation ?",
-        answer: "Les cours installent une continuité, les ateliers approfondissent une question, et les formations structurent un parcours plus long.",
-      },
-      {
-        question: "Puis-je écrire avant de réserver ?",
-        answer: "Oui. La page Contact reste le meilleur point d'entrée pour une orientation ou une question spécifique.",
-      },
-    ],
   },
   en: {
     newsletterTitle: "Stay in the loop",
@@ -96,20 +87,6 @@ const FOREST_PLACEHOLDER_COPY: Record<LocaleCode, ForestPlaceholderCopy> = {
       "Find other workshops, classes, and training pathways currently published in the Forest Lighthouse calendar.",
     discoverCta: "See more offers",
     extraFaqHeading: "Frequently asked questions",
-    extraFaqItems: [
-      {
-        question: "Do I need prior experience?",
-        answer: "No. Whenever a specific level is required, it is stated directly on the offer page.",
-      },
-      {
-        question: "How should I choose between a workshop, class, or training?",
-        answer: "Classes build continuity, workshops deepen a specific question, and trainings support longer-form development.",
-      },
-      {
-        question: "Can I write before booking?",
-        answer: "Yes. The Contact page remains the best entry point for orientation or specific questions.",
-      },
-    ],
   },
 };
 
