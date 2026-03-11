@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 
+import { ForestPageHero, ForestPageSection, ForestPageShell } from "@/components/forest/ForestPageShell";
+import { fetchSiteConfig } from "@/lib/api";
 import { getHostname } from "@/lib/get-hostname";
+import { FOREST_PAGE_MEDIA, isForestCenter } from "@/lib/forest-theme";
 import { getCanonicalOfferPathByTypeAndSlug } from "@/lib/offers";
+import { localizePath } from "@/lib/locale-path";
 
 type DomainPreviewCard = {
   offer: {
@@ -76,6 +80,8 @@ function formatOccurrence(value: string, locale: string, timezone?: string) {
 }
 
 export default async function DomainsPage() {
+  const hostname = await getHostname();
+  const siteConfig = await fetchSiteConfig(hostname).catch(() => null);
   const payload = await fetchDomainsPayload();
   const locale = (await headers()).get("x-locale") ?? "en";
 
@@ -85,6 +91,75 @@ export default async function DomainsPage() {
         <h1>Domains</h1>
         <p>Unable to load domains right now.</p>
       </section>
+    );
+  }
+
+  if (siteConfig && isForestCenter(siteConfig.centerSlug)) {
+    return (
+      <ForestPageShell>
+        <ForestPageHero
+          actions={[
+            { href: localizePath(locale, "/calendar"), label: locale.toLowerCase().startsWith("fr") ? "Voir le calendrier" : "See calendar" },
+            { href: localizePath(locale, "/workshops"), label: locale.toLowerCase().startsWith("fr") ? "Explorer les programmes" : "Explore programs", variant: "secondary" },
+          ]}
+          eyebrow={locale.toLowerCase().startsWith("fr") ? "Aires de recherche" : "Areas of inquiry"}
+          mediaUrl={FOREST_PAGE_MEDIA.domains}
+          subtitle={payload.page.intro}
+          title={payload.page.title}
+        />
+
+        {payload.domains.map((domain, index) => (
+          <ForestPageSection
+            className="domains-room forest-domain-section"
+            eyebrow={`${locale.toLowerCase().startsWith("fr") ? "Domaine" : "Domain"} ${index + 1}`}
+            key={domain.slug}
+            subtitle={domain.intro || undefined}
+            title={domain.name}
+          >
+            {domain.body ? <p>{domain.body}</p> : null}
+
+            {Array.isArray(domain.preview) && domain.preview.length > 0 ? (
+              <div className="domains-room__preview forest-card-grid">
+                {domain.preview.map((card) => {
+                  const detailsPath =
+                    getCanonicalOfferPathByTypeAndSlug(card.offer.type, card.offer.slug) || `/offer/${card.offer.slug}`;
+                  const localizedDetailsPath = localizePath(locale, detailsPath);
+                  const primaryOccurrence = card.next_occurrences?.[0];
+
+                  return (
+                    <article className="card domains-room__preview-card forest-content-card" key={`${domain.slug}-${card.offer.slug}`}>
+                      <p className="offer-type-label">{card.offer.type.replaceAll("_", " ")}</p>
+                      <h3>{card.offer.title}</h3>
+                      {primaryOccurrence ? (
+                        <p className="domains-room__preview-time">
+                          {formatOccurrence(primaryOccurrence.start_datetime, locale, primaryOccurrence.timezone)}
+                        </p>
+                      ) : null}
+                      <div className="link-row">
+                        <Link className="text-link" href={localizedDetailsPath}>
+                          {locale.toLowerCase().startsWith("fr") ? "Voir le détail" : "Offer details"}
+                        </Link>
+                        <Link className="button-link button-link--secondary" href={localizedDetailsPath}>
+                          {card.cta_label || "Book"}
+                        </Link>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : null}
+
+            <div className="link-row domains-room__links">
+              <Link className="text-link" href={localizePath(locale, domain.links.calendar)}>
+                {locale.toLowerCase().startsWith("fr") ? "Voir ce qui se passe" : "See what's on"}
+              </Link>
+              <Link className="text-link" href={localizePath(locale, domain.links.programs)}>
+                {locale.toLowerCase().startsWith("fr") ? "Explorer les programmes" : "Explore programs"}
+              </Link>
+            </div>
+          </ForestPageSection>
+        ))}
+      </ForestPageShell>
     );
   }
 

@@ -232,7 +232,7 @@ function applyClassMetaFr(entries: ScheduleEntry[]): ScheduleEntry[] {
 const CONTENT: Record<LocaleCode, PricingContent> = {
   en: {
     hero: {
-      title: "Learn, Move And Live Fully",
+      title: "Choose A Programme Or Pass",
       subtitle:
         "Every year, we support hundreds of people in their journey toward greater awareness, ease, and vitality through somatic education.",
       journeySteps: [
@@ -407,7 +407,6 @@ const CONTENT: Record<LocaleCode, PricingContent> = {
             { time: "17:30\u201318:30", className: "Pilates", instructor: "Joy", languages: ["FR", "EN"] },
             { time: "18:30\u201319:30", className: "Vinyasa to Yin Yoga", instructor: "Joy", languages: ["FR", "EN"] },
             { time: "18:30\u201319:30", className: "Feldenkrais", instructor: "Juan", languages: ["FR"] },
-            { time: "19:30\u201320:30", className: "Yoga Vinyasa Gentle Flow", instructor: "Sabine", languages: ["EN"] },
           ]),
         },
         {
@@ -430,7 +429,6 @@ const CONTENT: Record<LocaleCode, PricingContent> = {
             { time: "17:30\u201318:30", className: "Pilates", instructor: "Joy", languages: ["FR", "EN"] },
             { time: "18:30\u201319:30", className: "Vinyasa to Yin Yoga", instructor: "Joy", languages: ["FR", "EN"] },
             { time: "18:30\u201319:30", className: "Feldenkrais", instructor: "Betzabel", languages: ["FR"] },
-            { time: "19:30\u201320:45", className: "Chant Polyphonique", instructor: "Maria & Betzabel", languages: ["FR", "ES"] },
           ]),
         },
         {
@@ -569,7 +567,7 @@ const CONTENT: Record<LocaleCode, PricingContent> = {
 
   fr: {
     hero: {
-      title: "Apprendre, Bouger Et Vivre Pleinement",
+      title: "Choisissez Un Programme Ou Un Pass",
       subtitle:
         "Chaque ann\u00e9e, nous accompagnons des centaines de personnes dans leur cheminement vers une plus grande conscience, aisance et vitalit\u00e9 par l\u2019\u00e9ducation somatique.",
       journeySteps: [
@@ -744,7 +742,6 @@ const CONTENT: Record<LocaleCode, PricingContent> = {
             { time: "17:30\u201318:30", className: "Pilates", instructor: "Joy", languages: ["FR", "EN"] },
             { time: "18:30\u201319:30", className: "Vinyasa to Yin Yoga", instructor: "Joy", languages: ["FR", "EN"] },
             { time: "18:30\u201319:30", className: "Feldenkrais", instructor: "Juan", languages: ["FR"] },
-            { time: "19:30\u201320:30", className: "Yoga Vinyasa Gentle Flow", instructor: "Sabine", languages: ["EN"] },
           ]),
         },
         {
@@ -767,7 +764,6 @@ const CONTENT: Record<LocaleCode, PricingContent> = {
             { time: "17:30\u201318:30", className: "Pilates", instructor: "Joy", languages: ["FR", "EN"] },
             { time: "18:30\u201319:30", className: "Vinyasa to Yin Yoga", instructor: "Joy", languages: ["FR", "EN"] },
             { time: "18:30\u201319:30", className: "Feldenkrais", instructor: "Betzabel", languages: ["FR"] },
-            { time: "19:30\u201320:45", className: "Chant Polyphonique", instructor: "Maria & Betzabel", languages: ["FR", "ES"] },
           ]),
         },
         {

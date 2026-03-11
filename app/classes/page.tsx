@@ -1,11 +1,14 @@
 import ClassesSchedule from "@/components/calendar/ClassesSchedule";
+import { ForestPageHero, ForestPageSection, ForestPageShell } from "@/components/forest/ForestPageShell";
 import {
   type CalendarDomainLabel,
   type CalendarOccurrenceOption,
   type GroupedCalendarEntry,
 } from "@/components/calendar/GroupedCalendar";
 import { fetchCalendar, fetchSiteConfig, type CalendarItem } from "@/lib/api";
+import { FOREST_PAGE_MEDIA, isForestCenter } from "@/lib/forest-theme";
 import { getHostname } from "@/lib/get-hostname";
+import { localizePath } from "@/lib/locale-path";
 
 type RawRecord = Record<string, unknown>;
 
@@ -160,6 +163,45 @@ export default async function ClassesPage() {
   }
 
   const entries = parseGroupedEntries(payload);
+  const isForest = isForestCenter(siteConfig.centerSlug);
+
+  if (isForest) {
+    const isFrench = siteConfig.defaultLocale.toLowerCase().startsWith("fr");
+
+    return (
+      <ForestPageShell>
+        <ForestPageHero
+          actions={[
+            { href: localizePath(siteConfig.defaultLocale, "/pricing"), label: isFrench ? "Voir les tarifs" : "See pricing" },
+            { href: localizePath(siteConfig.defaultLocale, "/calendar"), label: isFrench ? "Calendrier complet" : "Full calendar", variant: "secondary" },
+          ]}
+          eyebrow={isFrench ? "Pratique hebdomadaire" : "Weekly practice"}
+          mediaUrl={FOREST_PAGE_MEDIA.classes}
+          subtitle={
+            isFrench
+              ? "Les cours réguliers apparaissent ici dans le même langage visuel que la page Tarifs."
+              : "Regular classes now live inside the same visual language as the Pricing page."
+          }
+          title={isFrench ? "Cours" : "Classes"}
+        />
+
+        <ForestPageSection
+          eyebrow={`${from} - ${to}`}
+          subtitle={isFrench ? "Cette vue garde la logique de planning actuelle, mais avec une présentation Forest unifiée." : "This keeps the current schedule logic, but presents it inside the unified Forest theme."}
+          title={isFrench ? "Planning des deux prochaines semaines" : "Schedule for the next two weeks"}
+        >
+          <ClassesSchedule
+            center={siteConfig.centerSlug}
+            entries={entries}
+            from={from}
+            hostname={hostname}
+            locale={siteConfig.defaultLocale}
+            to={to}
+          />
+        </ForestPageSection>
+      </ForestPageShell>
+    );
+  }
 
   return (
     <section className="page-section">

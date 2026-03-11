@@ -140,6 +140,57 @@ export default async function ForestPricingPage() {
     <div className="fp-page" id={motionScopeId}>
       <RevealObserver scopeId={motionScopeId} />
       <PricingScrollEffects scopeId={motionScopeId} />
+      {/* Botanical illustrations — decorative transition elements */}
+      {/* Pair A: hero exit — bird of paradise + small fan palm companion */}
+      <div aria-hidden="true" className="fp-botanical fp-botanical--1a" data-botanical="1a">
+        <Image alt="" className="fp-botanical__img" fill sizes="360px" src="/brands/forest-lighthouse/photos/leaves1.png" />
+      </div>
+      <div aria-hidden="true" className="fp-botanical fp-botanical--1b" data-botanical="1b">
+        <Image alt="" className="fp-botanical__img" fill sizes="160px" src="/brands/forest-lighthouse/photos/leaves3.png" />
+      </div>
+      {/* Pair: passes → packages — hibiscus (left) + calathea companion (right) */}
+      <div aria-hidden="true" className="fp-botanical fp-botanical--2" data-botanical="2">
+        <Image alt="" className="fp-botanical__img" fill sizes="340px" src="/brands/forest-lighthouse/photos/leaves2.png" />
+      </div>
+      <div aria-hidden="true" className="fp-botanical fp-botanical--2b" data-botanical="2b">
+        <Image alt="" className="fp-botanical__img" fill sizes="180px" src="/brands/forest-lighthouse/photos/leaves5.png" />
+      </div>
+      {/* Pair B: packages → commitment — fan palm + small monstera */}
+      <div aria-hidden="true" className="fp-botanical fp-botanical--3a" data-botanical="3a">
+        <Image alt="" className="fp-botanical__img" fill sizes="380px" src="/brands/forest-lighthouse/photos/leaves3.png" />
+      </div>
+      <div aria-hidden="true" className="fp-botanical fp-botanical--3b" data-botanical="3b">
+        <Image alt="" className="fp-botanical__img" fill sizes="180px" src="/brands/forest-lighthouse/photos/leaves4.png" />
+      </div>
+      {/* Pair: commitment → schedule — monstera (left) + hibiscus companion (right) */}
+      <div aria-hidden="true" className="fp-botanical fp-botanical--4" data-botanical="4">
+        <Image alt="" className="fp-botanical__img" fill sizes="400px" src="/brands/forest-lighthouse/photos/leaves4.png" />
+      </div>
+      <div aria-hidden="true" className="fp-botanical fp-botanical--4b" data-botanical="4b">
+        <Image alt="" className="fp-botanical__img" fill sizes="200px" src="/brands/forest-lighthouse/photos/leaves2.png" />
+      </div>
+      {/* Pair D: schedule → session — calathea (right) + small calathea companion (left) */}
+      <div aria-hidden="true" className="fp-botanical fp-botanical--7a" data-botanical="7a">
+        <Image alt="" className="fp-botanical__img" fill sizes="340px" src="/brands/forest-lighthouse/photos/leaves5.png" />
+      </div>
+      <div aria-hidden="true" className="fp-botanical fp-botanical--7b" data-botanical="7b">
+        <Image alt="" className="fp-botanical__img" fill sizes="180px" src="/brands/forest-lighthouse/photos/leaves5.png" />
+      </div>
+      {/* Single: session → platform — fan palm, flipped */}
+      <div aria-hidden="true" className="fp-botanical fp-botanical--8" data-botanical="8">
+        <Image alt="" className="fp-botanical__img" fill sizes="320px" src="/brands/forest-lighthouse/photos/leaves3.png" />
+      </div>
+      {/* Pair C: platform → benefits — calathea + small bird of paradise */}
+      <div aria-hidden="true" className="fp-botanical fp-botanical--5a" data-botanical="5a">
+        <Image alt="" className="fp-botanical__img" fill sizes="360px" src="/brands/forest-lighthouse/photos/leaves5.png" />
+      </div>
+      <div aria-hidden="true" className="fp-botanical fp-botanical--5b" data-botanical="5b">
+        <Image alt="" className="fp-botanical__img" fill sizes="200px" src="/brands/forest-lighthouse/photos/leaves1.png" />
+      </div>
+      {/* Single: near FAQ — hibiscus repeat, flipped */}
+      <div aria-hidden="true" className="fp-botanical fp-botanical--6" data-botanical="6">
+        <Image alt="" className="fp-botanical__img" fill sizes="300px" src="/brands/forest-lighthouse/photos/leaves2.png" />
+      </div>
 
       {/* ── 1. HERO (fade) ── */}
       <section aria-label={heroLabel} className="fp-hero-fade" data-scroll-hero>
@@ -153,6 +204,16 @@ export default async function ForestPricingPage() {
             <h1 className="fp-hero__title">{c.hero.title}</h1>
             <p className="fp-hero__subtitle">{c.hero.subtitle}</p>
           </div>
+        </div>
+        {/* Leaves zoom overlay — bridges hero fade into journey steps */}
+        <div aria-hidden="true" className="fp-hero-leaves" data-scroll-hero-leaves>
+          <Image
+            alt=""
+            className="fp-hero-leaves__img"
+            fill
+            sizes="100vw"
+            src="/brands/forest-lighthouse/photos/leaves.png"
+          />
         </div>
       </section>
 
@@ -525,6 +586,15 @@ export default async function ForestPricingPage() {
 
       {/* ── 6. SECTION III: NEUROSOMATIC PLATFORM ── */}
       <section className="fp-detail-section fp-detail-section--platform" data-scroll-parallax-section>
+        <div className="fp-detail-section__illustration" data-scroll-parallax-illus>
+          <Image
+            alt="Headphones illustration"
+            className="fp-detail-section__illus-img"
+            fill
+            sizes="(max-width: 900px) 100vw, 40vw"
+            src="/brands/forest-lighthouse/headphones.png"
+          />
+        </div>
         <div className="fp-detail-section__content" data-scroll-parallax-content>
           <p className="fp-chapter__eyebrow">{isFr ? "Plateforme" : "Platform"}</p>
           <h2 className="fp-section__heading fp-section__heading--left">{c.platform.heading}</h2>
@@ -552,13 +622,6 @@ export default async function ForestPricingPage() {
           </div>
         </div>
         <div className="fp-detail-section__phones" data-scroll-parallax-illus>
-          <Image
-            alt={c.features.columns[2]?.title || "Neurosomatic platform"}
-            className="fp-detail-section__illus-img fp-detail-section__illus-img--headphones"
-            fill
-            sizes="(max-width: 900px) 100vw, 40vw"
-            src="/brands/forest-lighthouse/headphones.png"
-          />
           <div className="fp-phone-mockups">
             <div className="fp-phone-frame">
               <Image

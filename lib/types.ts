@@ -133,6 +133,17 @@ export type CtaSectionBlock = {
   };
 };
 
+export type JourneyStepsBlock = {
+  type: "journey_steps";
+  value: {
+    heading?: string | null;
+    items?: Array<{
+      title?: string | null;
+      description?: string | null;
+    }>;
+  };
+};
+
 export type SectionBlock =
   | RichSectionBlock
   | FeatureStackBlock
@@ -140,6 +151,7 @@ export type SectionBlock =
   | ProgramHighlightsBlock
   | GalleryBlock
   | CtaSectionBlock
+  | JourneyStepsBlock
   | {
       type: string;
       value?: unknown;

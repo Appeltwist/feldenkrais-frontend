@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { localizePath } from "@/lib/locale-path";
 import { getCanonicalOfferPathByTypeAndSlug } from "@/lib/offers";
 
 type RawRecord = Record<string, unknown>;
@@ -132,6 +133,7 @@ export default function GroupedCalendar({
   from,
   to,
 }: GroupedCalendarProps) {
+  const isFrench = locale.toLowerCase().startsWith("fr");
   const [expandedOfferId, setExpandedOfferId] = useState<number | null>(null);
   const [loadingOfferId, setLoadingOfferId] = useState<number | null>(null);
   const [occurrencesByOffer, setOccurrencesByOffer] = useState<Record<number, CalendarOccurrenceOption[]>>({});
@@ -162,7 +164,7 @@ export default function GroupedCalendar({
         cache: "no-store",
       });
       if (!response.ok) {
-        throw new Error("Failed to fetch sessions.");
+        throw new Error(isFrench ? "Impossible de charger les dates." : "Failed to fetch sessions.");
       }
       const payload = (await response.json()) as unknown;
       const occurrences = parseFlatOccurrences(payload);
@@ -175,7 +177,10 @@ export default function GroupedCalendar({
       }
       setErrorsByOffer((previous) => ({ ...previous, [offerId]: "" }));
     } catch {
-      setErrorsByOffer((previous) => ({ ...previous, [offerId]: "Unable to load sessions right now." }));
+      setErrorsByOffer((previous) => ({
+        ...previous,
+        [offerId]: isFrench ? "Impossible de charger les dates pour le moment." : "Unable to load sessions right now.",
+      }));
     } finally {
       setLoadingOfferId(null);
     }
@@ -204,7 +209,10 @@ export default function GroupedCalendar({
         const selectedOccurrence = sessionList.find((session) => session.id === selectedId) ?? sessionList[0];
         const bookingUrl = selectedOccurrence?.bookingUrl || entry.offer.canonicalUrl || undefined;
         const offerDetailsPath =
-          getCanonicalOfferPathByTypeAndSlug(entry.offer.type, entry.offer.slug) || `/offer/${entry.offer.slug}`;
+          localizePath(
+            locale,
+            getCanonicalOfferPathByTypeAndSlug(entry.offer.type, entry.offer.slug) || `/offer/${entry.offer.slug}`,
+          );
         const previewSecondary = entry.nextOccurrences.slice(1, 3);
         const domainsLabel = entry.offer.domains.map((domain) => domain.name).join(" · ");
 
@@ -233,8 +241,10 @@ export default function GroupedCalendar({
                 {formatDateTime(selectedOccurrence.startDateTime, locale, selectedOccurrence.timezone)}
               </p>
             ) : (
-              <p className="calendar-group-card__primary-time">No upcoming sessions in this range.</p>
-            )}
+                <p className="calendar-group-card__primary-time">
+                  {isFrench ? "Aucune date dans cette période." : "No upcoming sessions in this range."}
+                </p>
+              )}
 
             {previewSecondary.length > 0 ? (
               <ul className="calendar-group-card__next-list">
@@ -248,7 +258,7 @@ export default function GroupedCalendar({
 
             <div className="link-row">
               <button className="button-link button-link--secondary" onClick={() => void toggleOffer(entry.offer.id)} type="button">
-                {isExpanded ? "Hide sessions" : "See sessions"}
+                {isExpanded ? (isFrench ? "Masquer les dates" : "Hide sessions") : isFrench ? "Voir les dates" : "See sessions"}
               </button>
               {bookingUrl ? (
                 <a className="button-link" href={bookingUrl} rel="noreferrer" target="_blank">
@@ -256,17 +266,17 @@ export default function GroupedCalendar({
                 </a>
               ) : (
                 <Link className="text-link" href={offerDetailsPath}>
-                  View offer
+                  {isFrench ? "Voir l’offre" : "View offer"}
                 </Link>
               )}
             </div>
 
             {isExpanded ? (
               <div className="calendar-group-card__expanded">
-                {loadingOfferId === entry.offer.id ? <p>Loading sessions...</p> : null}
+                {loadingOfferId === entry.offer.id ? <p>{isFrench ? "Chargement des dates..." : "Loading sessions..."}</p> : null}
                 {errorsByOffer[entry.offer.id] ? <p>{errorsByOffer[entry.offer.id]}</p> : null}
                 {loadingOfferId !== entry.offer.id && !errorsByOffer[entry.offer.id] && sessionList.length === 0 ? (
-                  <p>No sessions found for this offering in the selected date range.</p>
+                  <p>{isFrench ? "Aucune date trouvée pour cette offre dans la période choisie." : "No sessions found for this offering in the selected date range."}</p>
                 ) : null}
                 {sessionList.length > 0 ? (
                   <>
@@ -280,7 +290,7 @@ export default function GroupedCalendar({
                               onClick={() => selectOccurrence(entry.offer.id, session.id)}
                               type="button"
                             >
-                              <span>{session.label || "Session"}</span>
+                              <span>{session.label || (isFrench ? "Séance" : "Session")}</span>
                               <span>{formatDateTime(session.startDateTime, locale, session.timezone)}</span>
                             </button>
                           </li>
@@ -298,16 +308,16 @@ export default function GroupedCalendar({
                           View offer
                         </Link>
                       )}
-                      {selectedOccurrence?.icsUrl ? (
-                        <a className="text-link" href={selectedOccurrence.icsUrl}>
-                          Add to calendar
-                        </a>
-                      ) : null}
-                      <Link className="text-link" href={offerDetailsPath}>
-                        Offer details
-                      </Link>
-                    </div>
-                  </>
+                        {selectedOccurrence?.icsUrl ? (
+                          <a className="text-link" href={selectedOccurrence.icsUrl}>
+                            {isFrench ? "Ajouter au calendrier" : "Add to calendar"}
+                          </a>
+                        ) : null}
+                        <Link className="text-link" href={offerDetailsPath}>
+                          {isFrench ? "Détail de l’offre" : "Offer details"}
+                        </Link>
+                      </div>
+                    </>
                 ) : null}
               </div>
             ) : null}

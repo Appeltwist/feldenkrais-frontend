@@ -1,12 +1,13 @@
 import { notFound, permanentRedirect } from "next/navigation";
 
 import ClassTemplate from "@/components/offers/ClassTemplate";
+import ForestOfferTemplate from "@/components/offers/ForestOfferTemplate";
 import { ApiError, fetchOfferDetail, fetchSiteConfig, type OfferDetail } from "@/lib/api";
 import { getHostname } from "@/lib/get-hostname";
 import { getCanonicalOfferPath, getOfferType } from "@/lib/offers";
 
 type OfferPageProps = {
-  params: Promise<{ slug: string }> | { slug: string };
+  params: Promise<{ slug: string }>;
 };
 
 export default async function ClassDetailPage({ params }: OfferPageProps) {
@@ -50,6 +51,10 @@ export default async function ClassDetailPage({ params }: OfferPageProps) {
       notFound();
     }
     permanentRedirect(canonicalPath);
+  }
+
+  if (siteConfig.centerSlug === "forest-lighthouse") {
+    return <ForestOfferTemplate locale={siteConfig.defaultLocale} offer={offer} offerType={offerType} />;
   }
 
   return <ClassTemplate offer={offer} locale={siteConfig.defaultLocale} />;

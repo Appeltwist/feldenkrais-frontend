@@ -5,7 +5,7 @@ import { getHostname } from "@/lib/get-hostname";
 import { getCanonicalOfferPath } from "@/lib/offers";
 
 type OfferPageProps = {
-  params: Promise<{ slug: string }> | { slug: string };
+  params: Promise<{ slug: string }>;
 };
 
 export default async function OfferLegacyRedirectPage({ params }: OfferPageProps) {

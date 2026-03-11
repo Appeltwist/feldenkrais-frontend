@@ -3,13 +3,16 @@ import GroupedCalendar, {
   type CalendarOccurrenceOption,
   type GroupedCalendarEntry,
 } from "@/components/calendar/GroupedCalendar";
+import { ForestPageHero, ForestPageSection, ForestPageShell } from "@/components/forest/ForestPageShell";
 import {
   fetchCalendarWithMeta,
   fetchSiteConfig,
   type CalendarDomainOption,
   type CalendarItem,
 } from "@/lib/api";
+import { FOREST_PAGE_MEDIA, isForestCenter } from "@/lib/forest-theme";
 import { getHostname } from "@/lib/get-hostname";
+import { localizePath } from "@/lib/locale-path";
 
 type RawRecord = Record<string, unknown>;
 
@@ -202,6 +205,84 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
 
   const entries = parseGroupedEntries(calendar.items);
   const domains = sortDomains(calendar.meta.domains);
+  const isForest = isForestCenter(siteConfig.centerSlug);
+
+  if (isForest) {
+    const isFrench = siteConfig.defaultLocale.toLowerCase().startsWith("fr");
+
+    return (
+      <ForestPageShell>
+        <ForestPageHero
+          actions={[
+            { href: localizePath(siteConfig.defaultLocale, "/workshops"), label: isFrench ? "Voir les ateliers" : "See workshops" },
+            { href: localizePath(siteConfig.defaultLocale, "/classes"), label: isFrench ? "Voir les cours" : "See classes", variant: "secondary" },
+          ]}
+          eyebrow={isFrench ? "À venir" : "Upcoming"}
+          mediaUrl={FOREST_PAGE_MEDIA.calendar}
+          subtitle={
+            isFrench
+              ? "Une vue d’ensemble des cours, ateliers et parcours actuellement publiés."
+              : "An overview of the classes, workshops, and pathways currently published."
+          }
+          title={isFrench ? "Calendrier" : "Calendar"}
+        />
+
+        <ForestPageSection
+          eyebrow={siteConfig.center.name}
+          subtitle={`${from} - ${to}`}
+          title={isFrench ? "Filtrer les événements" : "Filter events"}
+        >
+          <form className="calendar-filter-form" method="get">
+            <label className="calendar-filter-form__label" htmlFor="calendar-domain-theme">
+              {isFrench ? "Domaine" : "Domain"}
+            </label>
+            <div className="calendar-filter-form__controls">
+              <select
+                className="calendar-filter-form__select"
+                defaultValue={selectedDomainTheme}
+                id="calendar-domain-theme"
+                name="domain_theme"
+              >
+                <option value="">{isFrench ? "Tous les domaines" : "All domains"}</option>
+                {domains.map((domain) => (
+                  <option key={domain.slug} value={domain.slug}>
+                    {domain.name}
+                  </option>
+                ))}
+              </select>
+              <button className="button-link button-link--secondary" type="submit">
+                {isFrench ? "Appliquer" : "Apply"}
+              </button>
+              {selectedDomainTheme ? (
+                <a className="text-link" href="?">
+                  {isFrench ? "Effacer" : "Clear"}
+                </a>
+              ) : null}
+            </div>
+          </form>
+        </ForestPageSection>
+
+        <ForestPageSection
+          eyebrow={entries.length > 0 ? `${entries.length}` : undefined}
+          subtitle={entries.length === 0 ? (isFrench ? "Aucun événement dans cette période." : "No events in this range.") : undefined}
+          title={isFrench ? "Ce qui se passe" : "What is on"}
+        >
+          {entries.length > 0 ? (
+            <GroupedCalendar
+              center={siteConfig.centerSlug}
+              entries={entries}
+              from={from}
+              hostname={hostname}
+              locale={siteConfig.defaultLocale}
+              to={to}
+            />
+          ) : (
+            <p className="forest-empty-state">{isFrench ? "Aucun événement trouvé." : "No events found."}</p>
+          )}
+        </ForestPageSection>
+      </ForestPageShell>
+    );
+  }
 
   return (
     <section className="page-section">
