@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import AboutPeopleTrack, { type AboutPerson } from "@/components/about/AboutPeopleTrack";
 import ForestImageGallery from "@/components/forest/ForestImageGallery";
 import RevealObserver from "@/components/motion/RevealObserver";
 import { ForestPageSection, ForestPageShell } from "@/components/forest/ForestPageShell";
@@ -51,42 +52,6 @@ function resolveAboutPerson(
   };
 }
 
-function AboutPersonChip({
-  ctaLabel,
-  person,
-}: {
-  ctaLabel: string;
-  person: ResolvedAboutPerson;
-}) {
-  return (
-    <article className="forest-about-person-chip">
-      {person.photoUrl ? (
-        <img
-          alt={person.imageAlt}
-          className="forest-about-person-chip__avatar"
-          loading="lazy"
-          src={person.photoUrl}
-        />
-      ) : (
-        <div
-          aria-hidden="true"
-          className="forest-about-person-chip__avatar forest-about-person-chip__avatar--placeholder"
-        />
-      )}
-      <div className="forest-about-person-chip__body">
-        <p className="forest-about-person-chip__role">{person.role}</p>
-        <h3 className="forest-about-person-chip__name">{person.name}</h3>
-        <p className="forest-about-person-chip__summary">{person.summary}</p>
-        {person.href ? (
-          <Link className="text-link forest-about-person-chip__link" href={person.href}>
-            {ctaLabel}
-          </Link>
-        ) : null}
-      </div>
-    </article>
-  );
-}
-
 export default async function AboutPage() {
   const hostname = await getHostname();
   const locale = await getRequestLocale();
@@ -115,7 +80,33 @@ export default async function AboutPage() {
   );
 
   const content = getForestAboutContent(localeCode);
-  const allPeople = getForestAboutPeople().map((person) => resolveAboutPerson(person, teacherBySlug, localeCode));
+  const aboutPeople = getForestAboutPeople();
+  const resolvedAboutPeople = aboutPeople.map((person) => resolveAboutPerson(person, teacherBySlug, localeCode));
+
+  // Slugs already covered by the hardcoded about people
+  const coveredSlugs = new Set(aboutPeople.map((p) => p.localSlug).filter(Boolean));
+
+  // Add API teachers not already in the about list
+  const extraTeachers: ResolvedAboutPerson[] = teachers
+    .filter((t) => {
+      const slug = readString(t.slug);
+      return slug && !coveredSlugs.has(slug) && readString(t.display_name);
+    })
+    .map((t) => {
+      const slug = readString(t.slug);
+      return {
+        id: slug || String(t.id),
+        featured: false,
+        href: localizePath(localeCode, `/teachers/${slug}`),
+        imageAlt: readString(t.display_name),
+        name: readString(t.display_name),
+        photoUrl: readString(t.photo_url) || undefined,
+        role: readString(t.title) || (localeCode === "fr" ? "Enseignant·e" : "Teacher"),
+        summary: readString(t.short_bio) || "",
+      };
+    });
+
+  const allPeople: AboutPerson[] = [...resolvedAboutPeople, ...extraTeachers];
 
   return (
     <ForestPageShell className="forest-site-shell--about">
@@ -190,11 +181,7 @@ export default async function AboutPage() {
             <p className="forest-page-section__eyebrow">{content.people.eyebrow}</p>
             <h2 className="forest-page-section__title">{content.people.title}</h2>
             <p className="forest-page-section__subtitle">{content.people.subtitle}</p>
-            <div className="forest-about-people-track">
-              {allPeople.map((person) => (
-                <AboutPersonChip ctaLabel={content.people.viewProfileLabel} key={person.id} person={person} />
-              ))}
-            </div>
+            <AboutPeopleTrack ctaLabel={content.people.viewProfileLabel} people={allPeople} />
           </section>
         </div>
 
