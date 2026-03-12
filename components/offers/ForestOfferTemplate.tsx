@@ -2,9 +2,11 @@ import Link from "next/link";
 
 import BlockRenderer from "@/components/blocks/BlockRenderer";
 import { ForestPageShell } from "@/components/forest/ForestPageShell";
+import RevealObserver from "@/components/motion/RevealObserver";
 import ForestFacilitatorShowcase from "@/components/offers/ForestFacilitatorShowcase";
 import ForestHeroMedia from "@/components/offers/ForestHeroMedia";
 import ForestMediaEmbed from "@/components/offers/ForestMediaEmbed";
+import ForestPdfForm from "@/components/offers/ForestPdfForm";
 import OfferActionBar from "@/components/offers/OfferActionBar";
 import { FOREST_DEFAULT_HERO_IMAGE } from "@/lib/brand-assets";
 import { getForestPlaceholderCopy, getOfferLabels, resolveLocale } from "@/lib/i18n";
@@ -12,6 +14,7 @@ import { localizePath } from "@/lib/locale-path";
 import {
   getCanonicalOfferPath,
   getDomains,
+  getOfferSlug,
   getFacilitatorBio,
   getFaqItems,
   getFacilitatorImageUrl,
@@ -25,6 +28,7 @@ import {
   getOfferHeroVideoUrl,
   getOfferSubtitle,
   getOfferTitle,
+  getOfferTypeVariant,
   getPriceOptions,
   getPrimaryCta,
   getQuickFacts,
@@ -36,7 +40,7 @@ import {
   normalizeText,
   pickString,
 } from "@/lib/offers";
-import type { OfferDetail, OfferSummary, OfferType, SectionBlock, SiteFaqSection } from "@/lib/types";
+import type { OfferDetail, OfferSummary, OfferType, RichSectionBlock, SectionBlock, SiteFaqSection } from "@/lib/types";
 
 /* ── props ── */
 
@@ -53,7 +57,7 @@ type ForestOfferTemplateProps = {
 const TYPE_LABELS: Record<OfferType, { fr: string; en: string }> = {
   WORKSHOP: { fr: "Atelier", en: "Workshop" },
   CLASS: { fr: "Cours", en: "Class" },
-  PRIVATE_SESSION: { fr: "Séance privée", en: "Private session" },
+  PRIVATE_SESSION: { fr: "Séance individuelle", en: "Individual session" },
   TRAINING_INFO: { fr: "Formation", en: "Training" },
 };
 
@@ -96,6 +100,37 @@ function parseCompactDate(dateStr: string, locale: string) {
     month: d.toLocaleDateString(loc, { month: "short" }),
     time: d.toLocaleTimeString(loc, { hour: "2-digit", minute: "2-digit" }),
   };
+}
+
+function getGalleryImagesFromSection(section: SectionBlock | null) {
+  if (!section || section.type !== "gallery") {
+    return [] as Array<{ url: string; alt?: string }>;
+  }
+
+  const value = section.value as Record<string, unknown> | undefined;
+  const rawImages = Array.isArray(value?.images) ? value.images : [];
+
+  return rawImages
+    .map((item) => {
+      if (typeof item === "string" && item.trim()) {
+        return { url: item.trim() };
+      }
+
+      const image = item && typeof item === "object" && !Array.isArray(item)
+        ? (item as Record<string, unknown>)
+        : null;
+      const url = pickString(image, ["url", "image_url", "src"]);
+      if (!url) {
+        return null;
+      }
+
+      const alt = pickString(image, ["alt", "title", "caption"]);
+      return {
+        url,
+        alt: alt || undefined,
+      };
+    })
+    .filter((image): image is { url: string; alt?: string } => image !== null);
 }
 
 function groupSectionsForLayout(sections: SectionBlock[]) {
@@ -150,8 +185,11 @@ export default function ForestOfferTemplate({
   const primaryCta = getPrimaryCta(offer);
   const heroVideoUrl = getOfferHeroVideoUrl(offer);
   const heroImageUrl = getOfferHeroImageUrl(offer);
+  const offerSlug = getOfferSlug(offer) ?? "";
   const quickFacts = getQuickFacts(offer);
-  const scheduleCards = getScheduleCards(offer);
+  const allScheduleCards = getScheduleCards(offer);
+  /* Classes: show only next week (≤ 4 occurrences) */
+  const scheduleCards = offerType === "CLASS" ? allScheduleCards.slice(0, 4) : allScheduleCards;
   const themes = getThemes(offer);
   const domains = getDomains(offer);
   const sections = getSections(offer);
@@ -165,11 +203,24 @@ export default function ForestOfferTemplate({
 
   /* split first rich_section (Aperçu) from remaining sections */
   const apercuSection =
-    sections.length > 0 && sections[0].type === "rich_section" ? sections[0] : null;
+    sections.length > 0 && sections[0].type === "rich_section"
+      ? (sections[0] as RichSectionBlock)
+      : null;
   const apercuHeading = apercuSection?.value?.heading as string | undefined;
   const apercuBody = apercuSection?.value?.body as string | undefined;
   const afterApercu = apercuSection ? sections.slice(1) : sections;
-  const hasMedia = Boolean(mediaUrl);
+
+  /* collect ALL gallery images across every gallery block */
+  const allGalleryImages = afterApercu.flatMap((s) => getGalleryImagesFromSection(s));
+  /* when there's no video, use first gallery section for the aperçu media carousel */
+  const mediaGallerySection = !mediaUrl
+    ? afterApercu.find((section) => getGalleryImagesFromSection(section).length > 0) ?? null
+    : null;
+  const galleryImages = getGalleryImagesFromSection(mediaGallerySection);
+  const hasMedia = Boolean(mediaUrl) || galleryImages.length > 0;
+
+  /* hero image: prefer explicit hero_image_url, fall back to first gallery image */
+  const effectiveHeroImage = heroImageUrl || allGalleryImages[0]?.url || "";
 
   /* pull out journey_steps section if present */
   const journeySection = afterApercu.find((s) => s.type === "journey_steps") ?? null;
@@ -182,7 +233,10 @@ export default function ForestOfferTemplate({
     const inner = (item.value ?? item) as { title?: string; description?: string };
     return { title: inner.title, description: inner.description };
   });
-  const remainingSections = afterApercu.filter((s) => s !== journeySection);
+  /* filter out journey + ALL gallery blocks (gallery handled by slider or hidden) */
+  const remainingSections = afterApercu.filter(
+    (section) => section !== journeySection && section.type !== "gallery",
+  );
 
   /* quick‑fact rows (venue is a Maps link, removed location/price/facilitator) */
   const venueMapUrl = quickFacts?.venue
@@ -263,12 +317,13 @@ export default function ForestOfferTemplate({
 
   return (
     <ForestPageShell className="forest-site-shell--offer">
-      <section className="page-section forest-offer-page">
+      <section className="page-section forest-offer-page" id="offer-motion">
+        <RevealObserver scopeId="offer-motion" />
         {/* ── CINEMATIC HERO ── */}
         <section className="forest-hero forest-hero--cinematic">
           <ForestHeroMedia
             defaultImageUrl={FOREST_DEFAULT_HERO_IMAGE}
-            imageUrl={heroImageUrl}
+            imageUrl={effectiveHeroImage}
             title={title}
             videoUrl={heroVideoUrl}
           />
@@ -289,6 +344,7 @@ export default function ForestOfferTemplate({
             <OfferActionBar
               calendarEvent={calendarEvent}
               canonicalUrl={canonicalPath}
+              hideCalendar={offerType === "PRIVATE_SESSION"}
               title={title}
               variant="cinematic"
             />
@@ -311,10 +367,10 @@ export default function ForestOfferTemplate({
         </section>
 
         {/* ── DETAILS BELOW HERO ── */}
-        <section className="forest-panel forest-hero__details" id="offer-details">
+        <section className="forest-panel forest-hero__details" data-reveal="section" id="offer-details">
           {/* quick facts */}
           {factRows.length > 0 ? (
-            <div className="forest-hero__facts">
+            <div className="forest-hero__facts" data-reveal="stagger">
               {factRows.map((row) => {
                 const isVenue = row.key === "venue" && venueMapUrl;
                 return (
@@ -342,35 +398,52 @@ export default function ForestOfferTemplate({
           ) : null}
 
           {/* schedule date cards */}
-          {showScheduleCards && scheduleCards.length > 0 ? (
-            <div className="forest-hero__schedule">
-              {scheduleCards.map((card, index) => {
-                const startParsed = card.start_datetime
-                  ? parseCompactDate(card.start_datetime, locale)
-                  : null;
-                const endParsed = card.end_datetime
-                  ? parseCompactDate(card.end_datetime, locale)
-                  : null;
-                const timeRange = [startParsed?.time, endParsed?.time].filter(Boolean).join(" – ");
+          {showScheduleCards && scheduleCards.length > 0 ? (() => {
+            /* Offer-level facilitator as fallback */
+            const defaultFacImg = getFacilitatorImageUrl(facilitators[0] ?? {});
+            const defaultFacName = getFacilitatorName(facilitators[0] ?? {});
+            return (
+              <div className="forest-hero__schedule">
+                {scheduleCards.map((card, index) => {
+                  const startParsed = card.start_datetime
+                    ? parseCompactDate(card.start_datetime, locale)
+                    : null;
+                  const endParsed = card.end_datetime
+                    ? parseCompactDate(card.end_datetime, locale)
+                    : null;
+                  const timeRange = [startParsed?.time, endParsed?.time].filter(Boolean).join(" – ");
 
-                return (
-                  <div className="forest-hero__schedule-card" key={`schedule-${index}`}>
-                    {startParsed ? (
-                      <>
-                        <span className="forest-hero__schedule-day">{startParsed.dayOfWeek}</span>
-                        <span className="forest-hero__schedule-date">
-                          {startParsed.dayNum} {startParsed.month}
-                        </span>
-                      </>
-                    ) : null}
-                    {timeRange ? (
-                      <span className="forest-hero__schedule-time">{timeRange}</span>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          ) : null}
+                  /* Per-card facilitator (from API) → fallback to offer-level */
+                  const cardFacImg = card.facilitator?.photo_url || defaultFacImg;
+                  const cardFacName = card.facilitator?.display_name || defaultFacName;
+
+                  return (
+                    <div className="forest-hero__schedule-card" key={`schedule-${index}`}>
+                      {cardFacImg ? (
+                        <img
+                          alt={cardFacName}
+                          className="forest-hero__schedule-avatar"
+                          loading="lazy"
+                          src={cardFacImg}
+                        />
+                      ) : null}
+                      {startParsed ? (
+                        <>
+                          <span className="forest-hero__schedule-day">{startParsed.dayOfWeek}</span>
+                          <span className="forest-hero__schedule-date">
+                            {startParsed.dayNum} {startParsed.month}
+                          </span>
+                        </>
+                      ) : null}
+                      {timeRange ? (
+                        <span className="forest-hero__schedule-time">{timeRange}</span>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })() : null}
 
         </section>
 
@@ -380,13 +453,14 @@ export default function ForestOfferTemplate({
 
       {/* ── APERÇU (two separate boxes side by side) ── */}
       {apercuSection ? (
-        <div className={`forest-apercu${hasMedia ? " forest-apercu--two-col" : ""}`}>
+        <div id="forest-apercu" className={`forest-apercu${hasMedia ? " forest-apercu--two-col" : ""}`} data-reveal="section">
           {hasMedia ? (
             <div className="forest-apercu__media">
               <ForestMediaEmbed
                 fallbackImageUrl={heroImageUrl}
+                galleryImages={galleryImages}
                 title={title}
-                vimeoUrl={mediaUrl}
+                videoUrl={mediaUrl}
               />
             </div>
           ) : null}
@@ -396,8 +470,8 @@ export default function ForestOfferTemplate({
               <div className="rich-text" dangerouslySetInnerHTML={{ __html: apercuBody }} />
             ) : null}
 
-            {/* domain & theme pills */}
-            {(domains.length > 0 || themes.length > 0) ? (
+            {/* domain, theme & tag pills */}
+            {(domains.length > 0 || themes.length > 0 || tags.length > 0) ? (
               <div className="forest-hero__themes">
                 <span className="forest-hero__themes-label">
                   {localeCode === "fr" ? "Thèmes" : "Themes"}
@@ -412,15 +486,21 @@ export default function ForestOfferTemplate({
                     {theme.name}
                   </span>
                 ))}
+                {tags.map((tag) => (
+                  <span className="forest-hero__theme-pill" key={tag}>
+                    {tag}
+                  </span>
+                ))}
               </div>
             ) : null}
           </section>
         </div>
       ) : null}
 
+
       {/* ── CONTENT BLOCKS ── */}
       {groupedSections.length > 0 ? (
-        <section className="forest-section forest-section--blocks">
+        <section className="forest-section forest-section--blocks" data-reveal="section">
           {groupedSections.map((group, gi) => {
             if (group.type === "pair") {
               return (
@@ -451,14 +531,12 @@ export default function ForestOfferTemplate({
       {/* ── WHAT YOU'LL LEARN ── */}
       {journeyItems.length > 0 ? (
         <>
-          <div aria-hidden="true" className="fl-separator" role="separator">
-            <span className="fl-separator__dot" />
-          </div>
-          <section className="forest-journey">
+          <div aria-hidden="true" className="fl-separator fl-separator--subtle" role="separator" />
+          <section className="forest-journey" data-reveal="section">
             <h2 className="forest-journey__heading">
               {localeCode === "fr" ? "Ce que vous apprendrez" : "What you\u2019ll learn"}
             </h2>
-            <ol className="forest-journey__trail">
+            <ol className="forest-journey__trail" data-reveal="stagger">
               {journeyItems.map((step, index) => (
                 <li className="forest-journey__waypoint" key={`step-${index}`}>
                   <span aria-hidden="true" className="forest-journey__marker">{index + 1}</span>
@@ -481,6 +559,23 @@ export default function ForestOfferTemplate({
                 </a>
               </div>
             ) : null}
+
+            {/* PDF lead magnet */}
+            <div className="forest-journey__pdf" data-reveal="section">
+              <svg aria-hidden="true" className="forest-journey__pdf-icon" fill="none" viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <polyline points="14 2 14 8 20 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+              <p className="forest-journey__pdf-text">{placeholderCopy.pdfPrompt}</p>
+              <ForestPdfForm
+                offerSlug={offerSlug}
+                locale={localeCode}
+                placeholderText={placeholderCopy.pdfPlaceholder}
+                ctaText={placeholderCopy.pdfCta}
+              />
+            </div>
           </section>
         </>
       ) : null}
@@ -488,10 +583,8 @@ export default function ForestOfferTemplate({
       {/* ── FEATURED IMAGE + EVENT FAQ ── */}
       {(heroImageUrl || faqItems.length > 0) ? (
         <>
-          <div aria-hidden="true" className="fl-separator" role="separator">
-            <span className="fl-separator__dot" />
-          </div>
-          <section className="forest-image-faq">
+          <div aria-hidden="true" className="fl-separator fl-separator--subtle" role="separator" />
+          <section className="forest-image-faq" data-reveal="section">
             {heroImageUrl ? (
               <div className="forest-image-faq__media">
                 <img
@@ -523,9 +616,10 @@ export default function ForestOfferTemplate({
 
       {/* ── PRICING & BENEFITS ── */}
       {priceOptions.length > 0 ? (
-        <section className={`forest-pricing-benefits${benefits ? " forest-pricing-benefits--two-col" : ""}`}>
+        <section className={`forest-pricing-benefits${benefits ? " forest-pricing-benefits--two-col" : ""}`} data-reveal="section">
           {/* compact pricing box */}
-          <div className="forest-panel forest-pricing-compact">
+          <div className="forest-panel forest-pricing-compact forest-pricing-compact--glow" data-hover-lift>
+            <p className="fp-chapter__eyebrow">{localeCode === "fr" ? "Tarifs" : "Pricing"}</p>
             <h2>{labels.pricing}</h2>
             <div className="forest-pricing-compact__list">
               {priceOptions.map((price, index) => {
@@ -533,10 +627,18 @@ export default function ForestOfferTemplate({
                 const amount = normalizeText(price.amount ?? price.price ?? price.value ?? price.formatted);
                 const currency = normalizeText(price.currency ?? price.currency_code);
                 const detail = [amount, currency].filter(Boolean).join(" ");
+                const isBest = priceOptions.length > 1 && index === priceOptions.length - 1;
 
                 return (
-                  <div className="forest-pricing-compact__row" key={`price-${label}-${index}`}>
-                    <span className="forest-pricing-compact__label">{label}</span>
+                  <div className={`forest-pricing-compact__row${isBest ? " forest-pricing-compact__row--best" : ""}`} key={`price-${label}-${index}`}>
+                    <span className="forest-pricing-compact__label">
+                      {label}
+                      {isBest ? (
+                        <span className="forest-pricing-compact__badge">
+                          {localeCode === "fr" ? "Meilleur rapport" : "Best value"}
+                        </span>
+                      ) : null}
+                    </span>
                     {detail ? <span className="forest-pricing-compact__amount">{detail}</span> : null}
                   </div>
                 );
@@ -552,10 +654,11 @@ export default function ForestOfferTemplate({
           {/* benefits column */}
           {benefits && benefits.items.length > 0 ? (
             <div className="forest-benefits">
+              <p className="fp-chapter__eyebrow">{localeCode === "fr" ? "Avantages" : "Benefits"}</p>
               <h2 className="forest-benefits__heading">
                 {benefits.heading || labels.benefits}
               </h2>
-              <ul className="forest-benefits__list">
+              <ul className="forest-benefits__list" data-reveal="stagger">
                 {benefits.items.map((item, index) => (
                   <li className="forest-benefits__item" key={`benefit-${index}`}>
                     <svg aria-hidden="true" className="forest-benefits__icon" fill="currentColor" height="20" viewBox="0 0 24 24" width="20">
@@ -576,36 +679,67 @@ export default function ForestOfferTemplate({
       ) : null}
 
       {/* ── NEWSLETTER ── */}
-      <section className="forest-panel forest-newsletter forest-newsletter--standalone">
-        <h2>{placeholderCopy.newsletterTitle}</h2>
-        <p>{placeholderCopy.newsletterBody}</p>
-        <div className="forest-newsletter__controls">
-          <input aria-label={placeholderCopy.newsletterPlaceholder} placeholder={placeholderCopy.newsletterPlaceholder} />
+      <section className="forest-newsletter-cta" data-reveal="section">
+        <p className="forest-newsletter-cta__eyebrow">
+          {localeCode === "fr" ? "Communauté" : "Community"}
+        </p>
+        <h2 className="forest-newsletter-cta__heading">
+          {placeholderCopy.newsletterTitle}
+        </h2>
+        <p className="forest-newsletter-cta__body">
+          {placeholderCopy.newsletterBody}
+        </p>
+        <div className="forest-newsletter-cta__form">
+          <input
+            aria-label={placeholderCopy.newsletterPlaceholder}
+            placeholder={placeholderCopy.newsletterPlaceholder}
+          />
           <button type="button">{placeholderCopy.newsletterCta}</button>
         </div>
       </section>
 
       {/* ── DISCOVER / RELATED OFFERS ── */}
       {relatedOffers.length > 0 ? (
-        <section className="forest-discover-slider">
+        <section className="forest-discover-slider" data-reveal="section">
+          <p className="fp-chapter__eyebrow">{localeCode === "fr" ? "Explorer" : "Explore"}</p>
           <h2 className="forest-discover-slider__heading">{placeholderCopy.discoverTitle}</h2>
           <div className="forest-discover-slider__track">
-            {relatedOffers.slice(0, 6).map((ro) => {
+            {(() => {
+              const currentDomainSet = new Set(domains.map((d) => String(d.id)));
+              const scored = [...relatedOffers].map((ro) => {
+                const hasImg = Boolean(
+                  getOfferHeroImageUrl(ro as OfferDetail)
+                  || getFacilitatorImageUrl(getFacilitators(ro as OfferDetail)[0] ?? {}),
+                );
+                const roDomains = Array.isArray(ro.domains) ? (ro.domains as Array<{slug?: string}>) : [];
+                const shared = roDomains.filter((d) => d.slug && currentDomainSet.has(d.slug)).length;
+                const sameType = (ro.type ?? "").toString().toUpperCase() === offerType ? 1 : 0;
+                return { ro, score: (hasImg ? 1000 : 0) + shared * 100 + sameType * 10 };
+              });
+              scored.sort((a, b) => b.score - a.score);
+              return scored.slice(0, 6).map(({ ro }) => ro);
+            })().map((ro) => {
               const roType = (ro.type ?? "WORKSHOP").toString().toUpperCase();
+              const roTypeVariant = getOfferTypeVariant(roType);
               const roLabel = TYPE_LABELS[roType as OfferType]?.[localeCode] ?? TYPE_LABELS.WORKSHOP[localeCode];
               const roTitle = ro.title ?? "Offer";
               const roExcerpt = typeof ro.excerpt === "string" ? ro.excerpt : "";
-              const roImage = getOfferHeroImageUrl(ro as OfferDetail);
+              const roImage = getOfferHeroImageUrl(ro as OfferDetail)
+                || getFacilitatorImageUrl(getFacilitators(ro as OfferDetail)[0] ?? {});
               const roPath = getCanonicalOfferPath(ro);
               return (
-                <Link className="forest-discover-slider__card" href={localizePath(localeCode, roPath)} key={ro.slug}>
+                <Link
+                  className={`forest-discover-slider__card forest-discover-slider__card--${roTypeVariant}`}
+                  href={localizePath(localeCode, roPath)}
+                  key={ro.slug}
+                >
                   {roImage ? (
                     <img alt={roTitle} className="forest-discover-slider__img" loading="lazy" src={roImage} />
                   ) : (
                     <div className="forest-discover-slider__img-placeholder" />
                   )}
                   <div className="forest-discover-slider__body">
-                    <small>{roLabel}</small>
+                    <small className={`forest-discover-slider__type forest-discover-slider__type--${roTypeVariant}`}>{roLabel}</small>
                     <strong>{roTitle}</strong>
                     {roExcerpt ? <p>{roExcerpt}</p> : null}
                   </div>
@@ -621,7 +755,7 @@ export default function ForestOfferTemplate({
 
       {/* ── SITE FAQ ── */}
       {faqSections.length > 0 ? (
-        <section className="forest-panel fp-section fp-section--faq forest-site-faq">
+        <section className="forest-panel fp-section fp-section--faq forest-site-faq" data-reveal="section">
           <div className="fp-chapter__intro fp-chapter__intro--faq">
             <p className="fp-chapter__eyebrow">Questions</p>
             <h2 className="fp-section__heading fp-section__heading--left">{placeholderCopy.extraFaqHeading}</h2>
@@ -644,17 +778,7 @@ export default function ForestOfferTemplate({
         </section>
       ) : null}
 
-      {/* ── TAGS ── */}
-      {tags.length > 0 ? (
-        <section className="forest-panel forest-section">
-          <h2>Tags</h2>
-          <ul className="tag-list">
-            {tags.map((tag) => (
-              <li key={tag}>{tag}</li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+      {/* Tags integrated into Aperçu pills — no standalone section */}
       </section>
     </ForestPageShell>
   );

@@ -79,7 +79,20 @@ export type CalendarResponse = {
   meta: CalendarMeta;
 };
 
-export type { CalendarItem, OfferDetail, OfferSummary, SiteFaqSection } from "@/lib/types";
+export type FetchTeacherDetailParams = {
+  hostname: string;
+  center?: string;
+  slug: string;
+  locale?: string;
+};
+
+export type FetchTeachersListParams = {
+  hostname: string;
+  center?: string;
+  locale?: string;
+};
+
+export type { CalendarItem, OfferDetail, OfferSummary, SiteFaqSection, TeacherDetail, TeacherListItem } from "@/lib/types";
 
 export class ApiError extends Error {
   status: number;
@@ -361,6 +374,34 @@ export async function fetchOfferDetail({ hostname, center, slug, locale }: Fetch
 
   const wrapped = asRecord(record.data) ?? asRecord(record.item) ?? asRecord(record.offer);
   return wrapped ?? record;
+}
+
+export async function fetchTeacherDetail({ hostname, center, slug, locale }: FetchTeacherDetailParams) {
+  const normalizedHostname = normalizeHostname(hostname);
+  const payload = await requestJson<unknown>(`/teachers/${encodeURIComponent(slug)}`, {
+    domain: normalizedHostname,
+    center,
+    locale,
+  });
+
+  const record = asRecord(payload);
+  if (!record) {
+    return null;
+  }
+
+  const wrapped = asRecord(record.data) ?? asRecord(record.item) ?? asRecord(record.teacher);
+  return (wrapped ?? record) as import("@/lib/types").TeacherDetail;
+}
+
+export async function fetchTeachersList({ hostname, center, locale }: FetchTeachersListParams) {
+  const normalizedHostname = normalizeHostname(hostname);
+  const payload = await requestJson<unknown>("/teachers", {
+    domain: normalizedHostname,
+    center,
+    locale,
+  });
+
+  return toList<import("@/lib/types").TeacherListItem>(payload, ["results", "items", "data", "teachers"]);
 }
 
 export async function fetchCalendar({

@@ -18,11 +18,18 @@ export type QuickFacts = {
   facilitator_note?: string | null;
 };
 
+export type ScheduleCardFacilitator = {
+  id?: number | string;
+  display_name?: string | null;
+  photo_url?: string | null;
+};
+
 export type ScheduleCard = {
   date_label?: string | null;
   start_datetime?: string | null;
   end_datetime?: string | null;
   timezone?: string | null;
+  facilitator?: ScheduleCardFacilitator | null;
 };
 
 export type ThemeTag = {
@@ -73,6 +80,33 @@ export type Facilitator = {
   name?: string | null;
   full_name?: string | null;
   title?: string | null;
+  [key: string]: unknown;
+};
+
+export type TeacherDetail = {
+  id?: number | string;
+  slug?: string;
+  display_name?: string;
+  title?: string | null;
+  short_bio?: string | null;
+  bio?: string | null;
+  photo_url?: string | null;
+  gallery_urls?: string[];
+  quote?: string | null;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  locale?: string;
+  center?: { slug?: string | null; name?: string | null } | null;
+  [key: string]: unknown;
+};
+
+export type TeacherListItem = {
+  id?: number | string;
+  slug?: string;
+  display_name?: string;
+  title?: string | null;
+  short_bio?: string | null;
+  photo_url?: string | null;
   [key: string]: unknown;
 };
 

@@ -75,6 +75,20 @@ export function getOfferType(offer: OfferDetail | OfferSummary) {
   return "WORKSHOP";
 }
 
+export function getOfferTypeVariant(offerType: string) {
+  const normalized = offerType.trim().toUpperCase();
+  if (normalized === "CLASS") {
+    return "class" as const;
+  }
+  if (normalized === "PRIVATE_SESSION") {
+    return "private-session" as const;
+  }
+  if (normalized === "TRAINING_INFO") {
+    return "training" as const;
+  }
+  return "workshop" as const;
+}
+
 export function getOfferCollectionPathByType(offerType: string) {
   const normalized = offerType.trim().toUpperCase();
   if (normalized === "CLASS") {
@@ -315,11 +329,19 @@ export function getScheduleCards(offer: OfferDetail) {
 
   return asRecords(record.schedule_cards ?? record.scheduleCards)
     .map((card) => {
+      const facRaw = asRecord(card.facilitator);
       const normalized: ScheduleCard = {
         date_label: pickString(card, ["date_label", "dateLabel"]),
         start_datetime: pickString(card, ["start_datetime", "start", "start_at", "datetime"]),
         end_datetime: pickString(card, ["end_datetime", "end", "end_at"]),
         timezone: pickString(card, ["timezone", "tz", "time_zone"]),
+        facilitator: facRaw
+          ? {
+              id: (facRaw.id as number | string) ?? undefined,
+              display_name: pickString(facRaw, ["display_name", "displayName", "name"]),
+              photo_url: pickString(facRaw, ["photo_url", "photoUrl", "image_url", "imageUrl"]),
+            }
+          : null,
       };
 
       const hasAny = Object.values(normalized).some((value) => Boolean(value));

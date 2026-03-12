@@ -186,7 +186,7 @@ function buildEngageTiles(locale: string, pillars: HomePillar[]): EngageTile[] {
     },
     {
       key: "private",
-      title: isFr ? "Privé" : "Private",
+      title: isFr ? "Individuel" : "Individual",
       description: isFr
         ? "Accompagnement individuel pour besoins spécifiques et progression ciblée."
         : "One-to-one guidance for specific needs and focused progress.",

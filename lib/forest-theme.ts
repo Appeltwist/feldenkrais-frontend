@@ -1,5 +1,5 @@
 export const FOREST_PAGE_MEDIA = {
-  about: "/brands/forest-lighthouse/photos/DSC01037.jpg",
+  about: "/brands/forest-lighthouse/photos/IMG_2910.jpg",
   calendar: "/brands/forest-lighthouse/photos/DSC00594.jpg",
   classes: "/brands/forest-lighthouse/photos/DSC00137.jpg",
   contact: "/brands/forest-lighthouse/photos/DSC02156.JPG",

@@ -108,7 +108,7 @@ export default function OfferTemplateBase({
         {bodyHtml ? <div className="rich-text" dangerouslySetInnerHTML={{ __html: bodyHtml }} /> : null}
       </section>
 
-      <OfferActionBar canonicalUrl={canonicalUrl} icsUrl={primaryIcsUrl} mediaUrl={mediaUrl} title={title} />
+      <OfferActionBar canonicalUrl={canonicalUrl} icsUrl={primaryIcsUrl} title={title} />
 
       {offerSlug ? <LeadMagnetDownload locale={localeCode} offerSlug={offerSlug} offerType={offerType} /> : null}
 

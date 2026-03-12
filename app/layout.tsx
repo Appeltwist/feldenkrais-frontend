@@ -51,7 +51,6 @@ export default async function RootLayout({
   children: ReactNode;
 }>) {
   const hostname = await getHostname();
-  const locale = await getRequestLocale();
   let siteConfig: Awaited<ReturnType<typeof fetchSiteConfig>> | null = null;
 
   try {
@@ -62,6 +61,8 @@ export default async function RootLayout({
     }
     siteConfig = FALLBACK_CONFIGS[hostname] ?? null;
   }
+
+  const locale = await getRequestLocale(siteConfig?.defaultLocale ?? "en");
 
   if (!siteConfig) {
     return (

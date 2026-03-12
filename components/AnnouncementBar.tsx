@@ -24,7 +24,7 @@ export default function AnnouncementBar({ locale }: { locale: string }) {
           rel="noopener noreferrer"
           target="_blank"
         >
-          {isEn ? "Join Now!" : "Rejoignez-nous\u00a0!"}
+          {isEn ? "Join Now!" : "Commencer\u00a0!"}
         </a>
         <button
           aria-label="Close"
