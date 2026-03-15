@@ -1,19 +1,13 @@
 import { NextResponse } from "next/server";
 
 import { getRequiredApiBase } from "@/lib/server-env";
+import { resolveHostname } from "@/lib/server-hostname";
 
 const API_BASE = getRequiredApiBase();
 
-function normalizeHostname(hostname: string) {
-  const cleaned = hostname.trim().toLowerCase().replace(/^https?:\/\//, "");
-  const firstPart = cleaned.split("/")[0] ?? cleaned;
-  const firstHost = firstPart.split(",")[0]?.trim() ?? firstPart;
-  return firstHost.replace(/:\d+$/, "");
-}
-
 async function proxy(request: Request, segments: string[]) {
   const url = new URL(request.url);
-  const hostname = normalizeHostname(url.searchParams.get("hostname") ?? "");
+  const hostname = resolveHostname(url.searchParams.get("hostname") ?? "");
   const center = (url.searchParams.get("center") ?? "").trim();
   const locale = (url.searchParams.get("locale") ?? "").trim();
 

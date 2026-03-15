@@ -12,6 +12,14 @@ NEXT_PUBLIC_API_BASE=https://api.forest-lighthouse.be/api
 
 The frontend requires `NEXT_PUBLIC_API_BASE` at build time and runtime. If it is missing, the app fails fast instead of falling back to localhost.
 
+If you are deploying to a temporary `*.vercel.app` hostname before switching DNS, also set:
+
+```bash
+SITE_HOSTNAME_OVERRIDE=forest-lighthouse.be
+```
+
+This makes the frontend identify itself to the backend as `forest-lighthouse.be`, which is useful while the backend site mapping and public DNS still point at the canonical domain instead of the temporary Vercel URL.
+
 ## Production branch
 
 Production deployments should come from the `main` branch.
