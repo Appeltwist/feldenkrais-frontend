@@ -11,7 +11,7 @@ Standalone multi-site frontend for Feldenkrais Education.
 127.0.0.1 feldenkrais-education.local
 ```
 
-2. In backend repo (`/Users/nicosdalton/Documents/CODEX/fe-cms`), run:
+2. In the backend repo, run:
 
 ```bash
 python manage.py runserver 8000
@@ -60,6 +60,8 @@ If browser API requests fail with CORS errors, backend must allow frontend origi
 - `http://localhost:3000`
 
 Backend CORS config is not managed in this repository.
+
+For production deployment on Vercel, set `NEXT_PUBLIC_API_BASE` in the project settings. Do not rely on any localhost fallback.
 
 ## Manual verification (offer detail)
 

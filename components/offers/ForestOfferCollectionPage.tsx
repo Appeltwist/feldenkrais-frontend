@@ -11,7 +11,7 @@ import {
   type OfferSummary,
 } from "@/lib/api";
 import { cleanDisplayText } from "@/lib/content-cleanup";
-import { getForestExcerptOverride } from "@/lib/forest-excerpts";
+import { getForestExcerptOverride, getForestImageOverride } from "@/lib/forest-excerpts";
 import { getForestFacilitatorNamesOverride } from "@/lib/forest-facilitator-overrides";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
@@ -194,7 +194,7 @@ function getCopy(
   };
 }
 
-function formatFacilitatorNames(names: string[]) {
+function formatFacilitatorNames(names: readonly string[]) {
   const cleaned = names.map((name) => cleanDisplayText(name)).filter(Boolean);
   if (cleaned.length === 0) {
     return "";
@@ -657,7 +657,7 @@ export default async function ForestOfferCollectionPage({
                   ? getFacilitatorName(firstFacilitator)
                   : "";
                 const facilitatorImage = facilitatorOverride ? "" : firstFacilitator ? getFacilitatorImageUrl(firstFacilitator) : "";
-                const cardImage = heroImage || facilitatorImage;
+                const cardImage = getForestImageOverride(title) || heroImage || facilitatorImage;
                 const offerType = getOfferType(offer);
                 const offerTypeVariant = getOfferTypeVariant(offerType);
                 const typeLabel = TYPE_LABELS[offerType]?.[localeCode] ?? TYPE_LABELS.WORKSHOP[localeCode];

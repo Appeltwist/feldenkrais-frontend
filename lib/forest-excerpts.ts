@@ -51,6 +51,36 @@ const FOREST_EXCERPT_OVERRIDES: Array<{ titleMatch: string; excerpt: string }> =
   },
 ];
 
+/* ── Hero-image overrides ──────────────────────────────────────────── */
+
+const FOREST_IMAGE_OVERRIDES: Array<{ titleMatch: string; imageUrl: string }> = [
+  {
+    titleMatch: "théâtre enfants",
+    imageUrl: "/brands/forest-lighthouse/photos/theatrenfant.JPEG",
+  },
+  {
+    titleMatch: "theatre enfants",
+    imageUrl: "/brands/forest-lighthouse/photos/theatrenfant.JPEG",
+  },
+  {
+    titleMatch: "brighter minds",
+    imageUrl: "/brands/forest-lighthouse/photos/theatrenfant.JPEG",
+  },
+];
+
+/**
+ * Returns a local hero-image override for the given offer title, or `null`.
+ */
+export function getForestImageOverride(title: string): string | null {
+  const lower = title.toLowerCase();
+  for (const entry of FOREST_IMAGE_OVERRIDES) {
+    if (lower.includes(entry.titleMatch)) {
+      return entry.imageUrl;
+    }
+  }
+  return null;
+}
+
 /**
  * Returns a hardcoded excerpt override for the given offer title, or `null`
  * if no override applies (so the caller keeps the empty string).

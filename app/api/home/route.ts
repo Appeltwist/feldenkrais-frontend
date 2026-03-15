@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000/api").replace(/\/+$/, "");
+import { getRequiredApiBase } from "@/lib/server-env";
+
+const API_BASE = getRequiredApiBase();
 
 function normalizeHostname(hostname: string) {
   const cleaned = hostname.trim().toLowerCase().replace(/^https?:\/\//, "");

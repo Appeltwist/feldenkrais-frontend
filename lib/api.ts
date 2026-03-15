@@ -3,6 +3,7 @@ import "server-only";
 import { cleanDisplayText, cleanRichTextHtml, isFacilitatorOnlySubtitle } from "@/lib/content-cleanup";
 import { getForestExcerptOverride } from "@/lib/forest-excerpts";
 import { getForestFacilitatorNamesOverride } from "@/lib/forest-facilitator-overrides";
+import { getRequiredApiBase } from "@/lib/server-env";
 import type { CalendarItem, OfferDetail, OfferSummary, PrivateBookingConfig, SiteFaqSection } from "@/lib/types";
 
 export type QueryValue = string | number | boolean | null | undefined;
@@ -114,7 +115,7 @@ export class ApiError extends Error {
   }
 }
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000/api").replace(/\/+$/, "");
+const API_BASE = getRequiredApiBase();
 
 function normalizeHostname(hostname: string) {
   const cleaned = hostname.trim().toLowerCase().replace(/^https?:\/\//, "");

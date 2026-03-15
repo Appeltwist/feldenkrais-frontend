@@ -10,6 +10,7 @@ import ForestPdfForm from "@/components/offers/ForestPdfForm";
 import OfferActionBar from "@/components/offers/OfferActionBar";
 import { FOREST_DEFAULT_HERO_IMAGE } from "@/lib/brand-assets";
 import { getForestBookingUrl } from "@/lib/forest-booking";
+import { getForestImageOverride } from "@/lib/forest-excerpts";
 import { isFacilitatorOnlySubtitle } from "@/lib/content-cleanup";
 import { getForestFacilitatorNamesOverride } from "@/lib/forest-facilitator-overrides";
 import { getForestPlaceholderCopy, getOfferLabels, resolveLocale } from "@/lib/i18n";
@@ -352,8 +353,8 @@ export default function ForestOfferTemplate({
   const galleryImages = afterApercu.flatMap((section) => getGalleryImagesFromSection(section));
   const hasMedia = Boolean(mediaUrl) || galleryImages.length > 0;
 
-  /* hero image: prefer explicit hero_image_url, fall back to first gallery image */
-  const effectiveHeroImage = heroImageUrl || galleryImages[0]?.url || "";
+  /* hero image: prefer local override, then explicit hero_image_url, fall back to first gallery image */
+  const effectiveHeroImage = getForestImageOverride(title ?? "") || heroImageUrl || galleryImages[0]?.url || "";
 
   /* pull out journey_steps section if present */
   const journeySection = afterApercu.find((s) => s.type === "journey_steps") ?? null;

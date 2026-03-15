@@ -17,6 +17,7 @@ import {
 import { isForestCenter } from "@/lib/forest-theme";
 import { getHostname } from "@/lib/get-hostname";
 import { localizePath } from "@/lib/locale-path";
+import { getForestImageOverride } from "@/lib/forest-excerpts";
 import { getCanonicalOfferPathByTypeAndSlug } from "@/lib/offers";
 
 const CALENDAR_TYPE_COLORS: Record<string, string> = {
@@ -366,7 +367,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
         dateLabel,
         timeLabel,
         domainsLabel: entry.offer.domains.map((d) => d.name).join(" · "),
-        heroImageUrl: entry.offer.heroImageUrl,
+        heroImageUrl: getForestImageOverride(entry.offer.title) || entry.offer.heroImageUrl,
         color: calendarTypeColor(entry.offer.type),
       };
     });

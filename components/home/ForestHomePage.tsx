@@ -10,7 +10,7 @@ import ForestHomeHeroVideo from "@/components/home/ForestHomeHeroVideo";
 import { ForestPageShell } from "@/components/forest/ForestPageShell";
 import { fetchOfferDetail, fetchOffers } from "@/lib/api";
 import { cleanDisplayText } from "@/lib/content-cleanup";
-import { getForestExcerptOverride } from "@/lib/forest-excerpts";
+import { getForestExcerptOverride, getForestImageOverride } from "@/lib/forest-excerpts";
 import { getForestFacilitatorNamesOverride } from "@/lib/forest-facilitator-overrides";
 import { getForestHomeContent } from "@/lib/forest-home-content";
 import {
@@ -369,7 +369,7 @@ function getWithLabel(locale: string) {
   return locale.toLowerCase().startsWith("fr") ? "avec" : "with";
 }
 
-function formatFacilitatorNames(names: string[]) {
+function formatFacilitatorNames(names: readonly string[]) {
   const cleaned = names.map((name) => cleanDisplayText(name)).filter(Boolean);
   if (cleaned.length === 0) {
     return "";
@@ -546,11 +546,14 @@ function buildHighlightCard(
   const dateLabels = rawDateLabels.slice(0, MAX_CARD_DATE_PILLS);
   const resolvedDateLabels = dateLabels.length > 0 ? dateLabels : [fallbackDate || fallbackDateLabel];
 
+  const title = getOfferTitle(offer, "Untitled");
+  const imageOverride = getForestImageOverride(title);
+
   return {
     href: getOfferHref(offer, locale),
-    title: getOfferTitle(offer, "Untitled"),
+    title,
     excerpt,
-    imageUrl: heroImage || facilitatorImage || FALLBACK_HIGHLIGHT_IMAGE,
+    imageUrl: imageOverride || heroImage || facilitatorImage || FALLBACK_HIGHLIGHT_IMAGE,
     typeLabel: getTypeLabel(offerType, locale),
     typeVariant: getOfferTypeVariant(offerType),
     facilitatorName,
