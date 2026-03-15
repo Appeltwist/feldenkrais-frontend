@@ -1,8 +1,8 @@
-import type { CSSProperties } from "react";
+import { fetchOffers, fetchTeachersList } from "@/lib/api";
+import { getHostname } from "@/lib/get-hostname";
+import { getPricingContent, type ScheduleDay } from "@/lib/pricing-content";
 
-import Image from "next/image";
-
-import { getPricingContent } from "@/lib/pricing-content";
+import ForestScheduleList from "./ForestScheduleList";
 
 type ForestWeeklyScheduleSectionProps = {
   locale: string;
@@ -10,114 +10,188 @@ type ForestWeeklyScheduleSectionProps = {
   heading?: string;
   subtitle?: string | null;
   className?: string;
+  /** @deprecated No longer used — kept for backward compat with pricing page */
   parallax?: boolean;
 };
 
-export default function ForestWeeklyScheduleSection({
+type InstructorProfile = {
+  display_name: string;
+  photo_url: string;
+};
+
+function normalizeName(value: string | null | undefined) {
+  return (value ?? "").trim().toLowerCase();
+}
+
+function firstWord(value: string | null | undefined) {
+  const normalized = normalizeName(value);
+  if (!normalized) {
+    return "";
+  }
+
+  return normalized.split(/\s+/)[0] ?? normalized;
+}
+
+function profileFromUnknown(value: unknown): InstructorProfile | null {
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const display_name = typeof record.display_name === "string" ? record.display_name : null;
+  const photo_url = typeof record.photo_url === "string" ? record.photo_url : null;
+
+  if (!display_name || !photo_url) {
+    return null;
+  }
+
+  return { display_name, photo_url };
+}
+
+function buildInstructorImageMap(days: ScheduleDay[], classOffers: unknown[], teachers: InstructorProfile[]) {
+  const instructorNames = Array.from(
+    new Set(
+      days.flatMap((day) => day.entries.map((entry) => entry.instructor)).filter(Boolean),
+    ),
+  );
+
+  const instructors = instructorNames.map((name) => ({
+    original: name,
+    normalized: normalizeName(name),
+    first: firstWord(name),
+  }));
+
+  const profiles: InstructorProfile[] = [
+    ...classOffers.flatMap((offer) => {
+      if (typeof offer !== "object" || offer === null) {
+        return [];
+      }
+
+      const facilitators = Array.isArray((offer as Record<string, unknown>).facilitators)
+        ? ((offer as Record<string, unknown>).facilitators as unknown[])
+        : [];
+
+      return facilitators
+        .map(profileFromUnknown)
+        .filter((profile): profile is InstructorProfile => profile !== null);
+    }),
+    ...teachers,
+  ];
+
+  const imageMap = new Map<string, string>();
+
+  for (const instructor of instructors) {
+    const match = profiles.find((profile) => {
+      const displayName = normalizeName(profile.display_name);
+      return (
+        displayName === instructor.normalized ||
+        displayName.startsWith(`${instructor.first} `) ||
+        firstWord(displayName) === instructor.first
+      );
+    });
+
+    if (match?.photo_url) {
+      imageMap.set(instructor.normalized, match.photo_url);
+    }
+  }
+
+  return imageMap;
+}
+
+function mergeInstructorImages(days: ScheduleDay[], imageMap: Map<string, string>) {
+  return days.map((day) => ({
+    ...day,
+    entries: day.entries.map((entry) => {
+      const resolvedImage = imageMap.get(normalizeName(entry.instructor));
+      if (!resolvedImage || entry.instructorImage === resolvedImage) {
+        return entry;
+      }
+
+      return {
+        ...entry,
+        instructorImage: resolvedImage,
+      };
+    }),
+  }));
+}
+
+export default async function ForestWeeklyScheduleSection({
   locale,
   eyebrow,
   heading,
   subtitle,
   className = "",
-  parallax = false,
 }: ForestWeeklyScheduleSectionProps) {
   const isFr = locale.toLowerCase().startsWith("fr");
   const content = getPricingContent(locale);
   const resolvedHeading = heading ?? content.schedule.heading;
   const resolvedSubtitle = subtitle ?? content.schedule.subtitle ?? null;
-  const classDetailsLabel = isFr ? "Plus de d\u00e9tails" : "More details";
-  const classBookLabel = isFr ? "R\u00e9server le cours" : "Book class";
-  const classTeacherPrefix = isFr ? "avec" : "w/";
-  const scheduleScrollHint = isFr ? "<- Glissez pour voir tous les jours ->" : "<- Scroll to see all days ->";
+
+  let scheduleDays = content.schedule.days;
+
+  try {
+    const hostname = await getHostname();
+    const [classOffers, teachers] = await Promise.all([
+      fetchOffers({
+        hostname,
+        center: "forest-lighthouse",
+        type: "CLASS",
+        locale,
+      }),
+      fetchTeachersList({
+        hostname,
+        center: "forest-lighthouse",
+        locale,
+      }),
+    ]);
+
+    const teacherProfiles: InstructorProfile[] = teachers.flatMap((teacher) => {
+      const display_name = typeof teacher.display_name === "string" ? teacher.display_name : "";
+      const photo_url = typeof teacher.photo_url === "string" ? teacher.photo_url : "";
+
+      if (!display_name || !photo_url) {
+        return [];
+      }
+
+      return [{ display_name, photo_url }];
+    });
+
+    const imageMap = buildInstructorImageMap(scheduleDays, classOffers, teacherProfiles);
+    scheduleDays = mergeInstructorImages(scheduleDays, imageMap);
+  } catch {
+    /* Keep the static schedule content as a safe fallback when the API is unavailable. */
+  }
+
+  const labels = {
+    classDetailsLabel: isFr ? "Plus de détails" : "More details",
+    classBookLabel: isFr ? "Réserver le cours" : "Book class",
+    classTeacherPrefix: isFr ? "avec" : "w/",
+    scheduleScrollHint: isFr
+      ? "<- Glissez pour voir tous les jours ->"
+      : "<- Scroll to see all days ->",
+  };
 
   return (
     <section
-      aria-label={resolvedHeading}
-      className={`fp-detail-section fp-detail-section--schedule ${className}`.trim()}
-      data-scroll-parallax-section={parallax ? true : undefined}
+      aria-label={resolvedHeading || undefined}
+      className={`fp-schedule-section ${className}`.trim()}
     >
-      <div
-        className="fp-detail-section__illustration"
-        data-scroll-parallax-illus={parallax ? true : undefined}
-      >
-        <Image
-          alt={content.features.columns[0]?.title || "Group classes"}
-          className="fp-detail-section__illus-img"
-          fill
-          sizes="(max-width: 900px) 100vw, 40vw"
-          src="/brands/forest-lighthouse/yoga-lines.png"
-        />
-      </div>
-      <div
-        className="fp-detail-section__content"
-        data-scroll-parallax-content={parallax ? true : undefined}
-      >
-        {eyebrow ? <p className="fp-chapter__eyebrow">{eyebrow}</p> : null}
-        {resolvedHeading ? <h2 className="fp-section__heading fp-section__heading--left">{resolvedHeading}</h2> : null}
-        {resolvedSubtitle ? (
-          <p className="fp-section__subtitle fp-section__subtitle--left">{resolvedSubtitle}</p>
-        ) : null}
+      {eyebrow ? <p className="fp-chapter__eyebrow">{eyebrow}</p> : null}
+      {resolvedHeading ? (
+        <h2 className="fp-section__heading fp-section__heading--left">
+          {resolvedHeading}
+        </h2>
+      ) : null}
+      {resolvedSubtitle ? (
+        <p className="fp-section__subtitle fp-section__subtitle--left">
+          {resolvedSubtitle}
+        </p>
+      ) : null}
 
-        <div className="fp-schedule-wrap">
-          <div className="fp-schedule">
-            {content.schedule.days.map((day) => (
-              <div className="fp-schedule__day" key={day.day}>
-                <h3 className="fp-schedule__day-name">{day.day}</h3>
-                <div className="fp-schedule__entries">
-                  {day.entries.map((entry, index) => (
-                    <div
-                      className="fp-class-card"
-                      data-hover-lift="true"
-                      key={`${day.day}-${entry.className}-${entry.time}-${index}`}
-                      style={{ "--card-bg": entry.color || "rgba(0,55,56,0.55)" } as CSSProperties}
-                    >
-                      <div className="fp-class-card__meta">
-                        <div className="fp-class-card__meta-left">
-                          <span className="fp-class-card__time">{entry.time}</span>
-                          <span className="fp-class-card__langs">
-                            {entry.languages.map((language) => (
-                              <span className="fp-class-card__lang" key={language}>
-                                {language}
-                              </span>
-                            ))}
-                          </span>
-                          {entry.level ? <span className="fp-class-card__level">{entry.level}</span> : null}
-                        </div>
-                      </div>
-
-                      <h4 className="fp-class-card__name">{entry.className}</h4>
-                      <span className="fp-class-card__teacher">
-                        {classTeacherPrefix} <strong>{entry.instructor}</strong>
-                      </span>
-
-                      <details className="fp-class-details">
-                        <summary className="fp-class-summary">
-                          <span className="fp-class-summary__label">{classDetailsLabel}</span>
-                          <span aria-hidden="true" className="fp-class-plus" />
-                        </summary>
-                        <div className="fp-class-desc">
-                          <p className="fp-class-desc__text">{entry.description}</p>
-                          {entry.bookingUrl ? (
-                            <a
-                              className="fp-class-desc__book"
-                              href={entry.bookingUrl}
-                              rel="noopener noreferrer"
-                              target="_blank"
-                            >
-                              {classBookLabel}
-                            </a>
-                          ) : null}
-                        </div>
-                      </details>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-          <p aria-hidden="true" className="fp-schedule__hint">{scheduleScrollHint}</p>
-        </div>
-      </div>
+      <ForestScheduleList
+        days={scheduleDays}
+        labels={labels}
+      />
     </section>
   );
 }

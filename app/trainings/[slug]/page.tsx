@@ -3,11 +3,11 @@ import { notFound, permanentRedirect } from "next/navigation";
 import LocaleSwitchSync from "@/components/LocaleSwitchSync";
 import ForestOfferTemplate from "@/components/offers/ForestOfferTemplate";
 import TrainingInfoTemplate from "@/components/offers/TrainingInfoTemplate";
-import { ApiError, fetchOfferDetail, fetchSiteConfig, fetchSiteFaq, type OfferDetail } from "@/lib/api";
+import { ApiError, fetchOfferDetail, fetchOffers, fetchSiteConfig, fetchSiteFaq, type OfferDetail, type OfferSummary } from "@/lib/api";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
 import { buildOfferLocaleSwitchPaths } from "@/lib/offer-locale-paths";
-import { getCanonicalOfferPath, getOfferType } from "@/lib/offers";
+import { getCanonicalOfferPath, getDomains, getOfferType } from "@/lib/offers";
 
 type OfferPageProps = {
   params: Promise<{ slug: string }>;
@@ -78,8 +78,9 @@ export default async function TrainingDetailPage({ params }: OfferPageProps) {
   }
 
   if (siteConfig.centerSlug === "forest-lighthouse") {
-    const [siteFaqSections, localeSwitchPaths] = await Promise.all([
-      fetchSiteFaq(hostname).catch(() => []),
+    const [siteFaqSections, allOffers, localeSwitchPaths] = await Promise.all([
+      fetchSiteFaq(hostname, requestLocale).catch(() => []),
+      fetchOffers({ hostname, center: siteConfig.centerSlug, locale: contentLocale }).catch(() => [] as OfferSummary[]),
       buildOfferLocaleSwitchPaths({
         hostname,
         centerSlug: siteConfig.centerSlug,
@@ -87,6 +88,17 @@ export default async function TrainingDetailPage({ params }: OfferPageProps) {
         requestLocale,
       }),
     ]);
+
+    const currentDomainSlugs = new Set(getDomains(offer).map((d) => String(d.id)));
+    const otherOffers = allOffers.filter((o) => String(o.slug) !== slug);
+    const domainMatched = otherOffers.filter((o) => {
+      const oDomains = Array.isArray(o.domains)
+        ? (o.domains as Array<{ slug?: string }>)
+        : [];
+      return oDomains.some((d) => d.slug && currentDomainSlugs.has(d.slug));
+    });
+    const relatedOffers = domainMatched.length > 0 ? domainMatched : otherOffers;
+
     return (
       <>
         <LocaleSwitchSync paths={localeSwitchPaths} />
@@ -94,6 +106,7 @@ export default async function TrainingDetailPage({ params }: OfferPageProps) {
           locale={requestLocale}
           offer={offer}
           offerType={offerType}
+          relatedOffers={relatedOffers}
           siteFaqSections={siteFaqSections}
         />
       </>

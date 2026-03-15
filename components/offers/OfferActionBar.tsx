@@ -13,6 +13,7 @@ type OfferActionBarProps = {
   canonicalUrl?: string;
   icsUrl?: string;
   calendarEvent?: CalendarEvent;
+  calendarEvents?: CalendarEvent[];
   variant?: "default" | "cinematic";
   /** Hide the "Save the date" / calendar button entirely */
   hideCalendar?: boolean;
@@ -36,24 +37,37 @@ function toIcsDate(isoStr: string) {
     .replace(/\.\d{3}/, "");
 }
 
-function downloadIcs(event: CalendarEvent, title: string) {
-  const uid = `${Date.now()}@forest-lighthouse`;
+function downloadIcs(events: CalendarEvent[], title: string) {
+  if (events.length === 0) {
+    return;
+  }
+
+  const dtStamp = toIcsDate(new Date().toISOString());
+  const eventBlocks = events
+    .map((event, index) => {
+      const uid = `${Date.now()}-${index}@forest-lighthouse`;
+      return [
+        "BEGIN:VEVENT",
+        `UID:${uid}`,
+        `DTSTART:${toIcsDate(event.start)}`,
+        `DTEND:${toIcsDate(event.end)}`,
+        `SUMMARY:${title}`,
+        event.location ? `LOCATION:${event.location}` : "",
+        `DTSTAMP:${dtStamp}`,
+        "END:VEVENT",
+      ]
+        .filter(Boolean)
+        .join("\r\n");
+    })
+    .join("\r\n");
+
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
     "PRODID:-//Forest Lighthouse//Offer//EN",
-    "BEGIN:VEVENT",
-    `UID:${uid}`,
-    `DTSTART:${toIcsDate(event.start)}`,
-    `DTEND:${toIcsDate(event.end)}`,
-    `SUMMARY:${title}`,
-    event.location ? `LOCATION:${event.location}` : "",
-    `DTSTAMP:${toIcsDate(new Date().toISOString())}`,
-    "END:VEVENT",
+    eventBlocks,
     "END:VCALENDAR",
-  ]
-    .filter(Boolean)
-    .join("\r\n");
+  ].join("\r\n");
 
   const blob = new Blob([lines], { type: "text/calendar;charset=utf-8" });
   const url = URL.createObjectURL(blob);
@@ -131,6 +145,7 @@ export default function OfferActionBar({
   canonicalUrl,
   icsUrl,
   calendarEvent,
+  calendarEvents = [],
   variant = "default",
   hideCalendar = false,
 }: OfferActionBarProps) {
@@ -224,8 +239,8 @@ export default function OfferActionBar({
   }
 
   function onAddToCalendar() {
-    if (calendarEvent) {
-      downloadIcs(calendarEvent, title);
+    if (resolvedCalendarEvents.length > 0) {
+      downloadIcs(resolvedCalendarEvents, title);
     }
   }
 
@@ -236,8 +251,14 @@ export default function OfferActionBar({
     }
   }
 
+  const resolvedCalendarEvents = calendarEvents.length > 0
+    ? calendarEvents
+    : calendarEvent
+      ? [calendarEvent]
+      : [];
+
   /* calendar action: ICS URL > client-side generation > disabled */
-  const hasCalendar = Boolean(icsUrl) || Boolean(calendarEvent);
+  const hasCalendar = Boolean(icsUrl) || resolvedCalendarEvents.length > 0;
 
   /* ── cinematic variant ── */
   if (variant === "cinematic") {

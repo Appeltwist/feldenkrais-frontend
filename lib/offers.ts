@@ -1,10 +1,13 @@
+import { cleanDisplayText, cleanRichTextHtml } from "@/lib/content-cleanup";
 import { getOfferLabels as getLocalizedOfferLabels } from "@/lib/i18n";
 import type {
+  BookingOption,
   Facilitator,
   OfferDetail,
   OfferSummary,
   OfferType,
   PriceOption,
+  PricingPromo,
   PrimaryCTA,
   QuickFacts,
   ScheduleCard,
@@ -229,6 +232,24 @@ export function getPriceOptions(offer: OfferDetail) {
   return asRecords(record.price_options ?? record.priceOptions ?? record.pricing) as PriceOption[];
 }
 
+export function getBookingOptions(offer: OfferDetail) {
+  const record = asRecord(offer);
+  if (!record) {
+    return [] as BookingOption[];
+  }
+
+  return asRecords(record.booking_options ?? record.bookingOptions) as BookingOption[];
+}
+
+export function getPricingPromos(offer: OfferDetail) {
+  const record = asRecord(offer);
+  if (!record) {
+    return [] as PricingPromo[];
+  }
+
+  return asRecords(record.pricing_promos ?? record.pricingPromos ?? record.discounts) as PricingPromo[];
+}
+
 export function getFacilitators(offer: OfferDetail) {
   const record = asRecord(offer);
   if (!record) {
@@ -255,7 +276,12 @@ export function getFacilitatorImageUrl(facilitator: Facilitator) {
 
 export function getFacilitatorBio(facilitator: Facilitator) {
   const record = asRecord(facilitator);
-  return pickString(record, ["bio", "short_bio", "shortBio", "description"]);
+  const richBio = pickString(record, ["bio"]);
+  if (richBio) {
+    return cleanRichTextHtml(richBio);
+  }
+
+  return cleanDisplayText(pickString(record, ["short_bio", "shortBio", "description"]));
 }
 
 export function getFacilitatorQuote(facilitator: Facilitator) {

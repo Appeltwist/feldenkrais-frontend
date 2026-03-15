@@ -89,7 +89,7 @@ export const FOREST_ABOUT_GALLERY_IMAGES = [
   "/brands/forest-lighthouse/photos/079A0848.jpg",
   "/brands/forest-lighthouse/about/gallery/class-circle.jpg",
   "/brands/forest-lighthouse/about/gallery/gathering.jpeg",
-  "/brands/forest-lighthouse/photos/IMG_1984.jpeg",
+  "/brands/forest-lighthouse/photos/forest-gathering-window.jpeg",
   "/brands/forest-lighthouse/about/gallery/sunlit-space.jpg",
   "/brands/forest-lighthouse/about/gallery/movement-practice.jpg",
   "/brands/forest-lighthouse/about/gallery/hallway.jpg",

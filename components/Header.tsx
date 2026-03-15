@@ -94,35 +94,11 @@ function isForestNavItemActive(item: ForestNavItem, barePathname: string): boole
 function getForestNav(locale: LocaleCode): ForestNavItem[] {
   const isFr = locale === "fr";
   return [
-    { key: "calendar", label: isFr ? "À l'affiche" : "What's On", href: withLocalePrefix(locale, "/calendar") },
+    { key: "calendar", label: isFr ? "À l'affiche" : "What's On", href: `/${locale}`, activeMatch: "exact" },
     { key: "individual", label: isFr ? "Individuel" : "Individual", href: withLocalePrefix(locale, "/private-sessions") },
-    {
-      key: "classes",
-      label: isFr ? "Cours" : "Classes",
-      activePrefixes: ["/classes", "/pricing"],
-      children: [
-        {
-          key: "classes-explore",
-          label: isFr ? "Explorer" : "Explore",
-          href: withLocalePrefix(locale, "/classes"),
-          activeMatch: "exact",
-        },
-        {
-          key: "classes-schedule",
-          label: isFr ? "Horaire" : "Schedule",
-          href: withLocalePrefix(locale, "/classes/schedule"),
-          activeMatch: "exact",
-        },
-        {
-          key: "classes-pricing",
-          label: isFr ? "Tarifs" : "Pricing",
-          href: withLocalePrefix(locale, "/pricing"),
-          activeMatch: "exact",
-        },
-      ],
-    },
+    { key: "classes", label: isFr ? "Cours" : "Classes", href: withLocalePrefix(locale, "/classes"), activePrefixes: ["/classes", "/pricing"] },
     { key: "workshops", label: isFr ? "Ateliers & Formations" : "Workshops & Trainings", href: withLocalePrefix(locale, "/workshops") },
-    { key: "rent", label: isFr ? "Location" : "Rent", href: withLocalePrefix(locale, "/rent") },
+    { key: "rent", label: isFr ? "Location" : "Rent", href: isFr ? "/fr/location" : withLocalePrefix(locale, "/rent") },
     { key: "about", label: isFr ? "À propos" : "About", href: withLocalePrefix(locale, "/about") },
   ];
 }
@@ -140,8 +116,12 @@ function ForestHeader({
 }) {
   const isFr = locale === "fr";
   const barePathname = stripLocalePrefix(pathname);
-  const enPath = localePaths?.en || switchLocaleInPath(pathname, "en");
-  const frPath = localePaths?.fr || switchLocaleInPath(pathname, "fr");
+  const staticLocalePaths =
+    barePathname === "/rent" || barePathname === "/location"
+      ? { en: "/en/rent", fr: "/fr/location" }
+      : null;
+  const enPath = localePaths?.en || staticLocalePaths?.en || switchLocaleInPath(pathname, "en");
+  const frPath = localePaths?.fr || staticLocalePaths?.fr || switchLocaleInPath(pathname, "fr");
   const [menuOpen, setMenuOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [desktopSubmenuKey, setDesktopSubmenuKey] = useState<string | null>(null);

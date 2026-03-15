@@ -57,6 +57,7 @@ export type ScheduleEntry = {
   description?: string;
   bookingUrl?: string;
   color?: string;
+  instructorImage?: string;
 };
 
 export type ScheduleDay = {
@@ -155,6 +156,35 @@ const EN_DEFAULT_CLASS_DESCRIPTION =
 const FR_DEFAULT_CLASS_DESCRIPTION =
   "Un cours guidé pour développer aisance, conscience et coordination grâce au mouvement attentif.";
 
+/* ── instructor images ── */
+
+const INSTRUCTOR_IMAGE: Record<string, string> = {
+  "Sacha": "/brands/forest-lighthouse/photos/sacha-kocic.jpeg",
+  "Orazio": "/brands/forest-lighthouse/photos/orazio-giurdanella.jpeg",
+};
+
+/* ── class-specific descriptions ── */
+
+const EN_CLASS_DESCRIPTIONS: Record<string, string> = {
+  "Ashtanga Yoga": "A traditional, breath-led practice following a set sequence of postures. Builds strength, flexibility, and inner focus through consistent repetition.",
+  "Pilates": "Precise, controlled movements that strengthen the core, improve posture, and develop body awareness. Accessible to all levels.",
+  "Vinyasa to Yin Yoga": "A flowing vinyasa warm-up transitions into slow, deep yin holds. The perfect balance between effort and release.",
+  "Feldenkrais": "Gentle, exploratory movement lessons that improve how you move, think, and feel. Based on the Feldenkrais Method of somatic education.",
+  "Yoga Vinyasa": "A dynamic flow linking breath and movement. Creative sequences build heat, strength, and presence on the mat.",
+  "Hatha Yoga": "A classical practice with longer-held poses, breathwork, and mindful transitions. Grounding and accessible for all levels.",
+  "Yoga Vinyasa Space&Flow": "A spacious, creative vinyasa practice emphasizing fluidity, breath, and the quality of transitions between poses.",
+};
+
+const FR_CLASS_DESCRIPTIONS: Record<string, string> = {
+  "Ashtanga Yoga": "Une pratique traditionnelle guidée par le souffle, suivant une séquence définie de postures. Développe force, souplesse et concentration intérieure.",
+  "Pilates": "Des mouvements précis et contrôlés qui renforcent le centre du corps, améliorent la posture et développent la conscience corporelle. Accessible à tous.",
+  "Vinyasa to Yin Yoga": "Un échauffement vinyasa fluide qui évolue vers des postures yin profondes et tenues. L\u2019équilibre parfait entre effort et relâchement.",
+  "Feldenkrais": "Des leçons de mouvement douces et exploratoires qui améliorent votre façon de bouger, penser et ressentir. Basé sur la Méthode Feldenkrais.",
+  "Yoga Vinyasa": "Un flow dynamique reliant souffle et mouvement. Des séquences créatives qui développent chaleur, force et présence sur le tapis.",
+  "Hatha Yoga": "Une pratique classique avec des postures tenues plus longtemps, du pranayama et des transitions conscientes. Ancrant et accessible à tous.",
+  "Yoga Vinyasa Space&Flow": "Une pratique vinyasa spacieuse et créative, mettant l\u2019accent sur la fluidité, le souffle et la qualité des transitions entre les postures.",
+};
+
 const CLASS_CARD_PALETTE = [
   "linear-gradient(160deg, rgba(118, 73, 65, 0.94) 0%, rgba(76, 49, 45, 0.94) 100%)",  // terracotta brown
   "linear-gradient(160deg, rgba(67, 76, 106, 0.94) 0%, rgba(47, 55, 82, 0.94) 100%)",   // slate blue
@@ -211,9 +241,10 @@ function applyClassMeta(entries: ScheduleEntry[]): ScheduleEntry[] {
   return entries.map((e) => ({
     ...e,
     level: withFallback(e.level, "All levels"),
-    description: withFallback(e.description, EN_DEFAULT_CLASS_DESCRIPTION),
+    description: withFallback(e.description, EN_CLASS_DESCRIPTIONS[e.className] ?? EN_DEFAULT_CLASS_DESCRIPTION),
     bookingUrl: withFallback(e.bookingUrl, BOOKING.book),
     color: withFallback(e.color, classColorFromName(e.className)),
+    instructorImage: e.instructorImage ?? INSTRUCTOR_IMAGE[e.instructor],
   }));
 }
 
@@ -221,9 +252,10 @@ function applyClassMetaFr(entries: ScheduleEntry[]): ScheduleEntry[] {
   return entries.map((e) => ({
     ...e,
     level: withFallback(e.level, "Tous niveaux"),
-    description: withFallback(e.description, FR_DEFAULT_CLASS_DESCRIPTION),
+    description: withFallback(e.description, FR_CLASS_DESCRIPTIONS[e.className] ?? FR_DEFAULT_CLASS_DESCRIPTION),
     bookingUrl: withFallback(e.bookingUrl, BOOKING.book),
     color: withFallback(e.color, classColorFromName(e.className)),
+    instructorImage: e.instructorImage ?? INSTRUCTOR_IMAGE[e.instructor],
   }));
 }
 
@@ -412,8 +444,8 @@ const CONTENT: Record<LocaleCode, PricingContent> = {
         {
           day: "Tuesday",
           entries: applyClassMeta([
-            { time: "17:30\u201318:30", className: "Pilates", instructor: "Ana", languages: ["FR", "EN"] },
-            { time: "19:30\u201320:30", className: "Yoga Vinyasa", instructor: "Ana", languages: ["EN"] },
+            { time: "17:30\u201318:30", className: "Yoga Vinyasa", instructor: "Ana", languages: ["EN"] },
+            { time: "18:30\u201319:30", className: "Pilates", instructor: "Ana", languages: ["FR", "EN"] },
           ]),
         },
         {
@@ -435,8 +467,8 @@ const CONTENT: Record<LocaleCode, PricingContent> = {
           day: "Friday",
           entries: applyClassMeta([
             { time: "8:00\u20139:15", className: "Ashtanga Yoga", instructor: "Gaspard", languages: ["FR", "EN"] },
-            { time: "17:30\u201318:30", className: "Pilates", instructor: "Orazio", languages: ["FR", "EN"] },
-            { time: "18:30\u201319:30", className: "Yoga Vinyasa Space&Flow", instructor: "Sacha", languages: ["EN", "FR"] },
+            { time: "17:30\u201318:30", className: "Yoga Vinyasa Space&Flow", instructor: "Sacha", languages: ["EN", "FR"] },
+            { time: "18:30\u201319:30", className: "Pilates", instructor: "Orazio", languages: ["FR", "EN"] },
           ]),
         },
       ],
@@ -747,8 +779,8 @@ const CONTENT: Record<LocaleCode, PricingContent> = {
         {
           day: "Mardi",
           entries: applyClassMetaFr([
-            { time: "17:30\u201318:30", className: "Pilates", instructor: "Ana", languages: ["FR", "EN"] },
-            { time: "19:30\u201320:30", className: "Yoga Vinyasa", instructor: "Ana", languages: ["EN"] },
+            { time: "17:30\u201318:30", className: "Yoga Vinyasa", instructor: "Ana", languages: ["EN"] },
+            { time: "18:30\u201319:30", className: "Pilates", instructor: "Ana", languages: ["FR", "EN"] },
           ]),
         },
         {
@@ -770,8 +802,8 @@ const CONTENT: Record<LocaleCode, PricingContent> = {
           day: "Vendredi",
           entries: applyClassMetaFr([
             { time: "8:00\u20139:15", className: "Ashtanga Yoga", instructor: "Gaspard", languages: ["FR", "EN"] },
-            { time: "17:30\u201318:30", className: "Pilates", instructor: "Orazio", languages: ["FR", "EN"] },
-            { time: "18:30\u201319:30", className: "Yoga Vinyasa Space&Flow", instructor: "Sacha", languages: ["EN", "FR"] },
+            { time: "17:30\u201318:30", className: "Yoga Vinyasa Space&Flow", instructor: "Sacha", languages: ["EN", "FR"] },
+            { time: "18:30\u201319:30", className: "Pilates", instructor: "Orazio", languages: ["FR", "EN"] },
           ]),
         },
       ],

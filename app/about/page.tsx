@@ -11,6 +11,7 @@ import {
   getForestAboutPeople,
   type ForestAboutPersonSeed,
 } from "@/lib/forest-about-content";
+import { cleanDisplayText } from "@/lib/content-cleanup";
 import { isForestCenter } from "@/lib/forest-theme";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
@@ -102,7 +103,7 @@ export default async function AboutPage() {
         name: readString(t.display_name),
         photoUrl: readString(t.photo_url) || undefined,
         role: readString(t.title) || (localeCode === "fr" ? "Enseignant·e" : "Teacher"),
-        summary: readString(t.short_bio) || "",
+        summary: cleanDisplayText(readString(t.short_bio)) || "",
       };
     });
 
@@ -128,7 +129,7 @@ export default async function AboutPage() {
                 <img
                   alt={localeCode === "fr" ? "Nikos et Betzabel au Forest Lighthouse" : "Nikos and Betzabel at Forest Lighthouse"}
                   loading="lazy"
-                  src="/brands/forest-lighthouse/photos/IMG_2910.jpg"
+                  src="/brands/forest-lighthouse/photos/forest-lighthouse-evening.jpg"
                 />
               </div>
               <div className="forest-about-story-layout__text">

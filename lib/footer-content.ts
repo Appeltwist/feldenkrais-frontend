@@ -37,7 +37,7 @@ const FOOTER: Record<string, FooterContent> = {
       { label: "Individuel", href: "/fr/private-sessions" },
       { label: "Cours", href: "/fr/classes" },
       { label: "Ateliers & Formations", href: "/fr/workshops" },
-      { label: "Location", href: "/fr/rent" },
+      { label: "Location", href: "/fr/location" },
       { label: "\u00c0 propos", href: "/fr/about" },
     ],
   },

@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 
-import { ForestPageShell } from "@/components/forest/ForestPageShell";
+import ForestHomePage from "@/components/home/ForestHomePage";
 import { getHostname } from "@/lib/get-hostname";
+import { getRequestLocale } from "@/lib/get-locale";
 import { getCanonicalOfferPathByTypeAndSlug } from "@/lib/offers";
 import { localizePath } from "@/lib/locale-path";
 
@@ -72,33 +73,8 @@ type HomeDetailImage = {
   alt: string;
 };
 
-type ForestHomeMedia = {
-  hero: string;
-  mainHall: string;
-  detailImages: HomeDetailImage[];
-};
-
 const MAX_WHATS_ON_CARDS = 9;
 const FOREST_HOST_MATCHERS = ["forest-lighthouse.local", "forest-lighthouse"];
-
-const FOREST_HOME_MEDIA: ForestHomeMedia = {
-  hero: "/brands/forest-lighthouse/home/hero-main-hall.jpg",
-  mainHall: "/brands/forest-lighthouse/home/main-hall-wide.jpg",
-  detailImages: [
-    {
-      src: "/brands/forest-lighthouse/home/community-practice.jpg",
-      alt: "Group practice at Forest Lighthouse",
-    },
-    {
-      src: "/brands/forest-lighthouse/home/terrace.jpg",
-      alt: "Forest Lighthouse terrace and gathering space",
-    },
-    {
-      src: "/brands/forest-lighthouse/home/cafe.jpg",
-      alt: "Forest Lighthouse cafe and social room",
-    },
-  ],
-};
 
 async function fetchHomePayload(hostname: string) {
   const requestHeaders = await headers();
@@ -121,11 +97,9 @@ async function fetchHomePayload(hostname: string) {
   return (await response.json()) as HomePayload;
 }
 
-function getForestHomeMedia(hostname: string): ForestHomeMedia | null {
+function isForestHomepage(hostname: string) {
   const normalizedHostname = hostname.toLowerCase();
-  return FOREST_HOST_MATCHERS.some((host) => normalizedHostname.includes(host))
-    ? FOREST_HOME_MEDIA
-    : null;
+  return FOREST_HOST_MATCHERS.some((host) => normalizedHostname.includes(host));
 }
 
 function formatOccurrence(value: string, locale: string, timezone?: string) {
@@ -431,6 +405,11 @@ function HomeDomainsTeaser({
 
 export default async function HomePage() {
   const hostname = await getHostname();
+  if (isForestHomepage(hostname)) {
+    const locale = await getRequestLocale("fr");
+    return <ForestHomePage hostname={hostname} locale={locale} />;
+  }
+
   const home = await fetchHomePayload(hostname);
 
   if (!home) {
@@ -443,16 +422,15 @@ export default async function HomePage() {
   }
 
   const locale = home.meta.locale || "en";
-  const forestHomeMedia = getForestHomeMedia(hostname);
-  const heroMediaUrl = forestHomeMedia?.hero || home.hero.media_url || home.main_hall.image_url || "";
-  const mainHallImageUrl = forestHomeMedia?.mainHall || home.main_hall.image_url || "";
-  const mainHallDetailImages = forestHomeMedia?.detailImages || [];
   const homeContent = (
     <section className="page-section home-page">
-      <HomeHero hero={home.hero} heroMediaUrl={heroMediaUrl} locale={locale} />
+      <HomeHero
+        hero={home.hero}
+        heroMediaUrl={home.hero.media_url || home.main_hall.image_url || ""}
+        locale={locale}
+      />
       <HomeMainHall
-        detailImages={mainHallDetailImages}
-        imageUrl={mainHallImageUrl}
+        imageUrl={home.main_hall.image_url || ""}
         locale={locale}
         mainHall={home.main_hall}
       />
@@ -461,10 +439,6 @@ export default async function HomePage() {
       <HomeDomainsTeaser domains={home.domains_teaser} locale={locale} />
     </section>
   );
-
-  if (forestHomeMedia) {
-    return <ForestPageShell className="forest-site-shell--home">{homeContent}</ForestPageShell>;
-  }
 
   return homeContent;
 }

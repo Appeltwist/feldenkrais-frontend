@@ -13,6 +13,7 @@ import {
   type OfferSummary,
   type TeacherDetail,
 } from "@/lib/api";
+import { cleanDisplayText, cleanRichTextHtml } from "@/lib/content-cleanup";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
 import { resolveLocale, getTeacherLabels, getForestPlaceholderCopy } from "@/lib/i18n";
@@ -73,7 +74,7 @@ export async function generateMetadata({ params }: TeacherPageProps): Promise<Me
 
   const displayName = pickStr(teacher, ["display_name"]) || "Facilitator";
   const seoTitle = pickStr(teacher, ["seo_title"]) || `${displayName} — ${siteConfig.siteName}`;
-  const seoDescription = pickStr(teacher, ["seo_description", "short_bio"]) || "";
+  const seoDescription = cleanDisplayText(pickStr(teacher, ["seo_description", "short_bio"])) || "";
 
   return {
     title: seoTitle,
@@ -147,7 +148,7 @@ export default async function TeacherProfilePage({ params }: TeacherPageProps) {
   /* ── extract teacher fields ── */
   const displayName = pickStr(teacher, ["display_name"]) || "Facilitator";
   const title = pickStr(teacher, ["title"]);
-  const bio = pickStr(teacher, ["bio"]);
+  const bio = cleanRichTextHtml(pickStr(teacher, ["bio"]));
   const photoUrl = pickStr(teacher, ["photo_url"]);
   const galleryUrls = Array.isArray(teacher.gallery_urls) ? teacher.gallery_urls.filter(Boolean) : [];
   const quote = pickStr(teacher, ["quote"]);

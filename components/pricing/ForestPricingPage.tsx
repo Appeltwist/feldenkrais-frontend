@@ -189,81 +189,22 @@ export default async function ForestPricingPage() {
         <Image alt="" className="fp-botanical__img" fill sizes="300px" src="/brands/forest-lighthouse/photos/leaves2.png" />
       </div>
 
-      {/* ── 1. HERO (fade) ── */}
-      <section aria-label={heroLabel} className="fp-hero-fade" data-scroll-hero>
-        <div
-          className="fp-hero-fade__img"
-          data-scroll-hero-img
-          style={{ "--fp-banner-image": "url('/brands/forest-lighthouse/home/hero-main-hall.jpg')" } as CSSProperties}
-        >
-          <div className="fp-hero-fade__content" data-scroll-hero-content>
-            <div className="fp-hero-fade__eyebrow">{heroLabel}</div>
-            <h1 className="fp-hero__title">{c.hero.title}</h1>
-            <p className="fp-hero__subtitle">{c.hero.subtitle}</p>
-          </div>
-        </div>
-        {/* Leaves zoom overlay — bridges hero fade into journey steps */}
-        <div aria-hidden="true" className="fp-hero-leaves" data-scroll-hero-leaves>
-          <Image
-            alt=""
-            className="fp-hero-leaves__img"
-            fill
-            sizes="100vw"
-            src="/brands/forest-lighthouse/photos/leaves.png"
-          />
-        </div>
+      {/* ── Page intro (matches schedule / rent page style) ── */}
+      <section className="fc-intro">
+        <p className="fc-intro__eyebrow">
+          {isFr ? "Tarifs & formules" : "Pricing & plans"}
+        </p>
+        <h1 className="fc-intro__title">
+          {isFr ? "Pass & Abonnements" : "Passes & Memberships"}
+        </h1>
+        <p className="fc-intro__subtitle">
+          {passesIntro}
+        </p>
       </section>
-
-      {/* ── Journey Steps (after hero, always visible) ── */}
-      <div className="fp-journey-steps">
-        <div className="fl-steps" data-reveal="stagger" aria-label={isFr ? "Parcours en 5 \u00e9tapes" : "5-step journey"}>
-          {c.hero.journeySteps.map((step, index) => {
-            const isFirst = index === 0 && step.highlighted && step.href;
-
-            const content = (
-              <>
-                <div className="fl-step-num">{index + 1}</div>
-                <div className="fl-step-text">
-                  {step.label ? `${step.label} ` : null}
-                  {step.boldPart ? <strong>{step.boldPart}</strong> : null}
-                </div>
-              </>
-            );
-
-            if (isFirst) {
-              return (
-                <div className="fl-step fl-step-clickable" key={`${step.boldPart}-${index}`}>
-                  <a
-                    aria-label={isFr ? "R\u00e9server un cours d\u2019essai" : "Book a free trial class"}
-                    href={step.href}
-                    rel="noopener noreferrer"
-                    target="_blank"
-                  >
-                    {content}
-                  </a>
-                </div>
-              );
-            }
-
-            return (
-              <div className="fl-step" key={`${step.boldPart}-${index}`}>
-                {content}
-              </div>
-            );
-          })}
-        </div>
-      </div>
 
       {/* ── 2. PRICING CHAPTER (reordered: passes first, packages second) ── */}
       <section className="fp-chapter fp-chapter--pricing">
-        {/* 2a. FLEXIBLE OPTIONS — shown first */}
-        <div className="fp-chapter__intro">
-          <p className="fp-chapter__eyebrow">{isFr ? "Options flexibles" : "Flexible options"}</p>
-          <h2 className="fp-section__heading fp-section__heading--left fp-section__heading--quiet">
-            {c.passes.heading}
-          </h2>
-          <p className="fp-section__subtitle fp-section__subtitle--left">{passesIntro}</p>
-        </div>
+        {/* 2a. FLEXIBLE OPTIONS — shown first (intro already in fc-intro above) */}
 
         <section
           aria-label={isFr ? "Pass et abonnements" : "Passes and subscriptions"}

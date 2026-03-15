@@ -11,7 +11,7 @@ Standalone multi-site frontend for Feldenkrais Education.
 127.0.0.1 feldenkrais-education.local
 ```
 
-2. In backend repo (`/Users/nicosdalton/Documents/CODEX/feldenkrais-education`), run:
+2. In backend repo (`/Users/nicosdalton/Documents/CODEX/fe-cms`), run:
 
 ```bash
 python manage.py runserver 8000

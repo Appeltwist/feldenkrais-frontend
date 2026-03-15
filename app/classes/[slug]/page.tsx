@@ -79,7 +79,7 @@ export default async function ClassDetailPage({ params }: OfferPageProps) {
 
   if (siteConfig.centerSlug === "forest-lighthouse") {
     const [siteFaqSections, allOffers, localeSwitchPaths] = await Promise.all([
-      fetchSiteFaq(hostname).catch(() => []),
+      fetchSiteFaq(hostname, requestLocale).catch(() => []),
       fetchOffers({ hostname, center: siteConfig.centerSlug, locale: contentLocale }).catch(() => [] as OfferSummary[]),
       buildOfferLocaleSwitchPaths({
         hostname,

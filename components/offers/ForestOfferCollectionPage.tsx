@@ -10,6 +10,9 @@ import {
   type CalendarItem,
   type OfferSummary,
 } from "@/lib/api";
+import { cleanDisplayText } from "@/lib/content-cleanup";
+import { getForestExcerptOverride } from "@/lib/forest-excerpts";
+import { getForestFacilitatorNamesOverride } from "@/lib/forest-facilitator-overrides";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
 import { resolveLocale } from "@/lib/i18n";
@@ -191,6 +194,20 @@ function getCopy(
   };
 }
 
+function formatFacilitatorNames(names: string[]) {
+  const cleaned = names.map((name) => cleanDisplayText(name)).filter(Boolean);
+  if (cleaned.length === 0) {
+    return "";
+  }
+  if (cleaned.length === 1) {
+    return cleaned[0];
+  }
+  if (cleaned.length === 2) {
+    return `${cleaned[0]} & ${cleaned[1]}`;
+  }
+  return `${cleaned.slice(0, -1).join(", ")} & ${cleaned[cleaned.length - 1]}`;
+}
+
 /* ── date helpers ── */
 
 type FormattedOccurrence = { date: string; timeRange: string };
@@ -324,30 +341,105 @@ function resolveAllOccurrences(offer: unknown, locale: string): FormattedOccurre
   return single ? [single] : [];
 }
 
-/** For TRAINING_INFO: compute a date range "Jun 10 – Sep 15" */
-function resolveTrainingRange(offer: unknown, locale: string): string | null {
-  const record = asRecord(offer);
-  if (!record) return null;
-
-  const allOccs = getOccurrenceEntries(offer);
-  const dateOpts: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" };
-
-  if (allOccs.length >= 2) {
-    const tz = pickString(allOccs[0], ["timezone", "tz", "time_zone"]);
-    if (tz) dateOpts.timeZone = tz;
-    const firstStr = pickString(allOccs[0], ["start_datetime", "start", "start_at", "datetime", "date"]);
-    const lastStr = pickString(allOccs[allOccs.length - 1], ["start_datetime", "start", "start_at", "datetime", "date"]);
-    const first = firstStr ? new Date(firstStr) : null;
-    const last = lastStr ? new Date(lastStr) : null;
-    if (first && last && !Number.isNaN(first.getTime()) && !Number.isNaN(last.getTime())) {
-      const fmt = new Intl.DateTimeFormat(locale || "en", dateOpts);
-      return `${fmt.format(first)} – ${fmt.format(last)}`;
-    }
+function getLocalizedDateParts(dateStr: string, locale: string, timezone?: string) {
+  const parsed = new Date(dateStr);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
   }
 
-  /* Fallback: single occurrence */
-  const single = resolveOneOccurrence(offer, locale);
-  return single ? single.date : null;
+  const formatter = new Intl.DateTimeFormat(locale || "en", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    ...(timezone ? { timeZone: timezone } : {}),
+  });
+  const parts = formatter.formatToParts(parsed).reduce<Record<string, string>>((acc, part) => {
+    if (part.type !== "literal") {
+      acc[part.type] = part.value;
+    }
+    return acc;
+  }, {});
+
+  if (!parts.day || !parts.month || !parts.year) {
+    return null;
+  }
+
+  return {
+    day: parts.day,
+    month: parts.month,
+    year: parts.year,
+  };
+}
+
+function formatTrainingPeriodLabel(occ: RawRecord, locale: string) {
+  const timezone = pickString(occ, ["timezone", "tz", "time_zone"]);
+  const startStr = pickString(occ, ["start_datetime", "start", "start_at", "datetime", "date"]);
+  const endStr = pickString(occ, ["end_datetime", "end", "end_at"]);
+  const start = startStr ? getLocalizedDateParts(startStr, locale, timezone) : null;
+  const end = endStr ? getLocalizedDateParts(endStr, locale, timezone) : null;
+
+  if (!start && !end) {
+    return null;
+  }
+
+  if (start && (!end || (start.day === end.day && start.month === end.month && start.year === end.year))) {
+    return `${start.day} ${start.month} ${start.year}`;
+  }
+
+  if (!start && end) {
+    return `${end.day} ${end.month} ${end.year}`;
+  }
+
+  if (!start || !end) {
+    return null;
+  }
+
+  if (start.year === end.year && start.month === end.month) {
+    return `${start.day}-${end.day} ${start.month} ${start.year}`;
+  }
+
+  if (start.year === end.year) {
+    return `${start.day} ${start.month} - ${end.day} ${end.month} ${start.year}`;
+  }
+
+  return `${start.day} ${start.month} ${start.year} - ${end.day} ${end.month} ${end.year}`;
+}
+
+/** For TRAINING_INFO: list each training period with its year */
+function resolveTrainingPeriodLabels(offer: unknown, locale: string): string[] {
+  const allOccs = getOccurrenceEntries(offer);
+  if (allOccs.length > 0) {
+    const labels: string[] = [];
+    const seen = new Set<string>();
+    for (const occ of allOccs) {
+      const label = formatTrainingPeriodLabel(occ, locale);
+      if (!label || seen.has(label)) {
+        continue;
+      }
+      seen.add(label);
+      labels.push(label);
+    }
+    return labels;
+  }
+
+  const record = asRecord(offer);
+  const nextRaw = record?.next_occurrence ?? record?.nextOccurrence;
+  if (!nextRaw) {
+    return [];
+  }
+
+  if (typeof nextRaw === "string") {
+    const parts = getLocalizedDateParts(nextRaw, locale);
+    return parts ? [`${parts.day} ${parts.month} ${parts.year}`] : [];
+  }
+
+  const nextOcc = asRecord(nextRaw);
+  if (!nextOcc) {
+    return [];
+  }
+
+  const label = formatTrainingPeriodLabel(nextOcc, locale);
+  return label ? [label] : [];
 }
 
 function resolveWorkshopDateLabels(offer: unknown, locale: string): string[] {
@@ -550,16 +642,29 @@ export default async function ForestOfferCollectionPage({
                 const title = getOfferTitle(offer, "Untitled");
                 const canonicalPath = getCanonicalOfferPath(offer);
                 const detailsPath = localizePath(requestLocale, canonicalPath || `/workshops/${slug}`);
-                const excerpt = pickString(offerRecord, ["excerpt", "summary", "short_description"]);
+                const rawExcerpt = pickString(offerRecord, ["excerpt", "summary", "short_description"]);
+                const strippedExcerpt = rawExcerpt ? cleanDisplayText(rawExcerpt.replace(/<[^>]*>/g, "").trim()) : "";
+                const apiExcerpt = strippedExcerpt && !strippedExcerpt.includes("Guest name cannot be repeated") ? strippedExcerpt : "";
+                const overrideExcerpt = getForestExcerptOverride(title) || "";
+                const excerpt = apiExcerpt && !/(?:\.{3}|…)$/.test(apiExcerpt) ? apiExcerpt : overrideExcerpt || apiExcerpt;
                 const heroImage = pickString(offerRecord, ["hero_image_url", "heroImageUrl"]);
                 const facilitators = getFacilitators(offer as OfferDetail);
                 const firstFacilitator = facilitators[0];
-                const facilitatorName = firstFacilitator ? getFacilitatorName(firstFacilitator) : "";
-                const facilitatorImage = firstFacilitator ? getFacilitatorImageUrl(firstFacilitator) : "";
+                const facilitatorOverride = getForestFacilitatorNamesOverride(slug);
+                const facilitatorName = facilitatorOverride
+                  ? formatFacilitatorNames(facilitatorOverride)
+                  : firstFacilitator
+                  ? getFacilitatorName(firstFacilitator)
+                  : "";
+                const facilitatorImage = facilitatorOverride ? "" : firstFacilitator ? getFacilitatorImageUrl(firstFacilitator) : "";
                 const cardImage = heroImage || facilitatorImage;
                 const offerType = getOfferType(offer);
                 const offerTypeVariant = getOfferTypeVariant(offerType);
                 const typeLabel = TYPE_LABELS[offerType]?.[localeCode] ?? TYPE_LABELS.WORKSHOP[localeCode];
+                const isDirectBookingCard = offerType === "PRIVATE_SESSION";
+                const bookingPath = offerType === "PRIVATE_SESSION" && slug
+                  ? localizePath(requestLocale, `/private-sessions/${slug}/book`)
+                  : detailsPath;
                 const detailedOffer = slug ? detailedOffersBySlug.get(slug) : null;
                 const cardDateSource = detailedOffer ?? offer;
 
@@ -572,37 +677,66 @@ export default async function ForestOfferCollectionPage({
                   .filter(Boolean)
                   .slice(0, 4);
 
-                return (
-                  <Link
-                    className={`fc-offer-card fc-offer-card--${offerTypeVariant}`}
-                    href={detailsPath}
-                    key={slug || `offer-${index}`}
-                  >
+                const cardInner = (
+                  <>
                     {/* Card image */}
-                    <div className="fc-offer-card__media">
-                      {cardImage ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          alt={title}
-                          className="fc-offer-card__img"
-                          loading={index < 4 ? "eager" : "lazy"}
-                          src={cardImage}
-                        />
-                      ) : (
-                        <div className="fc-offer-card__img-placeholder" aria-hidden="true">
-                          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round">
-                            <rect x="3" y="3" width="18" height="18" rx="2" />
-                            <circle cx="8.5" cy="8.5" r="1.5" />
-                            <path d="M21 15l-5-5L5 21" />
-                          </svg>
+                    {isDirectBookingCard ? (
+                      <Link className="fc-offer-card__media-link" href={detailsPath}>
+                        <div className="fc-offer-card__media">
+                          {cardImage ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              alt={title}
+                              className="fc-offer-card__img"
+                              loading={index < 4 ? "eager" : "lazy"}
+                              src={cardImage}
+                            />
+                          ) : (
+                            <div className="fc-offer-card__img-placeholder" aria-hidden="true">
+                              <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" />
+                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                <path d="M21 15l-5-5L5 21" />
+                              </svg>
+                            </div>
+                          )}
+                          <span className={`fc-offer-card__type-badge fc-offer-card__type-badge--${offerTypeVariant}`}>{typeLabel}</span>
                         </div>
-                      )}
-                      <span className={`fc-offer-card__type-badge fc-offer-card__type-badge--${offerTypeVariant}`}>{typeLabel}</span>
-                    </div>
+                      </Link>
+                    ) : (
+                      <div className="fc-offer-card__media">
+                        {cardImage ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            alt={title}
+                            className="fc-offer-card__img"
+                            loading={index < 4 ? "eager" : "lazy"}
+                            src={cardImage}
+                          />
+                        ) : (
+                          <div className="fc-offer-card__img-placeholder" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round">
+                              <rect x="3" y="3" width="18" height="18" rx="2" />
+                              <circle cx="8.5" cy="8.5" r="1.5" />
+                              <path d="M21 15l-5-5L5 21" />
+                            </svg>
+                          </div>
+                        )}
+                        <span className={`fc-offer-card__type-badge fc-offer-card__type-badge--${offerTypeVariant}`}>{typeLabel}</span>
+                      </div>
+                    )}
 
                     {/* Card body */}
                     <div className="fc-offer-card__body">
-                      <h3 className="fc-offer-card__title">{title}</h3>
+                      {isDirectBookingCard ? (
+                        <h3 className="fc-offer-card__title">
+                          <Link className="fc-offer-card__title-link" href={detailsPath}>
+                            {title}
+                          </Link>
+                        </h3>
+                      ) : (
+                        <h3 className="fc-offer-card__title">{title}</h3>
+                      )}
                       {excerpt ? (
                         <p className="fc-offer-card__excerpt">{excerpt}</p>
                       ) : null}
@@ -649,18 +783,24 @@ export default async function ForestOfferCollectionPage({
                             );
                           }
 
-                          /* TRAINING_INFO → "Jun 10 – Sep 15" range */
+                          /* TRAINING_INFO → one pill per period, with year */
                           if (offerType === "TRAINING_INFO") {
-                            const range = resolveTrainingRange(cardDateSource, requestLocale);
-                            if (!range) {
+                            const trainingPeriods = resolveTrainingPeriodLabels(cardDateSource, requestLocale);
+                            if (trainingPeriods.length === 0) {
                               return renderComingSoonDates(copy.datesComingSoonLabel);
                             }
                             return (
-                              <div className="fc-offer-card__date-row">
+                              <div className="fc-offer-card__date-cluster">
                                 <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
                                   <path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10zM5 8V6h14v2H5z" />
                                 </svg>
-                                <span className="fc-offer-card__date-label">{range}</span>
+                                <div className="fc-offer-card__date-pills">
+                                  {trainingPeriods.map((periodLabel) => (
+                                    <span className="fc-offer-card__date-pill" key={periodLabel}>
+                                      {periodLabel}
+                                    </span>
+                                  ))}
+                                </div>
                               </div>
                             );
                           }
@@ -700,14 +840,45 @@ export default async function ForestOfferCollectionPage({
 
                     {/* Card footer */}
                     <div className="fc-offer-card__footer">
-                      <span className="fc-offer-card__cta">
-                        {copy.viewLabel}
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
-                          <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
-                        </svg>
-                      </span>
-                      <span className="fc-offer-card__book">{getOfferCTA(offerType, requestLocale)}</span>
+                      {isDirectBookingCard ? (
+                        <>
+                          <Link className="fc-offer-card__cta" href={detailsPath}>
+                            {copy.viewLabel}
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+                              <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
+                            </svg>
+                          </Link>
+                          <Link className="fc-offer-card__book" href={bookingPath}>{getOfferCTA(offerType, requestLocale)}</Link>
+                        </>
+                      ) : (
+                        <>
+                          <span className="fc-offer-card__cta">
+                            {copy.viewLabel}
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+                              <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
+                            </svg>
+                          </span>
+                          <span className="fc-offer-card__book">{getOfferCTA(offerType, requestLocale)}</span>
+                        </>
+                      )}
                     </div>
+                  </>
+                );
+
+                return isDirectBookingCard ? (
+                  <article
+                    className={`fc-offer-card fc-offer-card--${offerTypeVariant}`}
+                    key={slug || `offer-${index}`}
+                  >
+                    {cardInner}
+                  </article>
+                ) : (
+                  <Link
+                    className={`fc-offer-card fc-offer-card--${offerTypeVariant}`}
+                    href={detailsPath}
+                    key={slug || `offer-${index}`}
+                  >
+                    {cardInner}
                   </Link>
                 );
               })}

@@ -3,16 +3,32 @@ import GroupedCalendar, {
   type CalendarOccurrenceOption,
   type GroupedCalendarEntry,
 } from "@/components/calendar/GroupedCalendar";
-import { ForestPageHero, ForestPageSection, ForestPageShell } from "@/components/forest/ForestPageShell";
+import ForestCalendarList, {
+  type CalendarListEntry,
+} from "@/components/calendar/ForestCalendarList";
+import { ForestPageShell } from "@/components/forest/ForestPageShell";
 import {
   fetchCalendarWithMeta,
+  fetchOffers,
   fetchSiteConfig,
   type CalendarDomainOption,
   type CalendarItem,
 } from "@/lib/api";
-import { FOREST_PAGE_MEDIA, isForestCenter } from "@/lib/forest-theme";
+import { isForestCenter } from "@/lib/forest-theme";
 import { getHostname } from "@/lib/get-hostname";
 import { localizePath } from "@/lib/locale-path";
+import { getCanonicalOfferPathByTypeAndSlug } from "@/lib/offers";
+
+const CALENDAR_TYPE_COLORS: Record<string, string> = {
+  WORKSHOP: "rgba(210, 170, 60, 0.50)",
+  TRAINING_INFO: "rgba(60, 120, 180, 0.50)",
+  CLASS: "rgba(60, 140, 80, 0.45)",
+  PRIVATE_SESSION: "rgba(120, 80, 160, 0.45)",
+};
+
+function calendarTypeColor(type: string): string {
+  return CALENDAR_TYPE_COLORS[type.toUpperCase()] ?? "rgba(0, 55, 56, 0.45)";
+}
 
 type RawRecord = Record<string, unknown>;
 
@@ -162,13 +178,61 @@ function sortDomains(domains: CalendarDomainOption[]) {
   });
 }
 
+function nextOccurrenceStart(entry: GroupedCalendarEntry) {
+  return entry.nextOccurrences[0]?.startDateTime ?? "";
+}
+
+function sortEntriesByNextOccurrence(entries: GroupedCalendarEntry[]) {
+  return [...entries].sort((left, right) =>
+    nextOccurrenceStart(left).localeCompare(nextOccurrenceStart(right)),
+  );
+}
+
+type ForestCalendarOfferCopy = {
+  excerpt: string;
+  facilitatorNames: string;
+};
+
+function parseFacilitatorNames(value: unknown) {
+  if (!Array.isArray(value)) {
+    return "";
+  }
+
+  const names = value
+    .map((item) => {
+      const record = asRecord(item);
+      return pickString(record, ["display_name", "name", "full_name"]);
+    })
+    .filter(Boolean);
+
+  return Array.from(new Set(names)).join(" · ");
+}
+
+function buildOfferCopyMap(offers: unknown[]) {
+  const copyBySlug = new Map<string, ForestCalendarOfferCopy>();
+
+  for (const offer of offers) {
+    const record = asRecord(offer);
+    const slug = pickString(record, ["slug"]);
+    if (!slug) {
+      continue;
+    }
+
+    copyBySlug.set(slug, {
+      excerpt: pickString(record, ["excerpt", "summary", "description"]),
+      facilitatorNames: parseFacilitatorNames(record?.facilitators),
+    });
+  }
+
+  return copyBySlug;
+}
+
 export default async function CalendarPage({ searchParams }: CalendarPageProps) {
   const hostname = await getHostname();
   const today = new Date();
-  const thirtyDaysLater = new Date(today);
-  thirtyDaysLater.setDate(today.getDate() + 30);
+  const weekLater = new Date(today);
+  weekLater.setDate(today.getDate() + 7);
   const from = toIsoDate(today);
-  const to = toIsoDate(thirtyDaysLater);
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const selectedDomainTheme = pickSingleSearchParam(
     resolvedSearchParams,
@@ -184,6 +248,14 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
       </section>
     );
   }
+
+  const horizonDate = new Date(today);
+  if (isForestCenter(siteConfig.centerSlug)) {
+    horizonDate.setDate(today.getDate() + 365);
+  } else {
+    horizonDate.setDate(today.getDate() + 30);
+  }
+  const to = toIsoDate(horizonDate);
 
   const calendar = await fetchCalendarWithMeta({
     hostname,
@@ -207,79 +279,121 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
   const domains = sortDomains(calendar.meta.domains);
   const isForest = isForestCenter(siteConfig.centerSlug);
 
+
+
   if (isForest) {
     const isFrench = siteConfig.defaultLocale.toLowerCase().startsWith("fr");
+    const locale = siteConfig.defaultLocale;
+    const [classOffers, workshopOffers, trainingOffers] = await Promise.all([
+      fetchOffers({
+        hostname,
+        center: siteConfig.centerSlug,
+        locale,
+        type: "CLASS",
+      }).catch(() => []),
+      fetchOffers({
+        hostname,
+        center: siteConfig.centerSlug,
+        locale,
+        type: "WORKSHOP",
+      }).catch(() => []),
+      fetchOffers({
+        hostname,
+        center: siteConfig.centerSlug,
+        locale,
+        type: "TRAINING_INFO",
+      }).catch(() => []),
+    ]);
+    const offerCopyBySlug = buildOfferCopyMap([
+      ...classOffers,
+      ...workshopOffers,
+      ...trainingOffers,
+    ]);
+
+    const classes = sortEntriesByNextOccurrence(
+      entries.filter((entry) => {
+        if (entry.offer.type !== "CLASS") {
+          return false;
+        }
+
+        const nextStart = nextOccurrenceStart(entry);
+        if (!nextStart) {
+          return false;
+        }
+
+        const nextDate = new Date(nextStart);
+        return nextDate >= today && nextDate <= weekLater;
+      }),
+    );
+    const workshops = sortEntriesByNextOccurrence(
+      entries.filter((entry) => entry.offer.type === "WORKSHOP"),
+    ).slice(0, 5);
+    const trainings = sortEntriesByNextOccurrence(
+      entries.filter((entry) => entry.offer.type === "TRAINING_INFO"),
+    ).slice(0, 2);
+    const featuredEntries = sortEntriesByNextOccurrence([...classes, ...workshops, ...trainings]);
+
+    /* Pre-compute display data for the client component */
+    const listEntries: CalendarListEntry[] = featuredEntries.map((entry) => {
+      const nextOcc = entry.nextOccurrences[0];
+      const offerPath = localizePath(
+        locale,
+        getCanonicalOfferPathByTypeAndSlug(entry.offer.type, entry.offer.slug) || `/offer/${entry.offer.slug}`,
+      );
+      let dateLabel = "";
+      let timeLabel = "";
+      if (nextOcc) {
+        const dt = new Date(nextOcc.startDateTime);
+        dateLabel = dt.toLocaleDateString(isFrench ? "fr-FR" : "en-GB", {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+        });
+        timeLabel = dt.toLocaleTimeString(isFrench ? "fr-FR" : "en-GB", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      }
+
+      return {
+        id: entry.offer.id,
+        title: entry.offer.title,
+        href: offerPath,
+        type: entry.offer.type,
+        typeLabel: ({ CLASS: isFrench ? "Cours" : "Class", WORKSHOP: isFrench ? "Atelier" : "Workshop", TRAINING_INFO: isFrench ? "Formation" : "Training" } as Record<string, string>)[entry.offer.type] ?? entry.offer.type,
+        description: offerCopyBySlug.get(entry.offer.slug)?.excerpt ?? "",
+        facilitator: offerCopyBySlug.get(entry.offer.slug)?.facilitatorNames ?? "",
+        dateLabel,
+        timeLabel,
+        domainsLabel: entry.offer.domains.map((d) => d.name).join(" · "),
+        heroImageUrl: entry.offer.heroImageUrl,
+        color: calendarTypeColor(entry.offer.type),
+      };
+    });
 
     return (
       <ForestPageShell>
-        <ForestPageHero
-          actions={[
-            { href: localizePath(siteConfig.defaultLocale, "/workshops"), label: isFrench ? "Voir les ateliers" : "See workshops" },
-            { href: localizePath(siteConfig.defaultLocale, "/classes"), label: isFrench ? "Voir les cours" : "See classes", variant: "secondary" },
-          ]}
-          eyebrow={isFrench ? "À venir" : "Upcoming"}
-          mediaUrl={FOREST_PAGE_MEDIA.calendar}
-          subtitle={
-            isFrench
-              ? "Une vue d’ensemble des cours, ateliers et parcours actuellement publiés."
-              : "An overview of the classes, workshops, and pathways currently published."
-          }
-          title={isFrench ? "Calendrier" : "Calendar"}
-        />
+        <div className="fp-page fp-calendar-page">
+          <section className="fc-intro">
+            <p className="fc-intro__eyebrow">{isFrench ? "À venir" : "Upcoming"}</p>
+            <h1 className="fc-intro__title">{isFrench ? "Calendrier" : "Calendar"}</h1>
+            <p className="fc-intro__subtitle">
+              {isFrench
+                ? "Les cours de la semaine, puis les prochains ateliers et formations."
+                : "This week’s classes, followed by the next workshops and training programmes."}
+            </p>
+          </section>
 
-        <ForestPageSection
-          eyebrow={siteConfig.center.name}
-          subtitle={`${from} - ${to}`}
-          title={isFrench ? "Filtrer les événements" : "Filter events"}
-        >
-          <form className="calendar-filter-form" method="get">
-            <label className="calendar-filter-form__label" htmlFor="calendar-domain-theme">
-              {isFrench ? "Domaine" : "Domain"}
-            </label>
-            <div className="calendar-filter-form__controls">
-              <select
-                className="calendar-filter-form__select"
-                defaultValue={selectedDomainTheme}
-                id="calendar-domain-theme"
-                name="domain_theme"
-              >
-                <option value="">{isFrench ? "Tous les domaines" : "All domains"}</option>
-                {domains.map((domain) => (
-                  <option key={domain.slug} value={domain.slug}>
-                    {domain.name}
-                  </option>
-                ))}
-              </select>
-              <button className="button-link button-link--secondary" type="submit">
-                {isFrench ? "Appliquer" : "Apply"}
-              </button>
-              {selectedDomainTheme ? (
-                <a className="text-link" href="?">
-                  {isFrench ? "Effacer" : "Clear"}
-                </a>
-              ) : null}
-            </div>
-          </form>
-        </ForestPageSection>
-
-        <ForestPageSection
-          eyebrow={entries.length > 0 ? `${entries.length}` : undefined}
-          subtitle={entries.length === 0 ? (isFrench ? "Aucun événement dans cette période." : "No events in this range.") : undefined}
-          title={isFrench ? "Ce qui se passe" : "What is on"}
-        >
-          {entries.length > 0 ? (
-            <GroupedCalendar
-              center={siteConfig.centerSlug}
-              entries={entries}
-              from={from}
-              hostname={hostname}
-              locale={siteConfig.defaultLocale}
-              to={to}
-            />
-          ) : (
-            <p className="forest-empty-state">{isFrench ? "Aucun événement trouvé." : "No events found."}</p>
-          )}
-        </ForestPageSection>
+          <ForestCalendarList
+            entries={listEntries}
+            labels={{
+              all: isFrench ? "Tout" : "All",
+              classes: isFrench ? "Cours" : "Classes",
+              workshops: isFrench ? "Ateliers" : "Workshops",
+              trainings: isFrench ? "Formations" : "Trainings",
+            }}
+          />
+        </div>
       </ForestPageShell>
     );
   }

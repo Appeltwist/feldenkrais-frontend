@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from "react";
 
 import AnnouncementBar from "@/components/AnnouncementBar";
 import AboutSubNav from "@/components/about/AboutSubNav";
+import CoursSubNav from "@/components/classes/CoursSubNav";
 import Footer from "@/components/Footer";
 import ForestFooter from "@/components/ForestFooter";
 import Header from "@/components/Header";
@@ -113,6 +114,7 @@ export default async function RootLayout({
             ) : null}
             <Header />
             <AboutSubNav />
+            <CoursSubNav />
             <main className={isForestLighthouse ? "" : "main-shell"}>{children}</main>
             {isForestLighthouse ? <ForestFooter locale={locale} /> : <Footer />}
             {isForestLighthouse && <MobileFixedFooter locale={locale} />}
