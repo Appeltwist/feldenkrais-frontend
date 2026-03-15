@@ -1,7 +1,11 @@
 import "server-only";
 
+export function getOptionalEnv(name: string) {
+  return process.env[name]?.trim() || "";
+}
+
 export function getRequiredEnv(name: string) {
-  const value = process.env[name]?.trim();
+  const value = getOptionalEnv(name);
 
   if (!value) {
     throw new Error(`${name} is not defined`);

@@ -66,6 +66,8 @@ export default async function RootLayout({
   const locale = await getRequestLocale(siteConfig?.defaultLocale ?? "en");
 
   if (!siteConfig) {
+    const isVercelPreview = hostname.includes("vercel.app");
+
     return (
       <html lang="en">
         <body>
@@ -73,6 +75,13 @@ export default async function RootLayout({
             <h1>Unable to load site configuration</h1>
             <p>Hostname: {hostname}</p>
             <p>Check backend API availability and domain mapping.</p>
+            {isVercelPreview ? (
+              <p>
+                If you are testing on Vercel before the DNS switch, set{" "}
+                <code>SITE_HOSTNAME_OVERRIDE</code> to a hostname the CMS already knows, for
+                example <code>forest-lighthouse.be</code>.
+              </p>
+            ) : null}
           </main>
         </body>
       </html>

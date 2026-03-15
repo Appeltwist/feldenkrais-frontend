@@ -4,6 +4,7 @@ import { cleanDisplayText, cleanRichTextHtml, isFacilitatorOnlySubtitle } from "
 import { getForestExcerptOverride } from "@/lib/forest-excerpts";
 import { getForestFacilitatorNamesOverride } from "@/lib/forest-facilitator-overrides";
 import { getRequiredApiBase } from "@/lib/server-env";
+import { resolveHostname } from "@/lib/server-hostname";
 import type { CalendarItem, OfferDetail, OfferSummary, PrivateBookingConfig, SiteFaqSection } from "@/lib/types";
 
 export type QueryValue = string | number | boolean | null | undefined;
@@ -118,11 +119,7 @@ export class ApiError extends Error {
 const API_BASE = getRequiredApiBase();
 
 function normalizeHostname(hostname: string) {
-  const cleaned = hostname.trim().toLowerCase().replace(/^https?:\/\//, "");
-  const firstPart = cleaned.split("/")[0] ?? cleaned;
-  const firstHost = firstPart.split(",")[0]?.trim() ?? firstPart;
-
-  return firstHost.replace(/:\d+$/, "");
+  return resolveHostname(hostname);
 }
 
 function isForestRequest(hostname: string, center?: string) {
