@@ -20,11 +20,9 @@ export default function AnnouncementBar({ locale }: { locale: string }) {
         </span>
         <a
           className="fl-announcement-link"
-          href={isEn ? "https://forest-lighthouse.be/en/trial/" : "https://forest-lighthouse.be/fr/essai/"}
-          rel="noopener noreferrer"
-          target="_blank"
+          href={isEn ? "/en/trial" : "/fr/essai"}
         >
-          {isEn ? "Join Now!" : "Rejoignez-nous\u00a0!"}
+          {isEn ? "Join Now!" : "Commencer\u00a0!"}
         </a>
         <button
           aria-label="Close"

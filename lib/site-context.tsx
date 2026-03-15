@@ -34,10 +34,17 @@ export type MobileBookingCta = {
   label?: string;
 } | null;
 
+export type LocaleSwitchPaths = {
+  en?: string;
+  fr?: string;
+} | null;
+
 export type SiteContextValue = SiteConfig & {
   hostname: string;
   mobileBookingCta: MobileBookingCta;
   setMobileBookingCta: (value: MobileBookingCta) => void;
+  localeSwitchPaths: LocaleSwitchPaths;
+  setLocaleSwitchPaths: (value: LocaleSwitchPaths) => void;
 };
 
 const defaultSiteContext: SiteContextValue = {
@@ -58,6 +65,8 @@ const defaultSiteContext: SiteContextValue = {
   },
   mobileBookingCta: null,
   setMobileBookingCta: () => undefined,
+  localeSwitchPaths: null,
+  setLocaleSwitchPaths: () => undefined,
 };
 
 const SiteContext = createContext<SiteContextValue>(defaultSiteContext);
@@ -70,6 +79,7 @@ type SiteProviderProps = {
 
 export function SiteProvider({ hostname, initialSiteConfig, children }: SiteProviderProps) {
   const [mobileBookingCta, setMobileBookingCta] = useState<MobileBookingCta>(null);
+  const [localeSwitchPaths, setLocaleSwitchPaths] = useState<LocaleSwitchPaths>(null);
 
   const value = useMemo(
     () => ({
@@ -77,8 +87,10 @@ export function SiteProvider({ hostname, initialSiteConfig, children }: SiteProv
       ...initialSiteConfig,
       mobileBookingCta,
       setMobileBookingCta,
+      localeSwitchPaths,
+      setLocaleSwitchPaths,
     }),
-    [hostname, initialSiteConfig, mobileBookingCta],
+    [hostname, initialSiteConfig, mobileBookingCta, localeSwitchPaths],
   );
 
   return <SiteContext.Provider value={value}>{children}</SiteContext.Provider>;

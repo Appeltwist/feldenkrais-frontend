@@ -32,8 +32,11 @@ export default function ForestFacilitatorShowcase({
   if (facilitators.length === 1) {
     return (
       <div className="forest-facilitator-showcase">
+        <p className="forest-facilitator-showcase__eyebrow">Votre guide</p>
         {heading ? <h2 className="forest-facilitator-showcase__heading">{heading}</h2> : null}
-        <FacilitatorCard f={facilitators[0]} />
+        <div className="forest-facilitator-showcase__panel">
+          <FacilitatorCard f={facilitators[0]} />
+        </div>
       </div>
     );
   }
@@ -41,8 +44,11 @@ export default function ForestFacilitatorShowcase({
   /* 2+ facilitators — slider */
   return (
     <div className="forest-facilitator-showcase">
+      <p className="forest-facilitator-showcase__eyebrow">Votre guide</p>
       {heading ? <h2 className="forest-facilitator-showcase__heading">{heading}</h2> : null}
-      <FacilitatorSlider facilitators={facilitators} />
+      <div className="forest-facilitator-showcase__panel">
+        <FacilitatorSlider facilitators={facilitators} />
+      </div>
     </div>
   );
 }
@@ -53,24 +59,24 @@ function FacilitatorCard({ f }: { f: FacilitatorSlide }) {
   const hasQuote = Boolean(f.quote);
 
   return (
-    <div className={`forest-facilitator-slide${hasQuote ? "" : " forest-facilitator-slide--no-quote"}`}>
-      {/* left: identity + bio excerpt */}
-      <div className="forest-facilitator-slide__identity">
+    <div className="forest-facilitator-slide forest-facilitator-slide--centered">
+      {/* top: centered avatar + name + title */}
+      <div className="forest-facilitator-slide__identity forest-facilitator-slide__identity--centered">
         {f.imageUrl ? (
           <img
             alt={f.name}
-            className="forest-facilitator-slide__avatar"
+            className="forest-facilitator-slide__avatar forest-facilitator-slide__avatar--large"
             loading="lazy"
             src={f.imageUrl}
           />
         ) : (
-          <div aria-hidden="true" className="forest-facilitator-slide__avatar-placeholder">
-            <svg fill="currentColor" height="40" viewBox="0 0 24 24" width="40">
+          <div aria-hidden="true" className="forest-facilitator-slide__avatar-placeholder forest-facilitator-slide__avatar-placeholder--large">
+            <svg fill="currentColor" height="48" viewBox="0 0 24 24" width="48">
               <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
             </svg>
           </div>
         )}
-        <div className="forest-facilitator-slide__meta">
+        <div className="forest-facilitator-slide__meta forest-facilitator-slide__meta--centered">
           {f.profileHref ? (
             <Link className="forest-facilitator-slide__name-link" href={f.profileHref}>
               <h3 className="forest-facilitator-slide__name">{f.name}</h3>
@@ -82,18 +88,20 @@ function FacilitatorCard({ f }: { f: FacilitatorSlide }) {
             <p className="forest-facilitator-slide__title">{f.title}</p>
           ) : null}
         </div>
-        {f.bio ? (
-          <div
-            className="forest-facilitator-slide__bio rich-text"
-            dangerouslySetInnerHTML={{ __html: f.bio }}
-          />
-        ) : null}
       </div>
 
-      {/* right: quote */}
+      {/* middle: bio */}
+      {f.bio ? (
+        <div
+          className="forest-facilitator-slide__bio forest-facilitator-slide__bio--full rich-text"
+          dangerouslySetInnerHTML={{ __html: f.bio }}
+        />
+      ) : null}
+
+      {/* bottom: prominent quote */}
       {hasQuote ? (
-        <blockquote className="forest-facilitator-slide__quote">
-          <span aria-hidden="true" className="forest-facilitator-slide__quote-mark">&ldquo;</span>
+        <blockquote className="forest-facilitator-slide__quote forest-facilitator-slide__quote--centered">
+          <span aria-hidden="true" className="forest-facilitator-slide__quote-mark forest-facilitator-slide__quote-mark--centered">&ldquo;</span>
           <p>{f.quote}</p>
         </blockquote>
       ) : null}

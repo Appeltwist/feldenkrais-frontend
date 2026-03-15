@@ -41,10 +41,10 @@ function getForestCollectionCopy(offerType: OfferType, locale: string) {
   if (offerType === "PRIVATE_SESSION") {
     return {
       eyebrow: isFrench ? "Accompagnement individuel" : "One-to-one guidance",
-      title: isFrench ? "Séances privées" : "Private Sessions",
+      title: isFrench ? "Séances individuelles" : "Individual Sessions",
       subtitle: isFrench
-        ? "Des séances privées et formats individualisés, dans le même langage visuel que le reste du site Forest."
-        : "Private sessions and individualized formats in the same visual language as the rest of the Forest site.",
+        ? "Des séances individuelles et formats personnalisés, dans le même langage visuel que le reste du site Forest."
+        : "Individual sessions and personalized formats in the same visual language as the rest of the Forest site.",
       mediaUrl: FOREST_PAGE_MEDIA.privateSessions,
       actionHref: localizePath(locale, "/contact"),
       actionLabel: isFrench ? "Nous écrire" : "Contact us",

@@ -21,10 +21,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const locale = extractLocale(pathname) ?? DEFAULT_LOCALE;
+  const explicitLocale = extractLocale(pathname);
+  const locale = explicitLocale ?? DEFAULT_LOCALE;
 
   // Strip locale prefix so Next.js routes resolve without it
-  const stripped = locale === extractLocale(pathname)
+  const stripped = explicitLocale
     ? pathname.replace(`/${locale}`, "") || "/"
     : pathname;
 
@@ -33,6 +34,7 @@ export function middleware(request: NextRequest) {
 
   const response = NextResponse.rewrite(url);
   response.headers.set("x-locale", locale);
+  response.headers.set("x-locale-explicit", explicitLocale ? "1" : "0");
   return response;
 }
 

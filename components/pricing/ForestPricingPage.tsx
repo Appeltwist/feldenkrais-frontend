@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 
 import Image from "next/image";
 
+import ForestWeeklyScheduleSection from "@/components/classes/ForestWeeklyScheduleSection";
 import PricingScrollEffects from "@/components/motion/PricingScrollEffects";
 import RevealObserver from "@/components/motion/RevealObserver";
 import { getRequestLocale } from "@/lib/get-locale";
@@ -119,9 +120,6 @@ export default async function ForestPricingPage() {
   const motionScopeId = "fp-page-motion";
   const swipeHint = isFr ? "\u2190 Glissez pour voir les options \u2192" : "\u2190 Swipe to view options \u2192";
   const heroLabel = isFr ? "Forest Lighthouse, Bruxelles" : "Forest Lighthouse, Brussels";
-  const classDetailsLabel = isFr ? "Plus de d\u00e9tails" : "More details";
-  const classBookLabel = isFr ? "R\u00e9server le cours" : "Book class";
-  const classTeacherPrefix = isFr ? "avec" : "w/";
   const pricingIntro = isFr
     ? "Choisissez la mani\u00e8re dont vous souhaitez \u00eatre accompagn\u00e9 pendant vos huit premi\u00e8res semaines."
     : "Choose the level of accompaniment that best matches how you want to move through your first eight weeks.";
@@ -129,7 +127,6 @@ export default async function ForestPricingPage() {
     ? "Pour une pratique plus libre, plus flexible, ou simplement r\u00e9guli\u00e8re sans cadre de programme."
     : "For a lighter rhythm, a flexible routine, or a steady weekly practice without the programme format.";
   const scheduleHeading = isFr ? "I. Cours hebdomadaires" : "I. Weekly classes";
-  const scheduleScrollHint = isFr ? "\u2190 Glissez pour voir tous les jours \u2192" : "\u2190 Scroll to see all days \u2192";
   const programBenefitsVariants = ["lite", "featured", "premium"] as const;
   const packageIcons: Array<keyof typeof ICON_PATHS> = ["infinity", "compass", "star"];
   const passIcons: Array<keyof typeof ICON_PATHS> = ["compass", "calendar", "ticket"];
@@ -192,81 +189,22 @@ export default async function ForestPricingPage() {
         <Image alt="" className="fp-botanical__img" fill sizes="300px" src="/brands/forest-lighthouse/photos/leaves2.png" />
       </div>
 
-      {/* ── 1. HERO (fade) ── */}
-      <section aria-label={heroLabel} className="fp-hero-fade" data-scroll-hero>
-        <div
-          className="fp-hero-fade__img"
-          data-scroll-hero-img
-          style={{ "--fp-banner-image": "url('/brands/forest-lighthouse/home/hero-main-hall.jpg')" } as CSSProperties}
-        >
-          <div className="fp-hero-fade__content" data-scroll-hero-content>
-            <div className="fp-hero-fade__eyebrow">{heroLabel}</div>
-            <h1 className="fp-hero__title">{c.hero.title}</h1>
-            <p className="fp-hero__subtitle">{c.hero.subtitle}</p>
-          </div>
-        </div>
-        {/* Leaves zoom overlay — bridges hero fade into journey steps */}
-        <div aria-hidden="true" className="fp-hero-leaves" data-scroll-hero-leaves>
-          <Image
-            alt=""
-            className="fp-hero-leaves__img"
-            fill
-            sizes="100vw"
-            src="/brands/forest-lighthouse/photos/leaves.png"
-          />
-        </div>
+      {/* ── Page intro (matches schedule / rent page style) ── */}
+      <section className="fc-intro">
+        <p className="fc-intro__eyebrow">
+          {isFr ? "Tarifs & formules" : "Pricing & plans"}
+        </p>
+        <h1 className="fc-intro__title">
+          {isFr ? "Pass & Abonnements" : "Passes & Memberships"}
+        </h1>
+        <p className="fc-intro__subtitle">
+          {passesIntro}
+        </p>
       </section>
-
-      {/* ── Journey Steps (after hero, always visible) ── */}
-      <div className="fp-journey-steps">
-        <div className="fl-steps" data-reveal="stagger" aria-label={isFr ? "Parcours en 5 \u00e9tapes" : "5-step journey"}>
-          {c.hero.journeySteps.map((step, index) => {
-            const isFirst = index === 0 && step.highlighted && step.href;
-
-            const content = (
-              <>
-                <div className="fl-step-num">{index + 1}</div>
-                <div className="fl-step-text">
-                  {step.label ? `${step.label} ` : null}
-                  {step.boldPart ? <strong>{step.boldPart}</strong> : null}
-                </div>
-              </>
-            );
-
-            if (isFirst) {
-              return (
-                <div className="fl-step fl-step-clickable" key={`${step.boldPart}-${index}`}>
-                  <a
-                    aria-label={isFr ? "R\u00e9server un cours d\u2019essai" : "Book a free trial class"}
-                    href={step.href}
-                    rel="noopener noreferrer"
-                    target="_blank"
-                  >
-                    {content}
-                  </a>
-                </div>
-              );
-            }
-
-            return (
-              <div className="fl-step" key={`${step.boldPart}-${index}`}>
-                {content}
-              </div>
-            );
-          })}
-        </div>
-      </div>
 
       {/* ── 2. PRICING CHAPTER (reordered: passes first, packages second) ── */}
       <section className="fp-chapter fp-chapter--pricing">
-        {/* 2a. FLEXIBLE OPTIONS — shown first */}
-        <div className="fp-chapter__intro">
-          <p className="fp-chapter__eyebrow">{isFr ? "Options flexibles" : "Flexible options"}</p>
-          <h2 className="fp-section__heading fp-section__heading--left fp-section__heading--quiet">
-            {c.passes.heading}
-          </h2>
-          <p className="fp-section__subtitle fp-section__subtitle--left">{passesIntro}</p>
-        </div>
+        {/* 2a. FLEXIBLE OPTIONS — shown first (intro already in fc-intro above) */}
 
         <section
           aria-label={isFr ? "Pass et abonnements" : "Passes and subscriptions"}
@@ -461,84 +399,12 @@ export default async function ForestPricingPage() {
       <Separator />
 
       {/* ── 4. SECTION I: SCHEDULE ── */}
-      <section className="fp-detail-section fp-detail-section--schedule" data-scroll-parallax-section>
-        <div className="fp-detail-section__illustration" data-scroll-parallax-illus>
-          <Image
-            alt={c.features.columns[0]?.title || "Group classes"}
-            className="fp-detail-section__illus-img"
-            fill
-            sizes="(max-width: 900px) 100vw, 40vw"
-            src="/brands/forest-lighthouse/yoga-lines.png"
-          />
-        </div>
-        <div className="fp-detail-section__content" data-scroll-parallax-content>
-          <p className="fp-chapter__eyebrow">{isFr ? "Pratique hebdomadaire" : "Weekly practice"}</p>
-          <h2 className="fp-section__heading fp-section__heading--left">{scheduleHeading}</h2>
-          {c.schedule.subtitle ? (
-            <p className="fp-section__subtitle fp-section__subtitle--left">{c.schedule.subtitle}</p>
-          ) : null}
-
-          <div className="fp-schedule-wrap">
-            <div className="fp-schedule">
-              {c.schedule.days.map((day) => (
-                <div className="fp-schedule__day" key={day.day}>
-                  <h3 className="fp-schedule__day-name">{day.day}</h3>
-                  <div className="fp-schedule__entries">
-                    {day.entries.map((entry, index) => (
-                      <div
-                        className="fp-class-card"
-                        data-hover-lift="true"
-                        key={`${day.day}-${entry.className}-${entry.time}-${index}`}
-                        style={{ "--card-bg": entry.color || "rgba(0,55,56,0.55)" } as CSSProperties}
-                      >
-                        <div className="fp-class-card__meta">
-                          <div className="fp-class-card__meta-left">
-                            <span className="fp-class-card__time">{entry.time}</span>
-                            <span className="fp-class-card__langs">
-                              {entry.languages.map((language) => (
-                                <span className="fp-class-card__lang" key={language}>
-                                  {language}
-                                </span>
-                              ))}
-                            </span>
-                            {entry.level ? <span className="fp-class-card__level">{entry.level}</span> : null}
-                          </div>
-                        </div>
-
-                        <h4 className="fp-class-card__name">{entry.className}</h4>
-                        <span className="fp-class-card__teacher">
-                          {classTeacherPrefix} <strong>{entry.instructor}</strong>
-                        </span>
-
-                        <details className="fp-class-details">
-                          <summary className="fp-class-summary">
-                            <span className="fp-class-summary__label">{classDetailsLabel}</span>
-                            <span aria-hidden="true" className="fp-class-plus" />
-                          </summary>
-                          <div className="fp-class-desc">
-                            <p className="fp-class-desc__text">{entry.description}</p>
-                            {entry.bookingUrl ? (
-                              <a
-                                className="fp-class-desc__book"
-                                href={entry.bookingUrl}
-                                rel="noopener noreferrer"
-                                target="_blank"
-                              >
-                                {classBookLabel}
-                              </a>
-                            ) : null}
-                          </div>
-                        </details>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <p aria-hidden="true" className="fp-schedule__hint">{scheduleScrollHint}</p>
-          </div>
-        </div>
-      </section>
+      <ForestWeeklyScheduleSection
+        eyebrow={isFr ? "Pratique hebdomadaire" : "Weekly practice"}
+        heading={scheduleHeading}
+        locale={locale}
+        parallax
+      />
 
       {/* ── 5. SECTION II: INDIVIDUAL SESSION (full-width) ── */}
       <section className="fp-session-section" data-reveal="section">

@@ -10,7 +10,7 @@ type GalleryImage = {
 };
 
 type ForestMediaEmbedProps = {
-  vimeoUrl?: string;
+  videoUrl?: string;
   galleryImages?: GalleryImage[];
   fallbackImageUrl?: string;
   title: string;
@@ -25,20 +25,42 @@ function parseVimeoId(url: string): string | null {
   return match ? match[1] : null;
 }
 
+function parseYouTubeId(url: string): string | null {
+  const embedMatch = url.match(/youtube\.com\/embed\/([A-Za-z0-9_-]+)/);
+  if (embedMatch) {
+    return embedMatch[1];
+  }
+
+  const watchMatch = url.match(/[?&]v=([A-Za-z0-9_-]+)/);
+  if (watchMatch) {
+    return watchMatch[1];
+  }
+
+  const shortMatch = url.match(/youtu\.be\/([A-Za-z0-9_-]+)/);
+  return shortMatch ? shortMatch[1] : null;
+}
+
 /* ── component ── */
 
 export default function ForestMediaEmbed({
-  vimeoUrl,
+  videoUrl,
   galleryImages,
   fallbackImageUrl,
   title,
 }: ForestMediaEmbedProps) {
-  const vimeoId = vimeoUrl ? parseVimeoId(vimeoUrl) : null;
+  const normalizedVideoUrl = (videoUrl || "").trim();
+  const vimeoId = normalizedVideoUrl ? parseVimeoId(normalizedVideoUrl) : null;
+  const youTubeId = normalizedVideoUrl ? parseYouTubeId(normalizedVideoUrl) : null;
   const images = galleryImages?.filter((img) => img.url) ?? [];
 
   /* ── Vimeo embed with thumbnail + play overlay ── */
   if (vimeoId) {
-    return <VimeoPlayer vimeoId={vimeoId} title={title} />;
+    return <VimeoPlayer fallbackImageUrl={fallbackImageUrl} title={title} vimeoId={vimeoId} />;
+  }
+
+  /* ── YouTube embed with thumbnail + play overlay ── */
+  if (youTubeId) {
+    return <YouTubePlayer fallbackImageUrl={fallbackImageUrl} title={title} youTubeId={youTubeId} />;
   }
 
   /* ── Carousel (2+ images) ── */
@@ -66,11 +88,16 @@ export default function ForestMediaEmbed({
 
 /* ── Vimeo player — thumbnail + play button, loads iframe on click ── */
 
-function VimeoPlayer({ vimeoId, title }: { vimeoId: string; title: string }) {
+function VimeoPlayer({
+  vimeoId,
+  title,
+  fallbackImageUrl,
+}: {
+  vimeoId: string;
+  title: string;
+  fallbackImageUrl?: string;
+}) {
   const [playing, setPlaying] = useState(false);
-
-  /* Vimeo provides thumbnail URLs in predictable patterns via their oEmbed,
-     but the simplest approach is their thumbnail URL scheme */
   const thumbUrl = `https://vumbnail.com/${vimeoId}.jpg`;
 
   if (playing) {
@@ -90,26 +117,108 @@ function VimeoPlayer({ vimeoId, title }: { vimeoId: string; title: string }) {
 
   return (
     <div className="forest-media-embed forest-media-embed--video">
-      <button
-        aria-label={`Play ${title}`}
-        className="forest-media-embed__poster"
-        onClick={() => setPlaying(true)}
-        type="button"
-      >
+      <VideoPosterButton
+        fallbackImageUrl={fallbackImageUrl}
+        key={`${thumbUrl}|${fallbackImageUrl || ""}`}
+        onPlay={() => setPlaying(true)}
+        primaryImageUrl={thumbUrl}
+        title={title}
+      />
+    </div>
+  );
+}
+
+function YouTubePlayer({
+  title,
+  youTubeId,
+  fallbackImageUrl,
+}: {
+  title: string;
+  youTubeId: string;
+  fallbackImageUrl?: string;
+}) {
+  const [playing, setPlaying] = useState(false);
+  const thumbUrl = `https://img.youtube.com/vi/${youTubeId}/hqdefault.jpg`;
+
+  if (playing) {
+    return (
+      <div className="forest-media-embed forest-media-embed--video">
+        <div className="forest-media-embed__ratio">
+          <iframe
+            allow="autoplay; fullscreen; picture-in-picture"
+            allowFullScreen
+            src={`https://www.youtube.com/embed/${youTubeId}?autoplay=1&rel=0`}
+            title={title}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="forest-media-embed forest-media-embed--video">
+      <VideoPosterButton
+        fallbackImageUrl={fallbackImageUrl}
+        key={`${thumbUrl}|${fallbackImageUrl || ""}`}
+        onPlay={() => setPlaying(true)}
+        primaryImageUrl={thumbUrl}
+        title={title}
+      />
+    </div>
+  );
+}
+
+function VideoPosterButton({
+  primaryImageUrl,
+  fallbackImageUrl,
+  onPlay,
+  title,
+}: {
+  primaryImageUrl?: string;
+  fallbackImageUrl?: string;
+  onPlay: () => void;
+  title: string;
+}) {
+  const normalizedPrimary = (primaryImageUrl || "").trim();
+  const normalizedFallback = (fallbackImageUrl || "").trim();
+  const preferredSource = normalizedFallback ? "fallback" : "primary";
+  const [activeSource, setActiveSource] = useState<"primary" | "fallback">(preferredSource);
+
+  const posterUrl = activeSource === "fallback"
+    ? (normalizedFallback || normalizedPrimary)
+    : (normalizedPrimary || normalizedFallback);
+
+  return (
+    <button
+      aria-label={`Play ${title}`}
+      className="forest-media-embed__poster"
+      onClick={onPlay}
+      type="button"
+    >
+      {posterUrl ? (
         <img
           alt=""
           className="forest-media-embed__thumb"
           loading="lazy"
-          src={thumbUrl}
+          onError={() => {
+            if (activeSource === "fallback" && normalizedPrimary) {
+              setActiveSource("primary");
+              return;
+            }
+            if (activeSource === "primary" && normalizedFallback) {
+              setActiveSource("fallback");
+            }
+          }}
+          src={posterUrl}
         />
-        <span aria-hidden="true" className="forest-media-embed__play">
-          <svg fill="none" height="48" viewBox="0 0 48 48" width="48">
-            <circle cx="24" cy="24" fill="rgba(0,0,0,0.55)" r="24" />
-            <path d="M19 15l14 9-14 9V15z" fill="#fff" />
-          </svg>
-        </span>
-      </button>
-    </div>
+      ) : null}
+      <span aria-hidden="true" className="forest-media-embed__play">
+        <svg fill="none" height="48" viewBox="0 0 48 48" width="48">
+          <circle cx="24" cy="24" fill="rgba(0,0,0,0.55)" r="24" />
+          <path d="M19 15l14 9-14 9V15z" fill="#fff" />
+        </svg>
+      </span>
+    </button>
   );
 }
 

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { useSiteContext } from "@/lib/site-context";
+
 type AboutNavItem = {
   label: string;
   labelFr: string;
@@ -48,9 +50,10 @@ function isAboutRoute(pathname: string): boolean {
 
 export default function AboutSubNav() {
   const pathname = usePathname() || "/";
+  const { defaultLocale } = useSiteContext();
   const localePrefix = getLocalePrefix(pathname);
   const barePathname = stripLocalePrefix(pathname);
-  const isFrench = localePrefix === "/fr";
+  const isFrench = localePrefix === "/fr" || (localePrefix === "" && defaultLocale === "fr");
 
   if (!isAboutRoute(barePathname)) {
     return null;

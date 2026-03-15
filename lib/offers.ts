@@ -1,10 +1,13 @@
+import { cleanDisplayText, cleanRichTextHtml } from "@/lib/content-cleanup";
 import { getOfferLabels as getLocalizedOfferLabels } from "@/lib/i18n";
 import type {
+  BookingOption,
   Facilitator,
   OfferDetail,
   OfferSummary,
   OfferType,
   PriceOption,
+  PricingPromo,
   PrimaryCTA,
   QuickFacts,
   ScheduleCard,
@@ -73,6 +76,20 @@ export function getOfferType(offer: OfferDetail | OfferSummary) {
   }
 
   return "WORKSHOP";
+}
+
+export function getOfferTypeVariant(offerType: string) {
+  const normalized = offerType.trim().toUpperCase();
+  if (normalized === "CLASS") {
+    return "class" as const;
+  }
+  if (normalized === "PRIVATE_SESSION") {
+    return "private-session" as const;
+  }
+  if (normalized === "TRAINING_INFO") {
+    return "training" as const;
+  }
+  return "workshop" as const;
 }
 
 export function getOfferCollectionPathByType(offerType: string) {
@@ -215,6 +232,24 @@ export function getPriceOptions(offer: OfferDetail) {
   return asRecords(record.price_options ?? record.priceOptions ?? record.pricing) as PriceOption[];
 }
 
+export function getBookingOptions(offer: OfferDetail) {
+  const record = asRecord(offer);
+  if (!record) {
+    return [] as BookingOption[];
+  }
+
+  return asRecords(record.booking_options ?? record.bookingOptions) as BookingOption[];
+}
+
+export function getPricingPromos(offer: OfferDetail) {
+  const record = asRecord(offer);
+  if (!record) {
+    return [] as PricingPromo[];
+  }
+
+  return asRecords(record.pricing_promos ?? record.pricingPromos ?? record.discounts) as PricingPromo[];
+}
+
 export function getFacilitators(offer: OfferDetail) {
   const record = asRecord(offer);
   if (!record) {
@@ -241,7 +276,12 @@ export function getFacilitatorImageUrl(facilitator: Facilitator) {
 
 export function getFacilitatorBio(facilitator: Facilitator) {
   const record = asRecord(facilitator);
-  return pickString(record, ["bio", "short_bio", "shortBio", "description"]);
+  const richBio = pickString(record, ["bio"]);
+  if (richBio) {
+    return cleanRichTextHtml(richBio);
+  }
+
+  return cleanDisplayText(pickString(record, ["short_bio", "shortBio", "description"]));
 }
 
 export function getFacilitatorQuote(facilitator: Facilitator) {
@@ -315,11 +355,19 @@ export function getScheduleCards(offer: OfferDetail) {
 
   return asRecords(record.schedule_cards ?? record.scheduleCards)
     .map((card) => {
+      const facRaw = asRecord(card.facilitator);
       const normalized: ScheduleCard = {
         date_label: pickString(card, ["date_label", "dateLabel"]),
         start_datetime: pickString(card, ["start_datetime", "start", "start_at", "datetime"]),
         end_datetime: pickString(card, ["end_datetime", "end", "end_at"]),
         timezone: pickString(card, ["timezone", "tz", "time_zone"]),
+        facilitator: facRaw
+          ? {
+              id: (facRaw.id as number | string) ?? undefined,
+              display_name: pickString(facRaw, ["display_name", "displayName", "name"]),
+              photo_url: pickString(facRaw, ["photo_url", "photoUrl", "image_url", "imageUrl"]),
+            }
+          : null,
       };
 
       const hasAny = Object.values(normalized).some((value) => Boolean(value));
@@ -396,6 +444,36 @@ export function getSections(offer: OfferDetail) {
       } as SectionBlock;
     })
     .filter((block): block is SectionBlock => block !== null);
+}
+
+export type BenefitItem = { title: string; description: string };
+
+export function getBenefits(
+  offer: OfferDetail,
+): { heading: string; items: BenefitItem[] } | null {
+  const sections = getSections(offer);
+  const section = sections.find((s) => s.type === "offer_benefits");
+  if (!section) return null;
+
+  const value = section.value as Record<string, unknown> | undefined;
+  const heading = (value?.heading as string) || "";
+  const rawItems =
+    (value?.items as Array<Record<string, unknown>>) || [];
+
+  const items = rawItems
+    .map((item) => {
+      const inner = ((item as Record<string, unknown>).value ?? item) as {
+        title?: string;
+        description?: string;
+      };
+      return {
+        title: inner.title || "",
+        description: inner.description || "",
+      };
+    })
+    .filter((item) => item.title || item.description);
+
+  return items.length > 0 ? { heading, items } : null;
 }
 
 export function readNextOccurrence(offer: OfferSummary | OfferDetail) {
