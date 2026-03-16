@@ -210,6 +210,10 @@ function formatFacilitatorNames(names: readonly string[]) {
 
 type FormattedOccurrence = { date: string; timeRange: string };
 
+function toIsoDate(value: Date) {
+  return value.toISOString().slice(0, 10);
+}
+
 function compareOccurrenceStart(a: RawRecord, b: RawRecord) {
   const aStart = pickString(a, ["start_datetime", "start", "start_at", "datetime", "date"]);
   const bStart = pickString(b, ["start_datetime", "start", "start_at", "datetime", "date"]);
@@ -512,10 +516,19 @@ export default async function ForestOfferCollectionPage({
   );
 
   /* Fetch calendar grouped by offer → gives us 1-3 next_occurrences per offer */
+  const today = new Date();
+  const horizon = new Date(today);
+  const fetchesClassesOnly =
+    config.offerTypes.length === 1 && config.offerTypes[0] === "CLASS";
+  horizon.setDate(today.getDate() + (fetchesClassesOnly ? 14 : 365));
+  const from = toIsoDate(today);
+  const to = toIsoDate(horizon);
   const calendarItems = await fetchCalendar({
     hostname,
     center: siteConfig.centerSlug,
     locale: requestLocale,
+    from,
+    to,
     groupBy: "offer",
   }).catch(() => [] as CalendarItem[]);
 
