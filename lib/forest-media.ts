@@ -24,7 +24,7 @@ export const FOREST_LEGACY_MEDIA_ENTRIES: readonly ForestLegacyMediaEntry[] = [
   {
     legacyUrl:
       "https://forest-lighthouse.be/wp-content/uploads/sites/12/2025/01/images-3-square-271a310ab72062ab5406049032f6eae4-ylwucpaoi847.jpeg",
-    localPath: "/brands/forest-lighthouse/offers/feldenkrais-for-musicians.jpeg",
+    localPath: "/brands/forest-lighthouse/photos/feldenkrais-music-1.jpeg",
     usage: "offer",
   },
   {
@@ -34,7 +34,7 @@ export const FOREST_LEGACY_MEDIA_ENTRIES: readonly ForestLegacyMediaEntry[] = [
   },
   {
     legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2024/02/60A8016-Grande.jpeg",
-    localPath: "/brands/forest-lighthouse/offers/brighter-minds.jpeg",
+    localPath: "/brands/forest-lighthouse/photos/theatrenfant.JPEG",
     usage: "offer",
   },
   {

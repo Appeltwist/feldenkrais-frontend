@@ -56,15 +56,23 @@ const FOREST_EXCERPT_OVERRIDES: Array<{ titleMatch: string; excerpt: string }> =
 const FOREST_IMAGE_OVERRIDES: Array<{ titleMatch: string; imageUrl: string }> = [
   {
     titleMatch: "théâtre enfants",
-    imageUrl: "/brands/forest-lighthouse/offers/brighter-minds.jpeg",
+    imageUrl: "/brands/forest-lighthouse/photos/theatrenfant.JPEG",
   },
   {
     titleMatch: "theatre enfants",
-    imageUrl: "/brands/forest-lighthouse/offers/brighter-minds.jpeg",
+    imageUrl: "/brands/forest-lighthouse/photos/theatrenfant.JPEG",
   },
   {
     titleMatch: "brighter minds",
-    imageUrl: "/brands/forest-lighthouse/offers/brighter-minds.jpeg",
+    imageUrl: "/brands/forest-lighthouse/photos/theatrenfant.JPEG",
+  },
+  {
+    titleMatch: "feldenkrais pour les musiciens",
+    imageUrl: "/brands/forest-lighthouse/photos/feldenkrais-music-1.jpeg",
+  },
+  {
+    titleMatch: "feldenkrais for musicians",
+    imageUrl: "/brands/forest-lighthouse/photos/feldenkrais-music-1.jpeg",
   },
 ];
 
