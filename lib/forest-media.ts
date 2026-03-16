@@ -114,8 +114,43 @@ export const FOREST_LEGACY_MEDIA_ENTRIES: readonly ForestLegacyMediaEntry[] = [
     usage: "person",
   },
   {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2023/12/Capture-decran-2026-03-02-a-09.06.21.png",
+    localPath: "/brands/forest-lighthouse/people/chen-wei-lee.png",
+    usage: "person",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2025/08/DSC06310-400x600.jpg",
+    localPath: "",
+    usage: "person",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2025/08/Jelila1-450x600.jpg",
+    localPath: "/brands/forest-lighthouse/people/jelila-laouiti.jpg",
+    usage: "person",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2025/08/joy-500x600.jpg",
+    localPath: "/brands/forest-lighthouse/people/joy-albano.jpg",
+    usage: "person",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2025/08/Juan-400x600.jpg",
+    localPath: "/brands/forest-lighthouse/people/juan-martinez.jpg",
+    usage: "person",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2024/09/IMG_3791-600x550.jpeg",
+    localPath: "/brands/forest-lighthouse/people/lara-liu.jpeg",
+    usage: "person",
+  },
+  {
     legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2023/12/079A2148-500x600.jpg",
     localPath: "/brands/forest-lighthouse/people/nikos-appelqvist.jpg",
+    usage: "person",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2025/09/WhatsApp-Image-2025-09-08-at-14.50.51-400x600.jpeg",
+    localPath: "/brands/forest-lighthouse/people/orazio-giurdanella.jpeg",
     usage: "person",
   },
   {
@@ -133,6 +168,51 @@ export const FOREST_LEGACY_MEDIA_ENTRIES: readonly ForestLegacyMediaEntry[] = [
     legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2022/09/Alan-Q-006-2.jpg",
     localPath: "/brands/forest-lighthouse/people/alan-questel.jpg",
     usage: "person",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2024/11/Ana--450x600.jpg",
+    localPath: "/brands/forest-lighthouse/people/ana-victoria-iommi.jpg",
+    usage: "person",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2025/01/WhatsApp-Image-2025-09-08-at-14.50.56-400x600.jpeg",
+    localPath: "/brands/forest-lighthouse/people/sabine-boone.jpeg",
+    usage: "person",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2025/12/unnamed-9-600x600.jpg",
+    localPath: "/brands/forest-lighthouse/people/sacha-kocic.jpeg",
+    usage: "person",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2023/12/DSC02131-400x600.jpg",
+    localPath: "/brands/forest-lighthouse/people/scott-clark.jpg",
+    usage: "person",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2025/04/IMG_3956-600x493.jpeg",
+    localPath: "/brands/forest-lighthouse/people/tara-appriou.jpg",
+    usage: "person",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2024/09/DSC05713-1012x1300.jpg",
+    localPath: "/brands/forest-lighthouse/offers/bones-for-life-training.jpg",
+    usage: "offer",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2024/09/DSC05715-1300x1157.jpg",
+    localPath: "/brands/forest-lighthouse/people/lara-liu.jpeg",
+    usage: "offer",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2024/09/DSC05722-866x1300.jpg",
+    localPath: "/brands/forest-lighthouse/offers/feldenkrais-bxl-4.jpg",
+    usage: "offer",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2024/09/IMG_3791-1300x1192.jpeg",
+    localPath: "/brands/forest-lighthouse/people/lara-liu.jpeg",
+    usage: "offer",
   },
 ] as const;
 
@@ -164,8 +244,12 @@ export function resolveForestMediaUrl(value?: string | null) {
     return "";
   }
 
-  const mapped = FOREST_LEGACY_MEDIA_MAP.get(normalizeLegacyMediaKey(trimmed));
-  return mapped || trimmed;
+  const normalizedKey = normalizeLegacyMediaKey(trimmed);
+  if (FOREST_LEGACY_MEDIA_MAP.has(normalizedKey)) {
+    return FOREST_LEGACY_MEDIA_MAP.get(normalizedKey) ?? "";
+  }
+
+  return trimmed;
 }
 
 export function rewriteForestMediaPayload<T>(payload: T): T {

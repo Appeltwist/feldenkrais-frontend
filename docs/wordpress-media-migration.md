@@ -91,6 +91,37 @@ Notes:
 - Alan Questel
   -> `/brands/forest-lighthouse/people/alan-questel.jpg`
 
+### Second-pass teacher and gallery fixes for live launch
+
+To remove the remaining broken-image icons that appeared after the domain cutover, a second pass migrated or substituted these additional WordPress media URLs:
+
+- Ana Victoria Iommi
+  -> `/brands/forest-lighthouse/people/ana-victoria-iommi.jpg`
+- Chen-Wei Lee
+  -> `/brands/forest-lighthouse/people/chen-wei-lee.png`
+- Jelila Laouiti
+  -> `/brands/forest-lighthouse/people/jelila-laouiti.jpg`
+- Joy Albano
+  -> `/brands/forest-lighthouse/people/joy-albano.jpg`
+- Juan Martinez
+  -> `/brands/forest-lighthouse/people/juan-martinez.jpg`
+- Lara Liu
+  -> `/brands/forest-lighthouse/people/lara-liu.jpeg`
+- Orazio Giurdanella
+  -> `/brands/forest-lighthouse/people/orazio-giurdanella.jpeg`
+- Sabine Boone
+  -> `/brands/forest-lighthouse/people/sabine-boone.jpeg`
+- Sacha Kocic
+  -> `/brands/forest-lighthouse/people/sacha-kocic.jpeg`
+- Scott Clark
+  -> `/brands/forest-lighthouse/people/scott-clark.jpg`
+- Tara Appriou
+  -> `/brands/forest-lighthouse/people/tara-appriou.jpg`
+- Bones for Life gallery images
+  -> local Forest assets under `/brands/forest-lighthouse/offers/` and `/brands/forest-lighthouse/people/`
+
+For `Gaspard Rozenwajn`, no trustworthy local portrait was available in the launch asset pack, so his legacy URL is currently forced to a clean empty value to trigger the UI initials fallback instead of showing a broken-image icon.
+
 ## Code Changes
 
 ### Centralized mapping
@@ -124,13 +155,11 @@ These still depend on WordPress-hosted media today and should move to Django/Wag
 - offer gallery images
 - other editorial media that changes regularly
 
-Examples still left on WordPress:
+Examples still left on WordPress or needing a proper CMS-media migration:
 
-- `chen-wei-lee-wei-wei` photo
-- `joy-albano` photo
-- `juan-martinez` photo
-- `orazio-giurdanella` photo
-- offer-detail gallery images returned by the CMS API
+- editorial teacher portraits not yet recovered from the original source files
+- offer-detail gallery sets beyond the launch-critical ones patched here
+- rich-text editorial media embedded inside CMS HTML blocks
 
 ## Long-Term Boundary
 
