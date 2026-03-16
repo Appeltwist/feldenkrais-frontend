@@ -47,7 +47,7 @@ function resolveAboutPerson(
     href: person.localSlug ? localizePath(locale, `/teachers/${person.localSlug}`) : undefined,
     imageAlt: person.imageAlt[locale],
     name: readString(teacher?.display_name) || person.name,
-    photoUrl: readString(teacher?.photo_url) || person.imageUrl,
+    photoUrl: person.imageUrl || readString(teacher?.photo_url),
     role: person.role[locale],
     summary: person.summary[locale],
   };

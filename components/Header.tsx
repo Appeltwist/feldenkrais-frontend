@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { brandAsset } from "@/lib/brand-assets";
 import { useSiteContext } from "@/lib/site-context";
 
 type DefaultNavLink = { label: string; href: string };
@@ -25,8 +26,7 @@ const DEFAULT_NAV: DefaultNavLink[] = [
   { label: "About", href: "/about" },
 ];
 
-const LOGO_URL =
-  "https://forest-lighthouse.be/wp-content/uploads/sites/12/2022/07/69289F3E-09F0-4D3A-AC4C-98B27501D6A5-e1657354348213.png";
+const LOGO_URL = brandAsset("forest-lighthouse", "logo/forest-lighthouse-wordmark.png");
 
 type LocaleCode = "en" | "fr";
 

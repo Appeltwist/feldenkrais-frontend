@@ -101,6 +101,7 @@ const ABOUT_PEOPLE: ForestAboutPersonSeed[] = [
     id: "betzabel-falfan",
     featured: true,
     localSlug: "betzabel-falfan",
+    imageUrl: "/brands/forest-lighthouse/people/betzabel-falfan.jpg",
     imageAlt: {
       en: "Betzabel Falfan at Forest Lighthouse",
       fr: "Betzabel Falfan au Forest Lighthouse",
@@ -119,6 +120,7 @@ const ABOUT_PEOPLE: ForestAboutPersonSeed[] = [
     id: "nikos-appelqvist",
     featured: true,
     localSlug: "nikos-appelqvist",
+    imageUrl: "/brands/forest-lighthouse/people/nikos-appelqvist.jpg",
     imageAlt: {
       en: "Nikos Appelqvist at Forest Lighthouse",
       fr: "Nikos Appelqvist au Forest Lighthouse",
@@ -170,6 +172,7 @@ const ABOUT_PEOPLE: ForestAboutPersonSeed[] = [
   {
     id: "yvo-mentens",
     localSlug: "yvo-mentens",
+    imageUrl: "/brands/forest-lighthouse/people/yvo-mentens.jpg",
     imageAlt: {
       en: "Yvo Mentens portrait",
       fr: "Portrait de Yvo Mentens",
@@ -187,6 +190,7 @@ const ABOUT_PEOPLE: ForestAboutPersonSeed[] = [
   {
     id: "pia-appelquist",
     localSlug: "pia-appelquist",
+    imageUrl: "/brands/forest-lighthouse/people/pia-appelqvist.jpg",
     imageAlt: {
       en: "Pia Appelquist portrait",
       fr: "Portrait de Pia Appelquist",
@@ -221,6 +225,7 @@ const ABOUT_PEOPLE: ForestAboutPersonSeed[] = [
   {
     id: "alan-questel",
     localSlug: "alan-questel",
+    imageUrl: "/brands/forest-lighthouse/people/alan-questel.jpg",
     imageAlt: {
       en: "Alan Questel portrait",
       fr: "Portrait d'Alan Questel",
