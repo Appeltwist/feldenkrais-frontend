@@ -564,8 +564,9 @@ export async function fetchPrivateBookingConfig({ hostname, center, slug, locale
     center,
     locale,
   });
+  const normalizedPayload = isForestRequest(normalizedHostname, center) ? rewriteForestMediaPayload(payload) : payload;
 
-  const record = asRecord(payload);
+  const record = asRecord(normalizedPayload);
   if (!record) {
     return null;
   }
