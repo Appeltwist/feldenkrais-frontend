@@ -76,12 +76,33 @@ const FOREST_IMAGE_OVERRIDES: Array<{ titleMatch: string; imageUrl: string }> = 
   },
 ];
 
+const FOREST_HERO_IMAGE_OVERRIDES: Array<{ titleMatch: string; imageUrl: string }> = [
+  {
+    titleMatch: "faire des cercles plus petits",
+    imageUrl: "/brands/forest-lighthouse/photos/alice-smaller-circles-3.jpeg",
+  },
+  {
+    titleMatch: "making smaller circles",
+    imageUrl: "/brands/forest-lighthouse/photos/alice-smaller-circles-3.jpeg",
+  },
+];
+
 /**
  * Returns a local hero-image override for the given offer title, or `null`.
  */
 export function getForestImageOverride(title: string): string | null {
   const lower = title.toLowerCase();
   for (const entry of FOREST_IMAGE_OVERRIDES) {
+    if (lower.includes(entry.titleMatch)) {
+      return entry.imageUrl;
+    }
+  }
+  return null;
+}
+
+export function getForestHeroImageOverride(title: string): string | null {
+  const lower = title.toLowerCase();
+  for (const entry of FOREST_HERO_IMAGE_OVERRIDES) {
     if (lower.includes(entry.titleMatch)) {
       return entry.imageUrl;
     }
