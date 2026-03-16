@@ -109,6 +109,21 @@ export const FOREST_LEGACY_MEDIA_ENTRIES: readonly ForestLegacyMediaEntry[] = [
     usage: "offer",
   },
   {
+    legacyUrl: "/brands/forest-lighthouse/photos/alice smaller circles1.jpeg",
+    localPath: "/brands/forest-lighthouse/photos/alice-smaller-circles-1.jpeg",
+    usage: "offer",
+  },
+  {
+    legacyUrl: "/brands/forest-lighthouse/photos/alice smaller circles2.jpeg",
+    localPath: "/brands/forest-lighthouse/photos/alice-smaller-circles-2.jpeg",
+    usage: "offer",
+  },
+  {
+    legacyUrl: "/brands/forest-lighthouse/photos/alice smaller circles3.jpeg",
+    localPath: "/brands/forest-lighthouse/photos/alice-smaller-circles-3.jpeg",
+    usage: "offer",
+  },
+  {
     legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2023/08/DSC01119.jpg",
     localPath: "/brands/forest-lighthouse/offers/feldenkrais-bxl-4.jpg",
     usage: "offer",
