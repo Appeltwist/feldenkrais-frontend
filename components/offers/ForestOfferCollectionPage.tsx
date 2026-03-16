@@ -1,10 +1,8 @@
 import Link from "next/link";
 
 import { ForestPageShell } from "@/components/forest/ForestPageShell";
-import RevealObserver from "@/components/motion/RevealObserver";
 import {
   fetchCalendar,
-  fetchOfferDetail,
   fetchOffers,
   fetchSiteConfig,
   type CalendarItem,
@@ -563,37 +561,6 @@ export default async function ForestOfferCollectionPage({
     return 0;
   });
 
-  const detailedOffersBySlug = new Map<string, OfferDetail>();
-  const details = await Promise.all(
-    sorted.map(async (offer) => {
-      const offerType = getOfferType(offer);
-      if (offerType !== "WORKSHOP" && offerType !== "TRAINING_INFO") {
-        return null;
-      }
-
-      const slug = getOfferSlug(offer);
-      if (!slug) {
-        return null;
-      }
-
-      const detail = await fetchOfferDetail({
-        hostname,
-        center: siteConfig.centerSlug,
-        slug,
-        locale: requestLocale,
-      }).catch(() => null);
-
-      return detail ? ([slug, detail] as const) : null;
-    }),
-  );
-
-  for (const entry of details) {
-    if (!entry) {
-      continue;
-    }
-    detailedOffersBySlug.set(entry[0], entry[1]);
-  }
-
   const offerCountLabel = localeCode === "fr"
     ? `${sorted.length} offre${sorted.length > 1 ? "s" : ""} publiée${sorted.length > 1 ? "s" : ""}`
     : `${sorted.length} published ${sorted.length === 1 ? "offer" : "offers"}`;
@@ -601,10 +568,8 @@ export default async function ForestOfferCollectionPage({
   return (
     <ForestPageShell>
       <div className="forest-collection-page" id="collection-motion">
-        <RevealObserver scopeId="collection-motion" />
-
         {/* ── PAGE INTRO ── */}
-        <section className="fc-intro" data-reveal="section">
+        <section className="fc-intro">
           <p className="fc-intro__eyebrow">{copy.eyebrow}</p>
           <h1 className="fc-intro__title">{copy.title}</h1>
           <p className="fc-intro__subtitle">{copy.subtitle}</p>
@@ -612,7 +577,7 @@ export default async function ForestOfferCollectionPage({
 
         {/* ── OFFER GRID ── */}
         {sorted.length === 0 ? (
-          <section className="fc-empty forest-panel" data-reveal="section">
+          <section className="fc-empty forest-panel">
             <div className="fc-empty__icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <circle cx="12" cy="12" r="10" />
@@ -626,7 +591,7 @@ export default async function ForestOfferCollectionPage({
             </Link>
           </section>
         ) : (
-          <section className="fc-grid-section" data-reveal="section">
+          <section className="fc-grid-section">
             <div className="fc-grid-header">
               <div>
                 <p className="fc-grid-header__eyebrow">{siteConfig.center.name}</p>
@@ -635,7 +600,7 @@ export default async function ForestOfferCollectionPage({
               <p className="fc-grid-header__count">{offerCountLabel}</p>
             </div>
 
-            <div className="fc-offer-grid" data-reveal="stagger">
+            <div className="fc-offer-grid">
               {sorted.map((offer, index) => {
                 const offerRecord = asRecord(offer);
                 const slug = getOfferSlug(offer);
@@ -665,8 +630,7 @@ export default async function ForestOfferCollectionPage({
                 const bookingPath = offerType === "PRIVATE_SESSION" && slug
                   ? localizePath(requestLocale, `/private-sessions/${slug}/book`)
                   : detailsPath;
-                const detailedOffer = slug ? detailedOffersBySlug.get(slug) : null;
-                const cardDateSource = detailedOffer ?? offer;
+                const cardDateSource = offer;
 
                 /* Domains for tag pills */
                 const rawDomains = Array.isArray(offerRecord?.domains)
@@ -887,7 +851,7 @@ export default async function ForestOfferCollectionPage({
         )}
 
         {/* ── NEWSLETTER ── */}
-        <section className="forest-newsletter-cta" data-reveal="section">
+        <section className="forest-newsletter-cta">
           <p className="forest-newsletter-cta__eyebrow">
             {localeCode === "fr" ? "Communauté" : "Community"}
           </p>
