@@ -21,6 +21,11 @@ export default function RevealObserver({
     if (!targets.length) return;
 
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const prefersImmediateReveal =
+      prefersReducedMotion
+      || window.matchMedia("(pointer: coarse)").matches
+      || window.matchMedia("(hover: none)").matches
+      || window.innerWidth < 900;
     scope.classList.add("motion-active");
 
     for (const target of targets) {
@@ -34,7 +39,7 @@ export default function RevealObserver({
       }
     }
 
-    if (prefersReducedMotion || !("IntersectionObserver" in window)) {
+    if (prefersImmediateReveal || !("IntersectionObserver" in window)) {
       for (const target of targets) {
         target.classList.add("is-visible");
       }
