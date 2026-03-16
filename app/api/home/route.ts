@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { rewriteForestMediaPayload } from "@/lib/forest-media";
 import { getRequiredApiBase } from "@/lib/server-env";
 import { resolveHostname } from "@/lib/server-hostname";
 
@@ -40,7 +41,8 @@ export async function GET(request: Request) {
   const contentType = backendResponse.headers.get("content-type") ?? "";
   if (contentType.includes("application/json")) {
     const body = await backendResponse.json();
-    return NextResponse.json(body, { status: backendResponse.status });
+    const rewrittenBody = hostname.includes("forest-lighthouse") ? rewriteForestMediaPayload(body) : body;
+    return NextResponse.json(rewrittenBody, { status: backendResponse.status });
   }
 
   const textBody = await backendResponse.text();

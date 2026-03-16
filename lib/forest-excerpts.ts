@@ -56,15 +56,15 @@ const FOREST_EXCERPT_OVERRIDES: Array<{ titleMatch: string; excerpt: string }> =
 const FOREST_IMAGE_OVERRIDES: Array<{ titleMatch: string; imageUrl: string }> = [
   {
     titleMatch: "théâtre enfants",
-    imageUrl: "/brands/forest-lighthouse/photos/theatrenfant.JPEG",
+    imageUrl: "/brands/forest-lighthouse/offers/brighter-minds.jpeg",
   },
   {
     titleMatch: "theatre enfants",
-    imageUrl: "/brands/forest-lighthouse/photos/theatrenfant.JPEG",
+    imageUrl: "/brands/forest-lighthouse/offers/brighter-minds.jpeg",
   },
   {
     titleMatch: "brighter minds",
-    imageUrl: "/brands/forest-lighthouse/photos/theatrenfant.JPEG",
+    imageUrl: "/brands/forest-lighthouse/offers/brighter-minds.jpeg",
   },
 ];
 

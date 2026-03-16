@@ -1,0 +1,192 @@
+type ForestLegacyMediaEntry = {
+  legacyUrl: string;
+  localPath: string;
+  usage: "logo" | "shared" | "offer" | "person";
+};
+
+export const FOREST_LEGACY_MEDIA_ENTRIES: readonly ForestLegacyMediaEntry[] = [
+  {
+    legacyUrl:
+      "https://forest-lighthouse.be/wp-content/uploads/sites/12/2022/07/69289F3E-09F0-4D3A-AC4C-98B27501D6A5-e1657354348213.png",
+    localPath: "/brands/forest-lighthouse/logo/forest-lighthouse-wordmark.png",
+    usage: "logo",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2022/12/079A0547.jpg",
+    localPath: "/brands/forest-lighthouse/shared/main-hall-practice.jpg",
+    usage: "shared",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2024/03/DSC02253.jpg",
+    localPath: "/brands/forest-lighthouse/offers/week-end-gaga-dancer.jpg",
+    usage: "offer",
+  },
+  {
+    legacyUrl:
+      "https://forest-lighthouse.be/wp-content/uploads/sites/12/2025/01/images-3-square-271a310ab72062ab5406049032f6eae4-ylwucpaoi847.jpeg",
+    localPath: "/brands/forest-lighthouse/offers/feldenkrais-for-musicians.jpeg",
+    usage: "offer",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2025/01/DSC04946.jpg",
+    localPath: "/brands/forest-lighthouse/offers/apapacha-mama.jpg",
+    usage: "offer",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2024/02/60A8016-Grande.jpeg",
+    localPath: "/brands/forest-lighthouse/offers/brighter-minds.jpeg",
+    usage: "offer",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2024/12/DSC04135.jpg",
+    localPath: "/brands/forest-lighthouse/offers/children-special-needs.jpg",
+    usage: "offer",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2023/12/DSC00129.jpg",
+    localPath: "/brands/forest-lighthouse/offers/unlearning-pain.jpg",
+    usage: "offer",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2022/09/DSC00129.jpg",
+    localPath: "/brands/forest-lighthouse/offers/unlearning-pain.jpg",
+    usage: "offer",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2022/09/079A2351.jpg",
+    localPath: "/brands/forest-lighthouse/offers/feldenkrais-individual-session.jpg",
+    usage: "offer",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2025/12/unnamed-7.jpg",
+    localPath: "/brands/forest-lighthouse/offers/yoga-vinyasa-space-flow.jpg",
+    usage: "offer",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2025/12/1.jpg",
+    localPath: "/brands/forest-lighthouse/offers/yoga-vinyasa-space-flow.jpg",
+    usage: "offer",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2022/09/079A0847.jpg",
+    localPath: "/brands/forest-lighthouse/offers/vinyasa-to-yin-yoga.jpg",
+    usage: "offer",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2025/09/079A0866.jpg",
+    localPath: "/brands/forest-lighthouse/offers/hatha-yoga.jpg",
+    usage: "offer",
+  },
+  {
+    legacyUrl:
+      "https://forest-lighthouse.be/wp-content/uploads/sites/12/2024/04/Gemini_Generated_Image_802sje802sje802s.png",
+    localPath: "/brands/forest-lighthouse/offers/hatha-yoga.jpg",
+    usage: "offer",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2024/10/Annelaure6-scaled.jpg",
+    localPath: "/brands/forest-lighthouse/offers/pilates.jpg",
+    usage: "offer",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2024/09/IMG_3305.jpg",
+    localPath: "/brands/forest-lighthouse/offers/vinyasa-flow.jpg",
+    usage: "offer",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2023/12/DSC02159-e1710885375562.jpg",
+    localPath: "/brands/forest-lighthouse/offers/feldenkrais-classes.jpg",
+    usage: "offer",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2024/09/DSC05713.jpg",
+    localPath: "/brands/forest-lighthouse/offers/bones-for-life-training.jpg",
+    usage: "offer",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2023/08/DSC01119.jpg",
+    localPath: "/brands/forest-lighthouse/offers/feldenkrais-bxl-4.jpg",
+    usage: "offer",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2023/12/DSC01056-427x600.jpg",
+    localPath: "/brands/forest-lighthouse/people/betzabel-falfan.jpg",
+    usage: "person",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2023/12/079A2148-500x600.jpg",
+    localPath: "/brands/forest-lighthouse/people/nikos-appelqvist.jpg",
+    usage: "person",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2023/12/DSC00431-600x400.jpg",
+    localPath: "/brands/forest-lighthouse/people/yvo-mentens.jpg",
+    usage: "person",
+  },
+  {
+    legacyUrl:
+      "https://forest-lighthouse.be/wp-content/uploads/sites/12/2024/08/monnaie-50-2-721x1024-square-cc5a29e251f8f5cc03fc6d1c17570af2-ylwucpaoi847-600x600.jpg",
+    localPath: "/brands/forest-lighthouse/people/pia-appelqvist.jpg",
+    usage: "person",
+  },
+  {
+    legacyUrl: "https://forest-lighthouse.be/wp-content/uploads/sites/12/2022/09/Alan-Q-006-2.jpg",
+    localPath: "/brands/forest-lighthouse/people/alan-questel.jpg",
+    usage: "person",
+  },
+] as const;
+
+function normalizeLegacyMediaKey(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.pathname || trimmed;
+  } catch {
+    return trimmed.split(/[?#]/, 1)[0] || trimmed;
+  }
+}
+
+const FOREST_LEGACY_MEDIA_MAP = new Map(
+  FOREST_LEGACY_MEDIA_ENTRIES.map((entry) => [normalizeLegacyMediaKey(entry.legacyUrl), entry.localPath]),
+);
+
+export function resolveForestMediaUrl(value?: string | null) {
+  if (typeof value !== "string") {
+    return value ?? "";
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  const mapped = FOREST_LEGACY_MEDIA_MAP.get(normalizeLegacyMediaKey(trimmed));
+  return mapped || trimmed;
+}
+
+export function rewriteForestMediaPayload<T>(payload: T): T {
+  if (typeof payload === "string") {
+    return resolveForestMediaUrl(payload) as T;
+  }
+
+  if (Array.isArray(payload)) {
+    return payload.map((item) => rewriteForestMediaPayload(item)) as T;
+  }
+
+  if (!payload || typeof payload !== "object") {
+    return payload;
+  }
+
+  const record = payload as Record<string, unknown>;
+  const rewritten: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(record)) {
+    rewritten[key] = rewriteForestMediaPayload(value);
+  }
+
+  return rewritten as T;
+}

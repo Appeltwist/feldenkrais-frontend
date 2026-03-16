@@ -3,6 +3,7 @@ import "server-only";
 import { cleanDisplayText, cleanRichTextHtml, isFacilitatorOnlySubtitle } from "@/lib/content-cleanup";
 import { getForestExcerptOverride } from "@/lib/forest-excerpts";
 import { getForestFacilitatorNamesOverride } from "@/lib/forest-facilitator-overrides";
+import { rewriteForestMediaPayload } from "@/lib/forest-media";
 import { getRequiredApiBase } from "@/lib/server-env";
 import { resolveHostname } from "@/lib/server-hostname";
 import type { CalendarItem, OfferDetail, OfferSummary, PrivateBookingConfig, SiteFaqSection } from "@/lib/types";
@@ -495,8 +496,9 @@ export async function fetchSiteConfig(hostname: string) {
   const payload = await requestJson<unknown>("/site-config", {
     domain: normalizedHostname,
   });
+  const normalizedPayload = isForestRequest(normalizedHostname) ? rewriteForestMediaPayload(payload) : payload;
 
-  return normalizeSiteConfig(payload, normalizedHostname);
+  return normalizeSiteConfig(normalizedPayload, normalizedHostname);
 }
 
 export async function fetchSiteFaq(hostname: string, locale?: string) {
@@ -526,8 +528,9 @@ export async function fetchOffers({
     from,
     to,
   });
+  const normalizedPayload = isForestRequest(normalizedHostname, center) ? rewriteForestMediaPayload(payload) : payload;
 
-  return toList<OfferSummary>(payload, ["results", "items", "data", "offers"]).map((offer) =>
+  return toList<OfferSummary>(normalizedPayload, ["results", "items", "data", "offers"]).map((offer) =>
     sanitizeOfferRecord(offer, isForestRequest(normalizedHostname, center)),
   );
 }
@@ -539,12 +542,13 @@ export async function fetchOfferDetail({ hostname, center, slug, locale }: Fetch
     center,
     locale,
   });
+  const normalizedPayload = isForestRequest(normalizedHostname, center) ? rewriteForestMediaPayload(payload) : payload;
 
-  if (Array.isArray(payload)) {
-    return toArray<OfferDetail>(payload)[0] ?? null;
+  if (Array.isArray(normalizedPayload)) {
+    return toArray<OfferDetail>(normalizedPayload)[0] ?? null;
   }
 
-  const record = asRecord(payload);
+  const record = asRecord(normalizedPayload);
   if (!record) {
     return null;
   }
@@ -577,8 +581,9 @@ export async function fetchTeacherDetail({ hostname, center, slug, locale }: Fet
     center,
     locale,
   });
+  const normalizedPayload = isForestRequest(normalizedHostname, center) ? rewriteForestMediaPayload(payload) : payload;
 
-  const record = asRecord(payload);
+  const record = asRecord(normalizedPayload);
   if (!record) {
     return null;
   }
@@ -594,8 +599,9 @@ export async function fetchTeachersList({ hostname, center, locale }: FetchTeach
     center,
     locale,
   });
+  const normalizedPayload = isForestRequest(normalizedHostname, center) ? rewriteForestMediaPayload(payload) : payload;
 
-  return toList<import("@/lib/types").TeacherListItem>(payload, ["results", "items", "data", "teachers"]).map(
+  return toList<import("@/lib/types").TeacherListItem>(normalizedPayload, ["results", "items", "data", "teachers"]).map(
     (teacher) => sanitizeTeacherDetailRecord(teacher),
   );
 }
@@ -621,8 +627,9 @@ export async function fetchCalendar({
     offering_id: offeringId,
     domain_theme: domainTheme,
   });
+  const normalizedPayload = isForestRequest(normalizedHostname, center) ? rewriteForestMediaPayload(payload) : payload;
 
-  return toList<CalendarItem>(payload, ["results", "items", "data", "calendar", "events"]);
+  return toList<CalendarItem>(normalizedPayload, ["results", "items", "data", "calendar", "events"]);
 }
 
 function toCalendarMeta(payload: unknown): CalendarMeta {
@@ -684,9 +691,10 @@ export async function fetchCalendarWithMeta({
     offering_id: offeringId,
     domain_theme: domainTheme,
   });
+  const normalizedPayload = isForestRequest(normalizedHostname, center) ? rewriteForestMediaPayload(payload) : payload;
 
   return {
-    items: toList<CalendarItem>(payload, ["results", "items", "data", "calendar", "events"]),
-    meta: toCalendarMeta(payload),
+    items: toList<CalendarItem>(normalizedPayload, ["results", "items", "data", "calendar", "events"]),
+    meta: toCalendarMeta(normalizedPayload),
   };
 }
