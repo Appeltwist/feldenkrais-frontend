@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { localizePath } from "@/lib/locale-path";
 import { getCanonicalOfferPathByTypeAndSlug } from "@/lib/offers";
@@ -48,6 +48,8 @@ type GroupedCalendarProps = {
   from: string;
   to: string;
 };
+
+const OFFERS_PER_PAGE = 12;
 
 function asRecord(value: unknown): RawRecord | null {
   if (typeof value === "object" && value !== null && !Array.isArray(value)) {
@@ -134,11 +136,17 @@ export default function GroupedCalendar({
   to,
 }: GroupedCalendarProps) {
   const isFrench = locale.toLowerCase().startsWith("fr");
+  const [visibleCount, setVisibleCount] = useState(OFFERS_PER_PAGE);
   const [expandedOfferId, setExpandedOfferId] = useState<number | null>(null);
   const [loadingOfferId, setLoadingOfferId] = useState<number | null>(null);
   const [occurrencesByOffer, setOccurrencesByOffer] = useState<Record<number, CalendarOccurrenceOption[]>>({});
   const [selectedByOffer, setSelectedByOffer] = useState<Record<number, number>>({});
   const [errorsByOffer, setErrorsByOffer] = useState<Record<number, string>>({});
+
+  useEffect(() => {
+    setVisibleCount(OFFERS_PER_PAGE);
+    setExpandedOfferId(null);
+  }, [entries]);
 
   async function loadOfferOccurrences(offerId: number) {
     if (occurrencesByOffer[offerId]) {
@@ -199,115 +207,128 @@ export default function GroupedCalendar({
     setSelectedByOffer((previous) => ({ ...previous, [offerId]: occurrenceId }));
   }
 
+  const visibleEntries = entries.slice(0, visibleCount);
+  const hasMoreEntries = visibleCount < entries.length;
+
   return (
-    <ul className="calendar-group-grid">
-      {entries.map((entry) => {
-        const isExpanded = expandedOfferId === entry.offer.id;
-        const loadedOccurrences = occurrencesByOffer[entry.offer.id] ?? [];
-        const sessionList = loadedOccurrences.length > 0 ? loadedOccurrences : entry.nextOccurrences;
-        const selectedId = selectedByOffer[entry.offer.id];
-        const selectedOccurrence = sessionList.find((session) => session.id === selectedId) ?? sessionList[0];
-        const bookingUrl = selectedOccurrence?.bookingUrl || entry.offer.canonicalUrl || undefined;
-        const offerDetailsPath =
-          localizePath(
+    <>
+      <ul className="calendar-group-grid">
+        {visibleEntries.map((entry) => {
+          const isExpanded = expandedOfferId === entry.offer.id;
+          const loadedOccurrences = occurrencesByOffer[entry.offer.id] ?? [];
+          const sessionList = loadedOccurrences.length > 0 ? loadedOccurrences : entry.nextOccurrences;
+          const selectedId = selectedByOffer[entry.offer.id];
+          const selectedOccurrence = sessionList.find((session) => session.id === selectedId) ?? sessionList[0];
+          const bookingUrl = selectedOccurrence?.bookingUrl || entry.offer.canonicalUrl || undefined;
+          const offerDetailsPath = localizePath(
             locale,
             getCanonicalOfferPathByTypeAndSlug(entry.offer.type, entry.offer.slug) || `/offer/${entry.offer.slug}`,
           );
-        const previewSecondary = entry.nextOccurrences.slice(1, 3);
-        const domainsLabel = entry.offer.domains.map((domain) => domain.name).join(" · ");
+          const previewSecondary = entry.nextOccurrences.slice(1, 3);
+          const domainsLabel = entry.offer.domains.map((domain) => domain.name).join(" · ");
 
-        return (
-          <li className="card calendar-group-card" key={entry.offer.id}>
-            {entry.offer.heroImageUrl ? (
-              <div
-                className="calendar-group-card__hero"
-                style={{
-                  backgroundImage: `linear-gradient(120deg, rgba(0,0,0,0.48), rgba(0,0,0,0.18)), url(${entry.offer.heroImageUrl})`,
-                }}
-              >
-                <p className="offer-type-label">{entry.offer.type.replaceAll("_", " ")}</p>
-                <h2>{entry.offer.title}</h2>
-              </div>
-            ) : (
-              <>
-                <p className="offer-type-label">{entry.offer.type.replaceAll("_", " ")}</p>
-                <h2>{entry.offer.title}</h2>
-              </>
-            )}
+          return (
+            <li className="card calendar-group-card" key={entry.offer.id}>
+              {entry.offer.heroImageUrl ? (
+                <div
+                  className="calendar-group-card__hero"
+                  style={{
+                    backgroundImage: `linear-gradient(120deg, rgba(0,0,0,0.48), rgba(0,0,0,0.18)), url(${entry.offer.heroImageUrl})`,
+                  }}
+                >
+                  <p className="offer-type-label">{entry.offer.type.replaceAll("_", " ")}</p>
+                  <h2>{entry.offer.title}</h2>
+                </div>
+              ) : (
+                <>
+                  <p className="offer-type-label">{entry.offer.type.replaceAll("_", " ")}</p>
+                  <h2>{entry.offer.title}</h2>
+                </>
+              )}
 
-            {domainsLabel ? <p className="calendar-group-card__domains">{domainsLabel}</p> : null}
-            {selectedOccurrence ? (
-              <p className="calendar-group-card__primary-time">
-                {formatDateTime(selectedOccurrence.startDateTime, locale, selectedOccurrence.timezone)}
-              </p>
-            ) : (
+              {domainsLabel ? <p className="calendar-group-card__domains">{domainsLabel}</p> : null}
+              {selectedOccurrence ? (
+                <p className="calendar-group-card__primary-time">
+                  {formatDateTime(selectedOccurrence.startDateTime, locale, selectedOccurrence.timezone)}
+                </p>
+              ) : (
                 <p className="calendar-group-card__primary-time">
                   {isFrench ? "Aucune date dans cette période." : "No upcoming sessions in this range."}
                 </p>
               )}
 
-            {previewSecondary.length > 0 ? (
-              <ul className="calendar-group-card__next-list">
-                {previewSecondary.map((occurrence) => (
-                  <li key={occurrence.id}>
-                    {formatDateTime(occurrence.startDateTime, locale, occurrence.timezone)}
-                  </li>
-                ))}
-              </ul>
-            ) : null}
+              {previewSecondary.length > 0 ? (
+                <ul className="calendar-group-card__next-list">
+                  {previewSecondary.map((occurrence) => (
+                    <li key={occurrence.id}>
+                      {formatDateTime(occurrence.startDateTime, locale, occurrence.timezone)}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
 
-            <div className="link-row">
-              <button className="button-link button-link--secondary" onClick={() => void toggleOffer(entry.offer.id)} type="button">
-                {isExpanded ? (isFrench ? "Masquer les dates" : "Hide sessions") : isFrench ? "Voir les dates" : "See sessions"}
-              </button>
-              {bookingUrl ? (
-                <a className="button-link" href={bookingUrl} rel="noreferrer" target="_blank">
-                  {entry.ctaLabel}
-                </a>
-              ) : (
-                <Link className="text-link" href={offerDetailsPath}>
-                  {isFrench ? "Voir l’offre" : "View offer"}
-                </Link>
-              )}
-            </div>
+              <div className="link-row">
+                <button
+                  className="button-link button-link--secondary"
+                  onClick={() => void toggleOffer(entry.offer.id)}
+                  type="button"
+                >
+                  {isExpanded ? (isFrench ? "Masquer les dates" : "Hide sessions") : isFrench ? "Voir les dates" : "See sessions"}
+                </button>
+                {bookingUrl ? (
+                  <a className="button-link" href={bookingUrl} rel="noreferrer" target="_blank">
+                    {entry.ctaLabel}
+                  </a>
+                ) : (
+                  <Link className="text-link" href={offerDetailsPath}>
+                    {isFrench ? "Voir l’offre" : "View offer"}
+                  </Link>
+                )}
+              </div>
 
-            {isExpanded ? (
-              <div className="calendar-group-card__expanded">
-                {loadingOfferId === entry.offer.id ? <p>{isFrench ? "Chargement des dates..." : "Loading sessions..."}</p> : null}
-                {errorsByOffer[entry.offer.id] ? <p>{errorsByOffer[entry.offer.id]}</p> : null}
-                {loadingOfferId !== entry.offer.id && !errorsByOffer[entry.offer.id] && sessionList.length === 0 ? (
-                  <p>{isFrench ? "Aucune date trouvée pour cette offre dans la période choisie." : "No sessions found for this offering in the selected date range."}</p>
-                ) : null}
-                {sessionList.length > 0 ? (
-                  <>
-                    <ul className="calendar-group-card__session-list">
-                      {sessionList.map((session) => {
-                        const isSelected = selectedOccurrence?.id === session.id;
-                        return (
-                          <li key={session.id}>
-                            <button
-                              className={`calendar-group-card__session-button${isSelected ? " is-selected" : ""}`}
-                              onClick={() => selectOccurrence(entry.offer.id, session.id)}
-                              type="button"
-                            >
-                              <span>{session.label || (isFrench ? "Séance" : "Session")}</span>
-                              <span>{formatDateTime(session.startDateTime, locale, session.timezone)}</span>
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
+              {isExpanded ? (
+                <div className="calendar-group-card__expanded">
+                  {loadingOfferId === entry.offer.id ? (
+                    <p>{isFrench ? "Chargement des dates..." : "Loading sessions..."}</p>
+                  ) : null}
+                  {errorsByOffer[entry.offer.id] ? <p>{errorsByOffer[entry.offer.id]}</p> : null}
+                  {loadingOfferId !== entry.offer.id && !errorsByOffer[entry.offer.id] && sessionList.length === 0 ? (
+                    <p>
+                      {isFrench
+                        ? "Aucune date trouvée pour cette offre dans la période choisie."
+                        : "No sessions found for this offering in the selected date range."}
+                    </p>
+                  ) : null}
+                  {sessionList.length > 0 ? (
+                    <>
+                      <ul className="calendar-group-card__session-list">
+                        {sessionList.map((session) => {
+                          const isSelected = selectedOccurrence?.id === session.id;
+                          return (
+                            <li key={session.id}>
+                              <button
+                                className={`calendar-group-card__session-button${isSelected ? " is-selected" : ""}`}
+                                onClick={() => selectOccurrence(entry.offer.id, session.id)}
+                                type="button"
+                              >
+                                <span>{session.label || (isFrench ? "Séance" : "Session")}</span>
+                                <span>{formatDateTime(session.startDateTime, locale, session.timezone)}</span>
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
 
-                    <div className="link-row">
-                      {selectedOccurrence?.bookingUrl ? (
-                        <a className="button-link" href={selectedOccurrence.bookingUrl} rel="noreferrer" target="_blank">
-                          {entry.ctaLabel}
-                        </a>
-                      ) : (
-                        <Link className="text-link" href={offerDetailsPath}>
-                          View offer
-                        </Link>
-                      )}
+                      <div className="link-row">
+                        {selectedOccurrence?.bookingUrl ? (
+                          <a className="button-link" href={selectedOccurrence.bookingUrl} rel="noreferrer" target="_blank">
+                            {entry.ctaLabel}
+                          </a>
+                        ) : (
+                          <Link className="text-link" href={offerDetailsPath}>
+                            {isFrench ? "Voir l’offre" : "View offer"}
+                          </Link>
+                        )}
                         {selectedOccurrence?.icsUrl ? (
                           <a className="text-link" href={selectedOccurrence.icsUrl}>
                             {isFrench ? "Ajouter au calendrier" : "Add to calendar"}
@@ -318,12 +339,25 @@ export default function GroupedCalendar({
                         </Link>
                       </div>
                     </>
-                ) : null}
-              </div>
-            ) : null}
-          </li>
-        );
-      })}
-    </ul>
+                  ) : null}
+                </div>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+
+      {hasMoreEntries ? (
+        <div className="calendar-group-grid__footer">
+          <button
+            className="button-link button-link--secondary"
+            onClick={() => setVisibleCount((current) => current + OFFERS_PER_PAGE)}
+            type="button"
+          >
+            {isFrench ? "Afficher plus" : "Load more"}
+          </button>
+        </div>
+      ) : null}
+    </>
   );
 }
