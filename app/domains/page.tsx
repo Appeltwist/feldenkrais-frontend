@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { headers } from "next/headers";
 
 import { getHostname } from "@/lib/get-hostname";
+import { getRequestLocale } from "@/lib/get-locale";
+import { resolveApiHostname } from "@/lib/hostname-routing";
 import { getCanonicalOfferPathByTypeAndSlug } from "@/lib/offers";
 
 type DomainPreviewCard = {
@@ -36,16 +37,11 @@ type DomainsPayload = {
   }>;
 };
 
-async function fetchDomainsPayload() {
-  const hostname = await getHostname();
-  const requestHeaders = await headers();
-  const forwardedHost = requestHeaders.get("x-forwarded-host");
-  const host = forwardedHost ?? requestHeaders.get("host") ?? `${hostname}:3000`;
-  const protocol = requestHeaders.get("x-forwarded-proto") ?? "http";
-  const locale = (requestHeaders.get("x-locale") ?? "").trim();
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000/api").replace(/\/+$/, "");
 
-  const url = new URL("/api/domains", `${protocol}://${host}`);
-  url.searchParams.set("hostname", hostname);
+async function fetchDomainsPayload(hostname: string, locale: string) {
+  const url = new URL(`${API_BASE}/domains`);
+  url.searchParams.set("domain", resolveApiHostname(hostname));
   url.searchParams.set("include_previews", "1");
   url.searchParams.set("preview_limit", "3");
   if (locale) {
@@ -76,8 +72,9 @@ function formatOccurrence(value: string, locale: string, timezone?: string) {
 }
 
 export default async function DomainsPage() {
-  const payload = await fetchDomainsPayload();
-  const locale = (await headers()).get("x-locale") ?? "en";
+  const hostname = await getHostname();
+  const locale = await getRequestLocale();
+  const payload = await fetchDomainsPayload(hostname, locale);
 
   if (!payload) {
     return (

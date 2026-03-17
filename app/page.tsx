@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { headers } from "next/headers";
 
 import { getHostname } from "@/lib/get-hostname";
 import { isForestPreviewHostname, resolveApiHostname } from "@/lib/hostname-routing";
+import { getRequestLocale } from "@/lib/get-locale";
 import { getCanonicalOfferPathByTypeAndSlug } from "@/lib/offers";
 
 type HomeDomain = {
@@ -79,6 +79,7 @@ type ForestHomeMedia = {
 
 const MAX_WHATS_ON_CARDS = 9;
 const FOREST_HOST_MATCHERS = ["forest-lighthouse.local", "forest-lighthouse"];
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000/api").replace(/\/+$/, "");
 
 const FOREST_HOME_MEDIA: ForestHomeMedia = {
   hero: "/brands/forest-lighthouse/home/hero-main-hall.jpg",
@@ -99,15 +100,9 @@ const FOREST_HOME_MEDIA: ForestHomeMedia = {
   ],
 };
 
-async function fetchHomePayload(hostname: string) {
-  const requestHeaders = await headers();
-  const forwardedHost = requestHeaders.get("x-forwarded-host");
-  const host = forwardedHost ?? requestHeaders.get("host") ?? `${hostname}:3000`;
-  const protocol = requestHeaders.get("x-forwarded-proto") ?? "http";
-  const locale = (requestHeaders.get("x-locale") ?? "").trim();
-
-  const url = new URL("/api/home", `${protocol}://${host}`);
-  url.searchParams.set("hostname", resolveApiHostname(hostname));
+async function fetchHomePayload(hostname: string, locale: string) {
+  const url = new URL(`${API_BASE}/home`);
+  url.searchParams.set("domain", resolveApiHostname(hostname));
   url.searchParams.set("limit", "9");
   if (locale) {
     url.searchParams.set("locale", locale);
@@ -437,7 +432,8 @@ function HomeDomainsTeaser({
 
 export default async function HomePage() {
   const hostname = await getHostname();
-  const home = await fetchHomePayload(hostname);
+  const requestedLocale = await getRequestLocale();
+  const home = await fetchHomePayload(hostname, requestedLocale);
 
   if (!home) {
     return (
@@ -448,7 +444,7 @@ export default async function HomePage() {
     );
   }
 
-  const locale = home.meta.locale || "en";
+  const locale = home.meta.locale || requestedLocale || "en";
   const forestHomeMedia = getForestHomeMedia(hostname);
   const heroMediaUrl = forestHomeMedia?.hero || home.hero.media_url || home.main_hall.image_url || "";
   const mainHallImageUrl = forestHomeMedia?.mainHall || home.main_hall.image_url || "";
