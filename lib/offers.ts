@@ -35,6 +35,14 @@ function asNonEmptyString(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : "";
 }
 
+export function normalizeText(value: unknown) {
+  if (typeof value === "number") {
+    return String(value);
+  }
+
+  return asNonEmptyString(value);
+}
+
 export function pickString(source: RawRecord | null, keys: string[], fallback = "") {
   if (!source) {
     return fallback;
@@ -116,6 +124,17 @@ export function getOfferSubtitle(offer: OfferDetail) {
 export function getOfferBodyHtml(offer: OfferDetail) {
   const record = asRecord(offer);
   return pickString(record, ["body_html", "bodyHtml", "body", "description_html", "description"]);
+}
+
+export function getOfferHeroImageUrl(offer: OfferDetail) {
+  const record = asRecord(offer);
+  return pickString(record, ["hero_image_url", "heroImageUrl", "image_url", "imageUrl"]);
+}
+
+export function getOfferHeroVideoUrl(offer: OfferDetail) {
+  const record = asRecord(offer);
+  const heroVideoUrl = pickString(record, ["hero_video_url", "heroVideoUrl"]);
+  return heroVideoUrl || getMediaUrl(offer);
 }
 
 export function getCanonicalUrl(offer: OfferDetail) {
@@ -204,6 +223,26 @@ export function getFacilitators(offer: OfferDetail) {
   }
 
   return asRecords(record.facilitators ?? record.teachers ?? record.instructors) as Facilitator[];
+}
+
+export function getFacilitatorName(facilitator: Facilitator, fallback = "Facilitator") {
+  const record = asRecord(facilitator);
+  return pickString(record, ["name", "full_name", "title"], fallback);
+}
+
+export function getFacilitatorBio(facilitator: Facilitator) {
+  const record = asRecord(facilitator);
+  return pickString(record, ["bio_html", "bio", "description_html", "description", "body_html", "body"]);
+}
+
+export function getFacilitatorImageUrl(facilitator: Facilitator) {
+  const record = asRecord(facilitator);
+  return pickString(record, ["image_url", "imageUrl", "avatar_url", "avatarUrl", "photo_url", "photoUrl"]);
+}
+
+export function getFacilitatorSlug(facilitator: Facilitator) {
+  const record = asRecord(facilitator);
+  return pickString(record, ["slug", "teacher_slug", "teacherSlug"]);
 }
 
 export function getTags(offer: OfferDetail) {
