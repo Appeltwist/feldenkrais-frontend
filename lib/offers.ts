@@ -36,6 +36,14 @@ function asNonEmptyString(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : "";
 }
 
+export function normalizeText(value: unknown) {
+  if (typeof value === "number") {
+    return String(value);
+  }
+
+  return asNonEmptyString(value);
+}
+
 export function pickString(source: RawRecord | null, keys: string[], fallback = "") {
   if (!source) {
     return fallback;
@@ -129,6 +137,16 @@ export function getMediaUrl(offer: OfferDetail) {
   return pickString(record, ["media_url", "mediaUrl", "video_url", "videoUrl"]);
 }
 
+export function getOfferHeroImageUrl(offer: OfferDetail) {
+  const record = asRecord(offer);
+  return pickString(record, ["hero_image_url", "heroImageUrl", "image_url", "imageUrl", "featured_image"]);
+}
+
+export function getOfferHeroVideoUrl(offer: OfferDetail) {
+  const record = asRecord(offer);
+  return pickString(record, ["hero_video_url", "heroVideoUrl", "video_url", "videoUrl", "media_url", "mediaUrl"]);
+}
+
 export function isTrialEligible(offer: OfferDetail) {
   const record = asRecord(offer);
   if (!record) {
@@ -214,6 +232,22 @@ export function getFacilitators(offer: OfferDetail) {
   }
 
   return asRecords(record.facilitators ?? record.teachers ?? record.instructors) as Facilitator[];
+}
+
+export function getFacilitatorName(facilitator: Facilitator | RawRecord, fallback = "Facilitator") {
+  return pickString(asRecord(facilitator), ["name", "full_name", "title"], fallback);
+}
+
+export function getFacilitatorBio(facilitator: Facilitator | RawRecord) {
+  return pickString(asRecord(facilitator), ["bio_html", "bioHtml", "bio", "description_html", "description"]);
+}
+
+export function getFacilitatorImageUrl(facilitator: Facilitator | RawRecord) {
+  return pickString(asRecord(facilitator), ["photo_url", "photoUrl", "image_url", "imageUrl", "avatar_url", "avatarUrl"]);
+}
+
+export function getFacilitatorSlug(facilitator: Facilitator | RawRecord) {
+  return pickString(asRecord(facilitator), ["slug"]);
 }
 
 export function getTags(offer: OfferDetail) {
