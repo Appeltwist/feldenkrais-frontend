@@ -58,6 +58,18 @@ export type PriceOption = {
   [key: string]: unknown;
 };
 
+export type BookingOption = {
+  label?: string | null;
+  amount?: string | number | null;
+  currency?: string | null;
+  summary?: string | null;
+  date_summary?: string | null;
+  booking_url?: string | null;
+  is_featured?: boolean | null;
+  occurrence_ids?: Array<number | string> | null;
+  [key: string]: unknown;
+};
+
 export type Facilitator = {
   id?: number | string;
   name?: string | null;
@@ -179,6 +191,7 @@ export type OfferDetail = {
   sections?: SectionBlock[] | null;
   occurrences?: Occurrence[] | null;
   price_options?: PriceOption[] | null;
+  booking_options?: BookingOption[] | null;
   facilitators?: Facilitator[] | null;
   tags?: Array<string | ThemeTag> | string | null;
   faq?: Array<{ question?: string | null; answer?: string | null }> | null;

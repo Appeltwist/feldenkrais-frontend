@@ -1,5 +1,6 @@
 import { getOfferLabels as getLocalizedOfferLabels } from "@/lib/i18n";
 import type {
+  BookingOption,
   Facilitator,
   OfferDetail,
   OfferSummary,
@@ -195,6 +196,15 @@ export function getPriceOptions(offer: OfferDetail) {
   }
 
   return asRecords(record.price_options ?? record.priceOptions ?? record.pricing) as PriceOption[];
+}
+
+export function getBookingOptions(offer: OfferDetail) {
+  const record = asRecord(offer);
+  if (!record) {
+    return [] as BookingOption[];
+  }
+
+  return asRecords(record.booking_options ?? record.bookingOptions) as BookingOption[];
 }
 
 export function getFacilitators(offer: OfferDetail) {
