@@ -231,8 +231,6 @@ function buildOfferCopyMap(offers: unknown[]) {
 export default async function CalendarPage({ searchParams }: CalendarPageProps) {
   const hostname = await getHostname();
   const today = new Date();
-  const weekLater = new Date(today);
-  weekLater.setDate(today.getDate() + 7);
   const from = toIsoDate(today);
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const selectedDomainTheme = pickSingleSearchParam(
@@ -311,28 +309,9 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
       ...trainingOffers,
     ]);
 
-    const classes = sortEntriesByNextOccurrence(
-      entries.filter((entry) => {
-        if (entry.offer.type !== "CLASS") {
-          return false;
-        }
-
-        const nextStart = nextOccurrenceStart(entry);
-        if (!nextStart) {
-          return false;
-        }
-
-        const nextDate = new Date(nextStart);
-        return nextDate >= today && nextDate <= weekLater;
-      }),
+    const featuredEntries = sortEntriesByNextOccurrence(entries).filter((entry) =>
+      Boolean(nextOccurrenceStart(entry)),
     );
-    const workshops = sortEntriesByNextOccurrence(
-      entries.filter((entry) => entry.offer.type === "WORKSHOP"),
-    ).slice(0, 5);
-    const trainings = sortEntriesByNextOccurrence(
-      entries.filter((entry) => entry.offer.type === "TRAINING_INFO"),
-    ).slice(0, 2);
-    const featuredEntries = sortEntriesByNextOccurrence([...classes, ...workshops, ...trainings]);
 
     /* Pre-compute display data for the client component */
     const listEntries: CalendarListEntry[] = featuredEntries.map((entry) => {
@@ -380,8 +359,8 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
             <h1 className="fc-intro__title">{isFrench ? "Calendrier" : "Calendar"}</h1>
             <p className="fc-intro__subtitle">
               {isFrench
-                ? "Les cours de la semaine, puis les prochains ateliers et formations."
-                : "This week’s classes, followed by the next workshops and training programmes."}
+                ? "Les 12 prochaines offres à venir, puis davantage sur demande."
+                : "The next 12 upcoming offers, with more available on demand."}
             </p>
           </section>
 
@@ -392,6 +371,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
               classes: isFrench ? "Cours" : "Classes",
               workshops: isFrench ? "Ateliers" : "Workshops",
               trainings: isFrench ? "Formations" : "Trainings",
+              loadMore: isFrench ? "Afficher plus" : "Load more",
             }}
           />
         </div>

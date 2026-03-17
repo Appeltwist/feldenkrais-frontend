@@ -7215,6 +7215,12 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   padding: 0;
 }
 
+.fp-calendar-list__footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
 .fp-calendar-item {
   border-top: 1px solid rgba(255, 255, 255, 0.07);
 }

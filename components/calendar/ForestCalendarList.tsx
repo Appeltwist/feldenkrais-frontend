@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import Link from "next/link";
 
@@ -21,17 +21,14 @@ export type CalendarListEntry = {
 
 type FilterKey = "all" | "class" | "workshop" | "training";
 
+const OFFERS_PER_PAGE = 12;
+
 const TYPE_COLORS: Record<string, string> = {
   WORKSHOP: "rgba(210, 170, 60, 0.50)",
   TRAINING_INFO: "rgba(60, 120, 180, 0.50)",
   CLASS: "rgba(60, 140, 80, 0.45)",
   PRIVATE_SESSION: "rgba(120, 80, 160, 0.45)",
 };
-
-/** Used internally by the client component for filter chip accents */
-function getTypeColor(type: string): string {
-  return TYPE_COLORS[type.toUpperCase()] ?? "rgba(0, 55, 56, 0.45)";
-}
 
 export default function ForestCalendarList({
   entries,
@@ -43,9 +40,11 @@ export default function ForestCalendarList({
     classes: string;
     workshops: string;
     trainings: string;
+    loadMore: string;
   };
 }) {
   const [filter, setFilter] = useState<FilterKey>("all");
+  const [visibleCount, setVisibleCount] = useState(OFFERS_PER_PAGE);
 
   const filtered = useMemo(() => {
     if (filter === "all") return entries;
@@ -65,10 +64,13 @@ export default function ForestCalendarList({
     return { class: c, workshop: w, training: t };
   }, [entries]);
 
-  const setFilterCb = useCallback(
-    (key: FilterKey) => setFilter((prev) => (prev === key ? "all" : key)),
-    [],
-  );
+  function setFilterValue(key: FilterKey) {
+    setFilter((prev) => (prev === key ? "all" : key));
+    setVisibleCount(OFFERS_PER_PAGE);
+  }
+
+  const visibleEntries = filtered.slice(0, visibleCount);
+  const hasMoreEntries = visibleCount < filtered.length;
 
   return (
     <div className="fp-calendar-list-wrap">
@@ -80,7 +82,10 @@ export default function ForestCalendarList({
       >
         <button
           className={`fp-calendar-filter${filter === "all" ? " is-active" : ""}`}
-          onClick={() => setFilter("all")}
+          onClick={() => {
+            setFilter("all");
+            setVisibleCount(OFFERS_PER_PAGE);
+          }}
           type="button"
         >
           {labels.all}
@@ -88,7 +93,7 @@ export default function ForestCalendarList({
         {counts.class > 0 && (
           <button
             className={`fp-calendar-filter${filter === "class" ? " is-active" : ""}`}
-            onClick={() => setFilterCb("class")}
+            onClick={() => setFilterValue("class")}
             type="button"
             style={
               {
@@ -102,7 +107,7 @@ export default function ForestCalendarList({
         {counts.workshop > 0 && (
           <button
             className={`fp-calendar-filter${filter === "workshop" ? " is-active" : ""}`}
-            onClick={() => setFilterCb("workshop")}
+            onClick={() => setFilterValue("workshop")}
             type="button"
             style={
               {
@@ -116,7 +121,7 @@ export default function ForestCalendarList({
         {counts.training > 0 && (
           <button
             className={`fp-calendar-filter${filter === "training" ? " is-active" : ""}`}
-            onClick={() => setFilterCb("training")}
+            onClick={() => setFilterValue("training")}
             type="button"
             style={
               {
@@ -135,8 +140,9 @@ export default function ForestCalendarList({
           —
         </p>
       ) : (
-        <ul className="fp-calendar-list">
-          {filtered.map((entry) => (
+        <>
+          <ul className="fp-calendar-list">
+            {visibleEntries.map((entry) => (
             <li className="fp-calendar-item" key={entry.id}>
               <Link
                 className="fp-calendar-item__link"
@@ -183,8 +189,21 @@ export default function ForestCalendarList({
                 </span>
               </Link>
             </li>
-          ))}
-        </ul>
+            ))}
+          </ul>
+
+          {hasMoreEntries ? (
+            <div className="fp-calendar-list__footer">
+              <button
+                className="button-link button-link--secondary"
+                onClick={() => setVisibleCount((current) => current + OFFERS_PER_PAGE)}
+                type="button"
+              >
+                {labels.loadMore}
+              </button>
+            </div>
+          ) : null}
+        </>
       )}
     </div>
   );
