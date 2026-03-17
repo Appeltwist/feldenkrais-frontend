@@ -3714,6 +3714,10 @@ a {
     grid-template-columns: 1fr;
   }
 
+  .site-forest-lighthouse .page-wrapper {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  }
+
   /* Mobile fixed footer visible */
   .fl-mobile-footer {
     align-items: center;
@@ -3724,7 +3728,7 @@ a {
     gap: 0.5rem;
     justify-content: center;
     left: 0;
-    padding: 0.6rem 1rem;
+    padding: 0.6rem 1rem calc(0.6rem + env(safe-area-inset-bottom));
     position: fixed;
     right: 0;
     z-index: 100;
@@ -3745,6 +3749,17 @@ a {
     background: #aa3b3b;
     border-color: #aa3b3b;
     color: #f4f2eb;
+  }
+
+  .fl-mobile-footer--offer {
+    gap: 0;
+    justify-content: stretch;
+  }
+
+  .fl-mobile-footer__link--offer {
+    flex: 1 1 auto;
+    font-size: 0.95rem;
+    padding: 0.85rem 1.25rem;
   }
 
 }

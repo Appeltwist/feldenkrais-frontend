@@ -28,6 +28,7 @@ import {
 
 import OfferActionBar from "./OfferActionBar";
 import LeadMagnetDownload from "./LeadMagnetDownload";
+import OfferMobileCtaSync from "./OfferMobileCtaSync";
 import QuickFacts from "./QuickFacts";
 import ScheduleCards from "./ScheduleCards";
 import ThemesPills from "./ThemesPills";
@@ -102,9 +103,38 @@ export default function OfferTemplateBase({
         }
       : primaryCta
     : null;
+  const mobileBookingCta = hasMultipleBookingOptions
+    ? {
+        href: "#offer-pricing",
+        label: labels.chooseDatesPricing,
+      }
+    : bookingOptions.length === 1
+    ? (() => {
+        const bookingUrl = pickString(bookingOptions[0], ["booking_url", "bookingUrl"]);
+        if (!bookingUrl) {
+          return primaryCta?.url
+            ? {
+                href: primaryCta.url,
+                label: primaryCta.label || labels.book,
+              }
+            : null;
+        }
+
+        return {
+          href: bookingUrl,
+          label: primaryCta?.label || labels.book,
+        };
+      })()
+    : primaryCta?.url
+    ? {
+        href: primaryCta.url,
+        label: primaryCta.label || labels.book,
+      }
+    : null;
 
   return (
     <section className="page-section">
+      <OfferMobileCtaSync cta={mobileBookingCta} />
       <p className="offer-type-label">{typeLabel}</p>
       {domainNames.length > 0 ? <p className="offer-domain-label">{domainNames.join(" · ")}</p> : null}
 
