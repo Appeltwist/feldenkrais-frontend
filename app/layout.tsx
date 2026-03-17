@@ -35,6 +35,8 @@ const FL_CONFIG: SiteConfig = {
 
 const FALLBACK_CONFIGS: Record<string, SiteConfig> = {
   "forest-lighthouse.local": FL_CONFIG,
+  "forest-lighthouse.be": FL_CONFIG,
+  "www.forest-lighthouse.be": FL_CONFIG,
   "localhost": FL_CONFIG,
   "127.0.0.1": FL_CONFIG,
 };

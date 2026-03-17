@@ -15,7 +15,7 @@ export function resolveApiHostname(hostname: string) {
   const normalized = normalizeRequestedHostname(hostname);
 
   if (isForestPreviewHostname(normalized)) {
-    return "forest-lighthouse.local";
+    return "forest-lighthouse.be";
   }
 
   return normalized;
