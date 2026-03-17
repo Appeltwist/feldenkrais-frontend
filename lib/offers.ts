@@ -249,7 +249,6 @@ export function getPricingPromos(offer: OfferDetail) {
 
   return asRecords(record.pricing_promos ?? record.pricingPromos ?? record.discounts) as PricingPromo[];
 }
-
 export function getFacilitators(offer: OfferDetail) {
   const record = asRecord(offer);
   if (!record) {

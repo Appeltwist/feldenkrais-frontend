@@ -2,6 +2,7 @@ import type { LocaleCode } from "@/lib/types";
 
 export type OfferLabels = {
   book: string;
+  chooseDatesPricing: string;
   upcomingDates: string;
   nextOccurrence: string;
   pricing: string;
@@ -34,6 +35,7 @@ export type ForestPlaceholderCopy = {
 const LABELS: Record<LocaleCode, OfferLabels> = {
   fr: {
     book: "R\u00e9server",
+    chooseDatesPricing: "Voir les dates et tarifs",
     upcomingDates: "Dates",
     nextOccurrence: "Prochaine date",
     pricing: "Tarifs",
@@ -50,6 +52,7 @@ const LABELS: Record<LocaleCode, OfferLabels> = {
   },
   en: {
     book: "Book",
+    chooseDatesPricing: "See dates and pricing",
     upcomingDates: "Upcoming dates",
     nextOccurrence: "Next occurrence",
     pricing: "Pricing",

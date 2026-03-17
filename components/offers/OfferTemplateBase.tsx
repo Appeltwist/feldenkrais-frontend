@@ -3,6 +3,7 @@ import { getForestBookingUrl } from "@/lib/forest-booking";
 import { getOfferLabels, resolveLocale } from "@/lib/i18n";
 import type { OfferDetail } from "@/lib/types";
 import {
+  getBookingOptions,
   formatDateTime,
   getFacilitators,
   getCanonicalUrl,
@@ -77,6 +78,7 @@ export default function OfferTemplateBase({
     .filter(Boolean);
   const sections = getSections(offer);
   const occurrences = getOccurrences(offer);
+  const bookingOptions = getBookingOptions(offer);
   const priceOptions = getPriceOptions(offer);
   const facilitators = getFacilitators(offer);
   const tags = getTags(offer);
@@ -89,6 +91,22 @@ export default function OfferTemplateBase({
   const primaryOccurrence = (occurrences[0] ?? null) as Record<string, unknown> | null;
   const primaryIcsUrl = pickString(primaryOccurrence, ["ics_url", "icsUrl"]);
   const isPracticeContext = offerType === "CLASS" || offerType === "PRIVATE_SESSION";
+  const hasMultipleBookingOptions = bookingOptions.length > 1;
+  const heroCta = primaryCta
+    ? hasMultipleBookingOptions
+      ? {
+          label: labels.chooseDatesPricing,
+          url: "#offer-pricing",
+          style: primaryCta.style,
+        }
+      : bookingOptions.length === 1
+      ? {
+          label: primaryCta.label || labels.book,
+          url: pickString(bookingOptions[0], ["booking_url", "bookingUrl"]) || primaryCta.url,
+          style: primaryCta.style,
+        }
+      : primaryCta
+    : null;
 
   return (
     <section className="page-section">
@@ -98,15 +116,15 @@ export default function OfferTemplateBase({
       <section className="offer-hero">
         <h1>{title}</h1>
         {subtitle ? <p className="offer-subtitle">{subtitle}</p> : null}
-        {primaryCta ? (
+        {heroCta ? (
           <p>
             <a
-              className={`button-link ${primaryCta.style ? `button-link--${primaryCta.style}` : ""}`.trim()}
-              href={primaryCta.url}
-              rel="noreferrer"
-              target="_blank"
+              className={`button-link ${heroCta.style ? `button-link--${heroCta.style}` : ""}`.trim()}
+              href={heroCta.url}
+              rel={heroCta.url.startsWith("http") ? "noreferrer" : undefined}
+              target={heroCta.url.startsWith("http") ? "_blank" : undefined}
             >
-              {primaryCta.label || `${labels.book} / En savoir plus`}
+              {heroCta.label || `${labels.book} / En savoir plus`}
             </a>
           </p>
         ) : null}
@@ -150,11 +168,37 @@ export default function OfferTemplateBase({
         </section>
       ) : null}
 
-      {priceOptions.length > 0 ? (
-        <section>
+      {(bookingOptions.length > 0 || priceOptions.length > 0) ? (
+        <section id="offer-pricing">
           <h2>{labels.pricing}</h2>
           <ul className="stack-list">
-            {priceOptions.map((price, index) => {
+            {bookingOptions.length > 0 ? bookingOptions.map((option, index) => {
+              const label = pickString(option, ["label", "name", "title"], "Option");
+              const amount = normalizeText(option.amount ?? option.price ?? option.value ?? option.formatted);
+              const currency = normalizeText(option.currency ?? option.currency_code);
+              const detail = [amount, currency].filter(Boolean).join(" ");
+              const summary = pickString(option, ["summary"]);
+              const dateSummary = pickString(option, ["date_summary", "dateSummary"]);
+              const bookingUrl = pickString(option, ["booking_url", "bookingUrl"]);
+
+              return (
+                <li key={`${label}-${index}`}>
+                  <p>
+                    <strong>{label}</strong>
+                    {detail ? `: ${detail}` : ""}
+                  </p>
+                  {summary ? <p>{summary}</p> : null}
+                  {dateSummary ? <p>{dateSummary}</p> : null}
+                  {bookingUrl ? (
+                    <div className="link-row">
+                      <a className="button-link" href={bookingUrl} rel="noreferrer" target="_blank">
+                        {labels.book}
+                      </a>
+                    </div>
+                  ) : null}
+                </li>
+              );
+            }) : priceOptions.map((price, index) => {
               const label = pickString(price, ["label", "name", "title"], "Option");
               const amount = normalizeText(price.amount ?? price.price ?? price.value ?? price.formatted);
               const currency = normalizeText(price.currency ?? price.currency_code);
@@ -196,7 +240,7 @@ export default function OfferTemplateBase({
                   <p>{label || line || "-"}</p>
                   {label ? <p>{line || "-"}</p> : null}
                   <div className="link-row">
-                    {bookingUrl ? (
+                    {bookingUrl && bookingOptions.length === 0 ? (
                       <a className="button-link" href={bookingUrl} rel="noreferrer" target="_blank">
                         {labels.book}
                       </a>

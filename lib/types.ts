@@ -98,7 +98,6 @@ export type PricingPromo = {
   is_active?: boolean | null;
   [key: string]: unknown;
 };
-
 export type Facilitator = {
   id?: number | string;
   name?: string | null;

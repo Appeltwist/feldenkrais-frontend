@@ -4154,6 +4154,61 @@ a {
   padding: 2.5rem 2rem;
 }
 
+.forest-pricing__grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.forest-pricing__card {
+  align-items: center;
+  background: rgba(9, 43, 44, 0.56);
+  border: 1px solid rgba(212, 166, 74, 0.24);
+  border-radius: 18px;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding: 1.15rem 1.25rem;
+}
+
+.forest-pricing__card--booking {
+  align-items: flex-start;
+}
+
+.forest-pricing__content {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.forest-pricing__label {
+  color: #f4f2eb;
+  font-size: 1.02rem;
+  font-weight: 700;
+}
+
+.forest-pricing__summary {
+  color: rgba(244, 242, 235, 0.78);
+  font-size: 0.94rem;
+}
+
+.forest-pricing__aside {
+  align-items: flex-end;
+  display: grid;
+  gap: 0.6rem;
+  justify-items: end;
+  text-align: right;
+}
+
+.forest-pricing__amount {
+  color: #f4f2eb;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.forest-pricing__cta {
+  white-space: nowrap;
+}
+
 
 /* ===================================================================
    RESPONSIVE — 900px
@@ -4531,6 +4586,18 @@ a {
   .forest-panel {
     padding: 1.5rem 1rem;
     border-radius: 14px;
+  }
+
+  .forest-pricing__card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .forest-pricing__aside {
+    align-items: flex-start;
+    justify-items: start;
+    text-align: left;
+    width: 100%;
   }
 
   .fp-section__heading {
