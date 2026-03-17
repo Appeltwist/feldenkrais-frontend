@@ -97,15 +97,34 @@ const FACT_LABELS: Record<string, { fr: string; en: string }> = {
 
 /* ── helpers ── */
 
-function parseCompactDate(dateStr: string, locale: string) {
+function parseCompactDate(dateStr: string, locale: string, timezone?: string | null) {
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return null;
+
   const loc = locale || "fr";
+  const parts = new Intl.DateTimeFormat(loc, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    ...(timezone ? { timeZone: timezone } : {}),
+  }).formatToParts(d);
+
+  const lookup = parts.reduce<Record<string, string>>((acc, part) => {
+    if (part.type !== "literal") {
+      acc[part.type] = part.value;
+    }
+    return acc;
+  }, {});
+
   return {
-    dayOfWeek: d.toLocaleDateString(loc, { weekday: "short" }),
-    dayNum: d.getDate(),
-    month: d.toLocaleDateString(loc, { month: "short" }),
-    time: d.toLocaleTimeString(loc, { hour: "2-digit", minute: "2-digit" }),
+    dayOfWeek: lookup.weekday ?? "",
+    dayNum: lookup.day ?? "",
+    month: lookup.month ?? "",
+    time: new Intl.DateTimeFormat(loc, {
+      hour: "2-digit",
+      minute: "2-digit",
+      ...(timezone ? { timeZone: timezone } : {}),
+    }).format(d),
   };
 }
 
@@ -615,10 +634,10 @@ export default function ForestOfferTemplate({
                 const defaultFacName = getFacilitatorName(facilitators[0] ?? {});
                 return displayedScheduleCards.map((card, index) => {
                   const startParsed = card.start_datetime
-                    ? parseCompactDate(card.start_datetime, locale)
+                    ? parseCompactDate(card.start_datetime, locale, card.timezone)
                     : null;
                   const endParsed = card.end_datetime
-                    ? parseCompactDate(card.end_datetime, locale)
+                    ? parseCompactDate(card.end_datetime, locale, card.timezone)
                     : null;
                   const timeRange = [startParsed?.time, endParsed?.time].filter(Boolean).join(" – ");
 
