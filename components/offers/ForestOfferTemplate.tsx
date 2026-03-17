@@ -902,7 +902,7 @@ export default function ForestOfferTemplate({
                 const supportingText = [summary, dateSummary].filter(Boolean).join(" · ");
                 const bookingUrl = offerType === "PRIVATE_SESSION"
                   ? primaryCta?.url || ""
-                  : pickString(optionRecord, ["booking_url", "bookingUrl"]) || primaryCta?.url || "";
+                  : pickString(optionRecord, ["booking_url", "bookingUrl"]);
                 return (
                   <div className="forest-pricing-compact__row" key={`booking-option-${label}-${index}`}>
                     <div className="forest-pricing-compact__copy">
