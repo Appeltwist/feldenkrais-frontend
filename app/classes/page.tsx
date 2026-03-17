@@ -1,10 +1,13 @@
 import ClassesSchedule from "@/components/calendar/ClassesSchedule";
+import { ForestPageShell } from "@/components/forest/ForestPageShell";
+import ForestOfferCollectionPage from "@/components/offers/ForestOfferCollectionPage";
 import {
   type CalendarDomainLabel,
   type CalendarOccurrenceOption,
   type GroupedCalendarEntry,
 } from "@/components/calendar/GroupedCalendar";
 import { fetchCalendar, fetchSiteConfig, type CalendarItem } from "@/lib/api";
+import { isForestCenter } from "@/lib/forest-theme";
 import { getHostname } from "@/lib/get-hostname";
 
 type RawRecord = Record<string, unknown>;
@@ -126,13 +129,8 @@ function parseGroupedEntries(items: CalendarItem[]) {
 
 export default async function ClassesPage() {
   const hostname = await getHostname();
-  const today = new Date();
-  const fourteenDaysLater = new Date(today);
-  fourteenDaysLater.setDate(today.getDate() + 14);
-  const from = toIsoDate(today);
-  const to = toIsoDate(fourteenDaysLater);
-
   const siteConfig = await fetchSiteConfig(hostname).catch(() => null);
+
   if (!siteConfig) {
     return (
       <section className="page-section">
@@ -142,6 +140,26 @@ export default async function ClassesPage() {
     );
   }
 
+  const isForest = isForestCenter(siteConfig.centerSlug);
+
+  if (isForest) {
+    return (
+      <ForestOfferCollectionPage
+        config={{
+          offerTypes: ["CLASS"],
+          fallbackHeading: "Classes",
+        }}
+      />
+    );
+  }
+
+  /* Non-Forest: keep the original calendar-based schedule */
+  const today = new Date();
+  const fourteenDaysLater = new Date(today);
+  fourteenDaysLater.setDate(today.getDate() + 14);
+  const from = toIsoDate(today);
+  const to = toIsoDate(fourteenDaysLater);
+
   const payload = await fetchCalendar({
     hostname,
     center: siteConfig.centerSlug,
@@ -150,6 +168,7 @@ export default async function ClassesPage() {
     to,
     groupBy: "offer",
   }).catch(() => null);
+
   if (!payload) {
     return (
       <section className="page-section">

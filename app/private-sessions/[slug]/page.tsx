@@ -1,12 +1,17 @@
 import { notFound, permanentRedirect } from "next/navigation";
 
+import LocaleSwitchSync from "@/components/LocaleSwitchSync";
+import ForestOfferTemplate from "@/components/offers/ForestOfferTemplate";
 import PrivateSessionTemplate from "@/components/offers/PrivateSessionTemplate";
-import { ApiError, fetchOfferDetail, fetchSiteConfig, type OfferDetail } from "@/lib/api";
+import { ApiError, fetchOfferDetail, fetchOffers, fetchSiteConfig, fetchSiteFaq, type OfferDetail, type OfferSummary } from "@/lib/api";
 import { getHostname } from "@/lib/get-hostname";
-import { getCanonicalOfferPath, getOfferType } from "@/lib/offers";
+import { getRequestLocale } from "@/lib/get-locale";
+import { localizePath } from "@/lib/locale-path";
+import { buildOfferLocaleSwitchPaths } from "@/lib/offer-locale-paths";
+import { getCanonicalOfferPath, getDomains, getOfferType } from "@/lib/offers";
 
 type OfferPageProps = {
-  params: Promise<{ slug: string }> | { slug: string };
+  params: Promise<{ slug: string }>;
 };
 
 export default async function PrivateSessionDetailPage({ params }: OfferPageProps) {
@@ -17,26 +22,47 @@ export default async function PrivateSessionDetailPage({ params }: OfferPageProp
   if (!siteConfig) {
     return (
       <section className="page-section">
-        <h1>Private session</h1>
+        <h1>Individual session</h1>
         <p>Unable to load this offer right now.</p>
       </section>
     );
   }
 
+  const requestLocale = await getRequestLocale(siteConfig.defaultLocale);
+
   let offer: OfferDetail | null = null;
+  let contentLocale = requestLocale;
 
   try {
     offer = await fetchOfferDetail({
       hostname,
       slug,
       center: siteConfig.centerSlug,
-      locale: siteConfig.defaultLocale,
+      locale: requestLocale,
     });
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
-      notFound();
+      if (requestLocale !== siteConfig.defaultLocale) {
+        try {
+          offer = await fetchOfferDetail({
+            hostname,
+            slug,
+            center: siteConfig.centerSlug,
+            locale: siteConfig.defaultLocale,
+          });
+          contentLocale = siteConfig.defaultLocale;
+        } catch (retryError) {
+          if (retryError instanceof ApiError && retryError.status === 404) {
+            notFound();
+          }
+          throw retryError;
+        }
+      } else {
+        notFound();
+      }
+    } else {
+      throw error;
     }
-    throw error;
   }
 
   if (!offer) {
@@ -52,5 +78,45 @@ export default async function PrivateSessionDetailPage({ params }: OfferPageProp
     permanentRedirect(canonicalPath);
   }
 
-  return <PrivateSessionTemplate offer={offer} locale={siteConfig.defaultLocale} />;
+  if (siteConfig.centerSlug === "forest-lighthouse") {
+    const [siteFaqSections, allOffers, localeSwitchPaths] = await Promise.all([
+      fetchSiteFaq(hostname, requestLocale).catch(() => []),
+      fetchOffers({ hostname, center: siteConfig.centerSlug, locale: contentLocale }).catch(() => [] as OfferSummary[]),
+      buildOfferLocaleSwitchPaths({
+        hostname,
+        centerSlug: siteConfig.centerSlug,
+        offer,
+        requestLocale,
+      }),
+    ]);
+
+    const currentDomainSlugs = new Set(getDomains(offer).map((d) => String(d.id)));
+    const otherOffers = allOffers.filter((o) => String(o.slug) !== slug);
+    const domainMatched = otherOffers.filter((o) => {
+      const oDomains = Array.isArray(o.domains)
+        ? (o.domains as Array<{ slug?: string }>)
+        : [];
+      return oDomains.some((d) => d.slug && currentDomainSlugs.has(d.slug));
+    });
+    const relatedOffers = domainMatched.length > 0 ? domainMatched : otherOffers;
+
+    return (
+      <>
+        <LocaleSwitchSync paths={localeSwitchPaths} />
+        <ForestOfferTemplate
+          locale={requestLocale}
+          offer={offer}
+          offerType={offerType}
+          primaryCtaOverride={{
+            label: requestLocale.toLowerCase().startsWith("fr") ? "Réserver une séance" : "Book a session",
+            url: localizePath(requestLocale, `/private-sessions/${offer.slug ?? slug}/book`),
+          }}
+          relatedOffers={relatedOffers}
+          siteFaqSections={siteFaqSections}
+        />
+      </>
+    );
+  }
+
+  return <PrivateSessionTemplate offer={offer} locale={requestLocale} />;
 }

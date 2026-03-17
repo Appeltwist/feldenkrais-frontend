@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 
 import { resolveApiHostname } from "@/lib/hostname-routing";
+import { getRequiredApiBase } from "@/lib/server-env";
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000/api").replace(/\/+$/, "");
+// Same-origin proxy used by lead magnets and offer pages to download PDFs from Django.
+const API_BASE = getRequiredApiBase();
 
 type RouteContext = {
   params: Promise<{ slug: string }> | { slug: string };

@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from "react";
 
 import AnnouncementBar from "@/components/AnnouncementBar";
 import AboutSubNav from "@/components/about/AboutSubNav";
+import CoursSubNav from "@/components/classes/CoursSubNav";
 import Footer from "@/components/Footer";
 import ForestFooter from "@/components/ForestFooter";
 import Header from "@/components/Header";
@@ -55,7 +56,6 @@ export default async function RootLayout({
 }>) {
   const hostname = await getHostname();
   const apiHostname = resolveApiHostname(hostname);
-  const locale = await getRequestLocale();
   let siteConfig: Awaited<ReturnType<typeof fetchSiteConfig>> | null = null;
 
   try {
@@ -66,6 +66,8 @@ export default async function RootLayout({
     }
     siteConfig = FALLBACK_CONFIGS[apiHostname] ?? null;
   }
+
+  const locale = await getRequestLocale(siteConfig?.defaultLocale ?? "en");
 
   if (!siteConfig) {
     return (
@@ -116,6 +118,7 @@ export default async function RootLayout({
             ) : null}
             <Header />
             <AboutSubNav />
+            <CoursSubNav />
             <main className={isForestLighthouse ? "" : "main-shell"}>{children}</main>
             {isForestLighthouse ? <ForestFooter locale={locale} /> : <Footer />}
             {isForestLighthouse && <MobileFixedFooter locale={locale} />}

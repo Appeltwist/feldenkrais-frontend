@@ -1,3 +1,4 @@
+import { cleanDisplayText, cleanRichTextHtml } from "@/lib/content-cleanup";
 import { getOfferLabels as getLocalizedOfferLabels } from "@/lib/i18n";
 import type {
   BookingOption,
@@ -6,6 +7,7 @@ import type {
   OfferSummary,
   OfferType,
   PriceOption,
+  PricingPromo,
   PrimaryCTA,
   QuickFacts,
   ScheduleCard,
@@ -76,6 +78,20 @@ export function getOfferType(offer: OfferDetail | OfferSummary) {
   return "WORKSHOP";
 }
 
+export function getOfferTypeVariant(offerType: string) {
+  const normalized = offerType.trim().toUpperCase();
+  if (normalized === "CLASS") {
+    return "class" as const;
+  }
+  if (normalized === "PRIVATE_SESSION") {
+    return "private-session" as const;
+  }
+  if (normalized === "TRAINING_INFO") {
+    return "training" as const;
+  }
+  return "workshop" as const;
+}
+
 export function getOfferCollectionPathByType(offerType: string) {
   const normalized = offerType.trim().toUpperCase();
   if (normalized === "CLASS") {
@@ -127,6 +143,16 @@ export function getOfferBodyHtml(offer: OfferDetail) {
   return pickString(record, ["body_html", "bodyHtml", "body", "description_html", "description"]);
 }
 
+export function getOfferHeroImageUrl(offer: OfferDetail) {
+  const record = asRecord(offer);
+  return pickString(record, ["hero_image_url", "heroImageUrl", "offer_hero_image_url", "image_url", "imageUrl"]);
+}
+
+export function getOfferHeroVideoUrl(offer: OfferDetail) {
+  const record = asRecord(offer);
+  return pickString(record, ["hero_video_url", "heroVideoUrl", "video_url", "videoUrl"]);
+}
+
 export function getCanonicalUrl(offer: OfferDetail) {
   const record = asRecord(offer);
   return pickString(record, ["canonical_url", "canonicalUrl", "url"]);
@@ -135,16 +161,6 @@ export function getCanonicalUrl(offer: OfferDetail) {
 export function getMediaUrl(offer: OfferDetail) {
   const record = asRecord(offer);
   return pickString(record, ["media_url", "mediaUrl", "video_url", "videoUrl"]);
-}
-
-export function getOfferHeroImageUrl(offer: OfferDetail) {
-  const record = asRecord(offer);
-  return pickString(record, ["hero_image_url", "heroImageUrl", "image_url", "imageUrl", "featured_image"]);
-}
-
-export function getOfferHeroVideoUrl(offer: OfferDetail) {
-  const record = asRecord(offer);
-  return pickString(record, ["hero_video_url", "heroVideoUrl", "video_url", "videoUrl", "media_url", "mediaUrl"]);
 }
 
 export function isTrialEligible(offer: OfferDetail) {
@@ -225,6 +241,15 @@ export function getBookingOptions(offer: OfferDetail) {
   return asRecords(record.booking_options ?? record.bookingOptions) as BookingOption[];
 }
 
+export function getPricingPromos(offer: OfferDetail) {
+  const record = asRecord(offer);
+  if (!record) {
+    return [] as PricingPromo[];
+  }
+
+  return asRecords(record.pricing_promos ?? record.pricingPromos ?? record.discounts) as PricingPromo[];
+}
+
 export function getFacilitators(offer: OfferDetail) {
   const record = asRecord(offer);
   if (!record) {
@@ -234,20 +259,34 @@ export function getFacilitators(offer: OfferDetail) {
   return asRecords(record.facilitators ?? record.teachers ?? record.instructors) as Facilitator[];
 }
 
-export function getFacilitatorName(facilitator: Facilitator | RawRecord, fallback = "Facilitator") {
-  return pickString(asRecord(facilitator), ["name", "full_name", "title"], fallback);
+export function getFacilitatorName(facilitator: Facilitator, fallback = "Facilitator") {
+  const record = asRecord(facilitator);
+  return pickString(record, ["name", "full_name", "display_name", "title"], fallback);
 }
 
-export function getFacilitatorBio(facilitator: Facilitator | RawRecord) {
-  return pickString(asRecord(facilitator), ["bio_html", "bioHtml", "bio", "description_html", "description"]);
+export function getFacilitatorSlug(facilitator: Facilitator) {
+  const record = asRecord(facilitator);
+  return pickString(record, ["slug"]);
 }
 
-export function getFacilitatorImageUrl(facilitator: Facilitator | RawRecord) {
-  return pickString(asRecord(facilitator), ["photo_url", "photoUrl", "image_url", "imageUrl", "avatar_url", "avatarUrl"]);
+export function getFacilitatorImageUrl(facilitator: Facilitator) {
+  const record = asRecord(facilitator);
+  return pickString(record, ["photo_url", "photoUrl", "image_url", "imageUrl", "avatar_url", "avatarUrl"]);
 }
 
-export function getFacilitatorSlug(facilitator: Facilitator | RawRecord) {
-  return pickString(asRecord(facilitator), ["slug"]);
+export function getFacilitatorBio(facilitator: Facilitator) {
+  const record = asRecord(facilitator);
+  const richBio = pickString(record, ["bio"]);
+  if (richBio) {
+    return cleanRichTextHtml(richBio);
+  }
+
+  return cleanDisplayText(pickString(record, ["short_bio", "shortBio", "description"]));
+}
+
+export function getFacilitatorQuote(facilitator: Facilitator) {
+  const record = asRecord(facilitator);
+  return pickString(record, ["quote", "citation", "inspirational_sentence"]);
 }
 
 export function getTags(offer: OfferDetail) {
@@ -316,11 +355,19 @@ export function getScheduleCards(offer: OfferDetail) {
 
   return asRecords(record.schedule_cards ?? record.scheduleCards)
     .map((card) => {
+      const facRaw = asRecord(card.facilitator);
       const normalized: ScheduleCard = {
         date_label: pickString(card, ["date_label", "dateLabel"]),
         start_datetime: pickString(card, ["start_datetime", "start", "start_at", "datetime"]),
         end_datetime: pickString(card, ["end_datetime", "end", "end_at"]),
         timezone: pickString(card, ["timezone", "tz", "time_zone"]),
+        facilitator: facRaw
+          ? {
+              id: (facRaw.id as number | string) ?? undefined,
+              display_name: pickString(facRaw, ["display_name", "displayName", "name"]),
+              photo_url: pickString(facRaw, ["photo_url", "photoUrl", "image_url", "imageUrl"]),
+            }
+          : null,
       };
 
       const hasAny = Object.values(normalized).some((value) => Boolean(value));
@@ -397,6 +444,36 @@ export function getSections(offer: OfferDetail) {
       } as SectionBlock;
     })
     .filter((block): block is SectionBlock => block !== null);
+}
+
+export type BenefitItem = { title: string; description: string };
+
+export function getBenefits(
+  offer: OfferDetail,
+): { heading: string; items: BenefitItem[] } | null {
+  const sections = getSections(offer);
+  const section = sections.find((s) => s.type === "offer_benefits");
+  if (!section) return null;
+
+  const value = section.value as Record<string, unknown> | undefined;
+  const heading = (value?.heading as string) || "";
+  const rawItems =
+    (value?.items as Array<Record<string, unknown>>) || [];
+
+  const items = rawItems
+    .map((item) => {
+      const inner = ((item as Record<string, unknown>).value ?? item) as {
+        title?: string;
+        description?: string;
+      };
+      return {
+        title: inner.title || "",
+        description: inner.description || "",
+      };
+    })
+    .filter((item) => item.title || item.description);
+
+  return items.length > 0 ? { heading, items } : null;
 }
 
 export function readNextOccurrence(offer: OfferSummary | OfferDetail) {

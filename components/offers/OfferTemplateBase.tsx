@@ -1,4 +1,5 @@
 import BlockRenderer from "@/components/blocks/BlockRenderer";
+import { getForestBookingUrl } from "@/lib/forest-booking";
 import { getOfferLabels, resolveLocale } from "@/lib/i18n";
 import type { OfferDetail } from "@/lib/types";
 import {
@@ -64,7 +65,11 @@ export default function OfferTemplateBase({
   const title = getOfferTitle(offer);
   const subtitle = getOfferSubtitle(offer);
   const bodyHtml = getOfferBodyHtml(offer);
-  const primaryCta = getPrimaryCta(offer);
+  const rawPrimaryCta = getPrimaryCta(offer);
+  const bookingOverride = getForestBookingUrl(offer);
+  const primaryCta = bookingOverride
+    ? { url: bookingOverride, label: rawPrimaryCta?.label ?? "", style: rawPrimaryCta?.style ?? null }
+    : rawPrimaryCta;
   const quickFacts = getQuickFacts(offer);
   const scheduleCards = getScheduleCards(offer);
   const themes = getThemes(offer);
@@ -156,7 +161,7 @@ export default function OfferTemplateBase({
         {bodyHtml ? <div className="rich-text" dangerouslySetInnerHTML={{ __html: bodyHtml }} /> : null}
       </section>
 
-      <OfferActionBar canonicalUrl={canonicalUrl} icsUrl={primaryIcsUrl} mediaUrl={mediaUrl} title={title} />
+      <OfferActionBar canonicalUrl={canonicalUrl} icsUrl={primaryIcsUrl} title={title} />
 
       {offerSlug ? <LeadMagnetDownload locale={localeCode} offerSlug={offerSlug} offerType={offerType} /> : null}
 

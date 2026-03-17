@@ -8,7 +8,7 @@ type PrivateSessionTemplateProps = {
 };
 
 export default function PrivateSessionTemplate({ offer, locale }: PrivateSessionTemplateProps) {
-  const typeLabel = locale.toLowerCase().startsWith("fr") ? "Seance privee" : "Private session";
+  const typeLabel = locale.toLowerCase().startsWith("fr") ? "Séance individuelle" : "Individual session";
 
   return <OfferTemplateBase locale={locale} offer={offer} showScheduleCards={false} typeLabel={typeLabel} />;
 }

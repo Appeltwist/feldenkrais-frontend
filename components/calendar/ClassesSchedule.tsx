@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import { localizePath } from "@/lib/locale-path";
 import { getCanonicalOfferPathByTypeAndSlug } from "@/lib/offers";
 import { useSiteContext } from "@/lib/site-context";
 
@@ -132,6 +133,7 @@ export default function ClassesSchedule({
   from,
   to,
 }: ClassesScheduleProps) {
+  const isFrench = locale.toLowerCase().startsWith("fr");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [expandedOfferId, setExpandedOfferId] = useState<number | null>(null);
   const [loadingOfferId, setLoadingOfferId] = useState<number | null>(null);
@@ -175,7 +177,7 @@ export default function ClassesSchedule({
         cache: "no-store",
       });
       if (!response.ok) {
-        throw new Error("Failed to fetch sessions.");
+        throw new Error(isFrench ? "Impossible de charger les dates." : "Failed to fetch sessions.");
       }
       const payload = (await response.json()) as unknown;
       const occurrences = parseFlatOccurrences(payload);
@@ -189,7 +191,10 @@ export default function ClassesSchedule({
       setErrorsByOffer((previous) => ({ ...previous, [offerId]: "" }));
       return occurrences;
     } catch {
-      setErrorsByOffer((previous) => ({ ...previous, [offerId]: "Unable to load sessions right now." }));
+      setErrorsByOffer((previous) => ({
+        ...previous,
+        [offerId]: isFrench ? "Impossible de charger les dates pour le moment." : "Unable to load sessions right now.",
+      }));
       return [] as CalendarOccurrenceOption[];
     } finally {
       setLoadingOfferId(null);
@@ -219,7 +224,7 @@ export default function ClassesSchedule({
   }
 
   if (classEntries.length === 0) {
-    return <p>No weekly classes found in this date range.</p>;
+    return <p>{isFrench ? "Aucun cours trouvé dans cette période." : "No weekly classes found in this date range."}</p>;
   }
 
   return (
@@ -232,7 +237,7 @@ export default function ClassesSchedule({
           aria-selected={viewMode === "grid"}
           type="button"
         >
-          Visual grid
+          {isFrench ? "Vue visuelle" : "Visual grid"}
         </button>
         <button
           className={`schedule-view-toggle__button${viewMode === "list" ? " is-active" : ""}`}
@@ -241,7 +246,7 @@ export default function ClassesSchedule({
           aria-selected={viewMode === "list"}
           type="button"
         >
-          List
+          {isFrench ? "Liste" : "List"}
         </button>
       </div>
 
@@ -254,7 +259,10 @@ export default function ClassesSchedule({
           const selectedOccurrence = sessionList.find((session) => session.id === selectedId) ?? sessionList[0];
           const bookingUrl = deriveBookingUrl(entry, selectedOccurrence) || undefined;
           const offerDetailsPath =
-            getCanonicalOfferPathByTypeAndSlug(entry.offer.type, entry.offer.slug) || `/offer/${entry.offer.slug}`;
+            localizePath(
+              locale,
+              getCanonicalOfferPathByTypeAndSlug(entry.offer.type, entry.offer.slug) || `/offer/${entry.offer.slug}`,
+            );
           const previewSecondary = entry.nextOccurrences.slice(1, 3);
           const domainsLabel = entry.offer.domains.map((domain) => domain.name).join(" · ");
 
@@ -283,7 +291,9 @@ export default function ClassesSchedule({
                   {formatDateTime(selectedOccurrence.startDateTime, locale, selectedOccurrence.timezone)}
                 </p>
               ) : (
-                <p className="calendar-group-card__primary-time">No upcoming sessions in this range.</p>
+                <p className="calendar-group-card__primary-time">
+                  {isFrench ? "Aucune date dans cette période." : "No upcoming sessions in this range."}
+                </p>
               )}
 
               {previewSecondary.length > 0 ? (
@@ -296,7 +306,7 @@ export default function ClassesSchedule({
 
               <div className="link-row">
                 <button className="button-link button-link--secondary" onClick={() => void toggleOffer(entry)} type="button">
-                  {isExpanded ? "Hide sessions" : "See sessions"}
+                  {isExpanded ? (isFrench ? "Masquer les dates" : "Hide sessions") : isFrench ? "Voir les dates" : "See sessions"}
                 </button>
                 {bookingUrl ? (
                   <a className="button-link" href={bookingUrl} rel="noreferrer" target="_blank">
@@ -304,17 +314,17 @@ export default function ClassesSchedule({
                   </a>
                 ) : (
                   <Link className="text-link" href={offerDetailsPath}>
-                    View offer
+                    {isFrench ? "Voir l’offre" : "View offer"}
                   </Link>
                 )}
               </div>
 
               {isExpanded ? (
                 <div className="calendar-group-card__expanded">
-                  {loadingOfferId === entry.offer.id ? <p>Loading sessions...</p> : null}
+                  {loadingOfferId === entry.offer.id ? <p>{isFrench ? "Chargement des dates..." : "Loading sessions..."}</p> : null}
                   {errorsByOffer[entry.offer.id] ? <p>{errorsByOffer[entry.offer.id]}</p> : null}
                   {loadingOfferId !== entry.offer.id && !errorsByOffer[entry.offer.id] && sessionList.length === 0 ? (
-                    <p>No sessions found for this offering in the selected date range.</p>
+                    <p>{isFrench ? "Aucune date trouvée pour cette offre dans la période choisie." : "No sessions found for this offering in the selected date range."}</p>
                   ) : null}
                   {sessionList.length > 0 ? (
                     <>
@@ -328,7 +338,7 @@ export default function ClassesSchedule({
                                 onClick={() => selectOccurrence(entry, session)}
                                 type="button"
                               >
-                                <span>{session.label || "Session"}</span>
+                                <span>{session.label || (isFrench ? "Séance" : "Session")}</span>
                                 <span>{formatDateTime(session.startDateTime, locale, session.timezone)}</span>
                               </button>
                             </li>
@@ -343,16 +353,16 @@ export default function ClassesSchedule({
                           </a>
                         ) : (
                           <Link className="text-link" href={offerDetailsPath}>
-                            View offer
+                            {isFrench ? "Voir l’offre" : "View offer"}
                           </Link>
                         )}
                         {selectedOccurrence?.icsUrl ? (
                           <a className="text-link" href={selectedOccurrence.icsUrl}>
-                            Add to calendar
+                            {isFrench ? "Ajouter au calendrier" : "Add to calendar"}
                           </a>
                         ) : null}
                         <Link className="text-link" href={offerDetailsPath}>
-                          Offer details
+                          {isFrench ? "Détail de l’offre" : "Offer details"}
                         </Link>
                       </div>
                     </>

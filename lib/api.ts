@@ -1,7 +1,11 @@
 import "server-only";
 
+import { cleanDisplayText, cleanRichTextHtml, isFacilitatorOnlySubtitle } from "@/lib/content-cleanup";
+import { getForestExcerptOverride } from "@/lib/forest-excerpts";
+import { getForestFacilitatorNamesOverride } from "@/lib/forest-facilitator-overrides";
 import { resolveApiHostname } from "@/lib/hostname-routing";
-import type { CalendarItem, OfferDetail, OfferSummary } from "@/lib/types";
+import { getRequiredApiBase } from "@/lib/server-env";
+import type { CalendarItem, OfferDetail, OfferSummary, PrivateBookingConfig, SiteFaqSection } from "@/lib/types";
 
 export type QueryValue = string | number | boolean | null | undefined;
 
@@ -51,6 +55,13 @@ export type FetchOfferDetailParams = {
   locale?: string;
 };
 
+export type FetchPrivateBookingConfigParams = {
+  hostname: string;
+  center?: string;
+  slug: string;
+  locale?: string;
+};
+
 export type FetchCalendarParams = {
   hostname: string;
   center?: string;
@@ -80,7 +91,20 @@ export type CalendarResponse = {
   meta: CalendarMeta;
 };
 
-export type { CalendarItem, OfferDetail, OfferSummary } from "@/lib/types";
+export type FetchTeacherDetailParams = {
+  hostname: string;
+  center?: string;
+  slug: string;
+  locale?: string;
+};
+
+export type FetchTeachersListParams = {
+  hostname: string;
+  center?: string;
+  locale?: string;
+};
+
+export type { CalendarItem, OfferDetail, OfferSummary, SiteFaqSection, TeacherDetail, TeacherListItem } from "@/lib/types";
 
 export class ApiError extends Error {
   status: number;
@@ -92,7 +116,20 @@ export class ApiError extends Error {
   }
 }
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000/api").replace(/\/+$/, "");
+const API_BASE = getRequiredApiBase();
+
+function normalizeHostname(hostname: string) {
+  const cleaned = hostname.trim().toLowerCase().replace(/^https?:\/\//, "");
+  const firstPart = cleaned.split("/")[0] ?? cleaned;
+  const firstHost = firstPart.split(",")[0]?.trim() ?? firstPart;
+
+  return resolveApiHostname(firstHost);
+}
+
+function isForestRequest(hostname: string, center?: string) {
+  const normalizedHostname = normalizeHostname(hostname);
+  return normalizedHostname.includes("forest-lighthouse") || center === "forest-lighthouse";
+}
 
 function asRecord(value: unknown): RawRecord | null {
   if (typeof value === "object" && value !== null && !Array.isArray(value)) {
@@ -139,6 +176,167 @@ function toList<T>(payload: unknown, keys: string[]) {
   }
 
   return [];
+}
+
+function formatDisplayNames(names: readonly string[]) {
+  const cleaned = names.map((name) => cleanDisplayText(name)).filter(Boolean);
+  if (cleaned.length === 0) {
+    return "";
+  }
+  if (cleaned.length === 1) {
+    return cleaned[0];
+  }
+  if (cleaned.length === 2) {
+    return `${cleaned[0]} & ${cleaned[1]}`;
+  }
+  return `${cleaned.slice(0, -1).join(", ")} & ${cleaned[cleaned.length - 1]}`;
+}
+
+function sanitizeFacilitatorRecord<T>(facilitator: T): T {
+  const record = asRecord(facilitator);
+  if (!record) {
+    return facilitator;
+  }
+
+  const sanitized: RawRecord = { ...record };
+
+  for (const key of ["display_name", "name", "full_name", "title", "short_bio"] as const) {
+    if (typeof sanitized[key] === "string") {
+      sanitized[key] = cleanDisplayText(sanitized[key] as string);
+    }
+  }
+
+  if (typeof sanitized.bio === "string") {
+    sanitized.bio = cleanRichTextHtml(sanitized.bio);
+  }
+
+  return sanitized as T;
+}
+
+function normalizeForMatch(value: string) {
+  return cleanDisplayText(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9à-ÿ]+/gi, " ")
+    .trim();
+}
+
+function facilitatorMatchesTarget(facilitator: RawRecord, target: string) {
+  const candidate = normalizeForMatch(
+    pickString(facilitator, ["display_name", "name", "full_name"]),
+  );
+  const targetName = normalizeForMatch(target);
+
+  return candidate === targetName || candidate.includes(targetName) || targetName.includes(candidate);
+}
+
+function applyFacilitatorOverride(facilitators: unknown, names: readonly string[]) {
+  const records = toArray<unknown>(facilitators)
+    .map((item) => sanitizeFacilitatorRecord(asRecord(item)))
+    .filter((item): item is RawRecord => item !== null);
+
+  const used = new Set<number>();
+
+  return names.map((targetName) => {
+    const matchIndex = records.findIndex(
+      (record, index) => !used.has(index) && facilitatorMatchesTarget(record, targetName),
+    );
+
+    if (matchIndex === -1) {
+      return {
+        display_name: targetName,
+        name: targetName,
+      };
+    }
+
+    used.add(matchIndex);
+    return {
+      ...records[matchIndex],
+      display_name: targetName,
+      name: targetName,
+      full_name: targetName,
+    };
+  });
+}
+
+function needsForestExcerptOverride(rawExcerpt: string, cleanedExcerpt: string) {
+  if (!cleanedExcerpt) {
+    return true;
+  }
+
+  if (/(?:\.{3}|…)\s*$/u.test(rawExcerpt)) {
+    return true;
+  }
+
+  return cleanedExcerpt.length > 100 && !/[.!?]$/u.test(cleanedExcerpt);
+}
+
+function sanitizeOfferRecord<T>(offer: T, isForest: boolean): T {
+  const record = asRecord(offer);
+  if (!record) {
+    return offer;
+  }
+
+  const sanitized: RawRecord = { ...record };
+  const slug = pickString(record, ["slug"]);
+  const title = cleanDisplayText(pickString(record, ["title", "name"]));
+
+  if (typeof sanitized.title === "string") {
+    sanitized.title = title || sanitized.title;
+  }
+
+  if (typeof sanitized.subtitle === "string") {
+    const cleanedSubtitle = cleanDisplayText(sanitized.subtitle);
+    const facilitatorOverride = isForest ? getForestFacilitatorNamesOverride(slug) : null;
+
+    if (facilitatorOverride && isFacilitatorOnlySubtitle(cleanedSubtitle)) {
+      const prefix = cleanedSubtitle.match(/^(w\/|with|avec)\b/i)?.[0] ?? "";
+      const formattedNames = formatDisplayNames(facilitatorOverride);
+      sanitized.subtitle = prefix ? `${prefix} ${formattedNames}` : formattedNames;
+    } else {
+      sanitized.subtitle = cleanedSubtitle;
+    }
+  }
+
+  if (typeof sanitized.excerpt === "string") {
+    const rawExcerpt = sanitized.excerpt;
+    const cleanedExcerpt = cleanDisplayText(rawExcerpt);
+    const forestOverride = isForest ? getForestExcerptOverride(title) : null;
+
+    sanitized.excerpt =
+      forestOverride && needsForestExcerptOverride(rawExcerpt, cleanedExcerpt)
+        ? forestOverride
+        : cleanedExcerpt;
+  }
+
+  if (Array.isArray(sanitized.facilitators)) {
+    const facilitatorOverride = isForest ? getForestFacilitatorNamesOverride(slug) : null;
+    sanitized.facilitators = facilitatorOverride
+      ? applyFacilitatorOverride(sanitized.facilitators, facilitatorOverride)
+      : sanitized.facilitators.map((item) => sanitizeFacilitatorRecord(item));
+  }
+
+  return sanitized as T;
+}
+
+function sanitizeTeacherDetailRecord<T>(teacher: T): T {
+  const record = asRecord(teacher);
+  if (!record) {
+    return teacher;
+  }
+
+  const sanitized: RawRecord = { ...record };
+
+  for (const key of ["display_name", "title", "short_bio", "seo_title", "seo_description"] as const) {
+    if (typeof sanitized[key] === "string") {
+      sanitized[key] = cleanDisplayText(sanitized[key] as string);
+    }
+  }
+
+  if (typeof sanitized.bio === "string") {
+    sanitized.bio = cleanRichTextHtml(sanitized.bio);
+  }
+
+  return sanitized as T;
 }
 
 function buildUrl(path: string, params: QueryParams) {
@@ -263,13 +461,56 @@ function normalizeSiteConfig(payload: unknown, hostname: string): SiteConfig {
   };
 }
 
+function normalizeSiteFaq(payload: unknown) {
+  const record = asRecord(payload);
+  const rawSections = toArray<unknown>(record?.sections);
+  const sections: SiteFaqSection[] = [];
+
+  for (const rawSection of rawSections) {
+    const sectionRecord = asRecord(rawSection);
+    const title = pickString(sectionRecord, ["title", "heading", "name"]);
+    if (!title) {
+      continue;
+    }
+
+    const items: SiteFaqSection["items"] = [];
+    for (const rawItem of toArray<unknown>(sectionRecord?.items)) {
+      const itemRecord = asRecord(rawItem);
+      const question = pickString(itemRecord, ["question", "title", "heading"]);
+      const answer = pickString(itemRecord, ["answer", "body", "text"]);
+      if (!question || !answer) {
+        continue;
+      }
+      items.push({ question, answer });
+    }
+
+    if (items.length === 0) {
+      continue;
+    }
+
+    sections.push({ title, items });
+  }
+
+  return sections;
+}
+
 export async function fetchSiteConfig(hostname: string) {
-  const normalizedHostname = resolveApiHostname(hostname);
+  const normalizedHostname = normalizeHostname(hostname);
   const payload = await requestJson<unknown>("/site-config", {
     domain: normalizedHostname,
   });
 
   return normalizeSiteConfig(payload, normalizedHostname);
+}
+
+export async function fetchSiteFaq(hostname: string, locale?: string) {
+  const normalizedHostname = normalizeHostname(hostname);
+  const payload = await requestJson<unknown>("/site-faq", {
+    domain: normalizedHostname,
+    locale,
+  });
+
+  return normalizeSiteFaq(payload);
 }
 
 export async function fetchOffers({
@@ -280,7 +521,7 @@ export async function fetchOffers({
   from,
   to,
 }: FetchOffersParams) {
-  const normalizedHostname = resolveApiHostname(hostname);
+  const normalizedHostname = normalizeHostname(hostname);
   const payload = await requestJson<unknown>("/offers", {
     domain: normalizedHostname,
     center,
@@ -290,11 +531,13 @@ export async function fetchOffers({
     to,
   });
 
-  return toList<OfferSummary>(payload, ["results", "items", "data", "offers"]);
+  return toList<OfferSummary>(payload, ["results", "items", "data", "offers"]).map((offer) =>
+    sanitizeOfferRecord(offer, isForestRequest(normalizedHostname, center)),
+  );
 }
 
 export async function fetchOfferDetail({ hostname, center, slug, locale }: FetchOfferDetailParams) {
-  const normalizedHostname = resolveApiHostname(hostname);
+  const normalizedHostname = normalizeHostname(hostname);
   const payload = await requestJson<unknown>(`/offers/${encodeURIComponent(slug)}`, {
     domain: normalizedHostname,
     center,
@@ -311,7 +554,54 @@ export async function fetchOfferDetail({ hostname, center, slug, locale }: Fetch
   }
 
   const wrapped = asRecord(record.data) ?? asRecord(record.item) ?? asRecord(record.offer);
-  return wrapped ?? record;
+  return sanitizeOfferRecord(wrapped ?? record, isForestRequest(normalizedHostname, center));
+}
+
+export async function fetchPrivateBookingConfig({ hostname, center, slug, locale }: FetchPrivateBookingConfigParams) {
+  const normalizedHostname = normalizeHostname(hostname);
+  const payload = await requestJson<unknown>(`/private-booking/config/${encodeURIComponent(slug)}`, {
+    domain: normalizedHostname,
+    center,
+    locale,
+  });
+
+  const record = asRecord(payload);
+  if (!record) {
+    return null;
+  }
+
+  const wrapped = asRecord(record.data) ?? asRecord(record.item) ?? asRecord(record.config);
+  return (wrapped ?? record) as PrivateBookingConfig;
+}
+
+export async function fetchTeacherDetail({ hostname, center, slug, locale }: FetchTeacherDetailParams) {
+  const normalizedHostname = normalizeHostname(hostname);
+  const payload = await requestJson<unknown>(`/teachers/${encodeURIComponent(slug)}`, {
+    domain: normalizedHostname,
+    center,
+    locale,
+  });
+
+  const record = asRecord(payload);
+  if (!record) {
+    return null;
+  }
+
+  const wrapped = asRecord(record.data) ?? asRecord(record.item) ?? asRecord(record.teacher);
+  return sanitizeTeacherDetailRecord((wrapped ?? record) as import("@/lib/types").TeacherDetail);
+}
+
+export async function fetchTeachersList({ hostname, center, locale }: FetchTeachersListParams) {
+  const normalizedHostname = normalizeHostname(hostname);
+  const payload = await requestJson<unknown>("/teachers", {
+    domain: normalizedHostname,
+    center,
+    locale,
+  });
+
+  return toList<import("@/lib/types").TeacherListItem>(payload, ["results", "items", "data", "teachers"]).map(
+    (teacher) => sanitizeTeacherDetailRecord(teacher),
+  );
 }
 
 export async function fetchCalendar({
@@ -324,7 +614,7 @@ export async function fetchCalendar({
   offeringId,
   domainTheme,
 }: FetchCalendarParams) {
-  const normalizedHostname = resolveApiHostname(hostname);
+  const normalizedHostname = normalizeHostname(hostname);
   const payload = await requestJson<unknown>("/calendar", {
     domain: normalizedHostname,
     center,
@@ -387,7 +677,7 @@ export async function fetchCalendarWithMeta({
   offeringId,
   domainTheme,
 }: FetchCalendarParams): Promise<CalendarResponse> {
-  const normalizedHostname = resolveApiHostname(hostname);
+  const normalizedHostname = normalizeHostname(hostname);
   const payload = await requestJson<unknown>("/calendar", {
     domain: normalizedHostname,
     center,

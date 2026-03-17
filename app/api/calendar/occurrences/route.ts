@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 
 import { ApiError, fetchCalendar } from "@/lib/api";
 
+// Same-origin proxy used by the calendar UI to fetch per-offer occurrences from Django.
+
 function toPositiveInt(value: string | null) {
   if (!value) {
     return null;

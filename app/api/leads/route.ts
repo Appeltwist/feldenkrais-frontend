@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 
 import { resolveApiHostname } from "@/lib/hostname-routing";
+import { getRequiredApiBase } from "@/lib/server-env";
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000/api").replace(/\/+$/, "");
+const API_BASE = getRequiredApiBase();
 
 export async function POST(request: Request) {
   const url = new URL(request.url);
