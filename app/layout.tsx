@@ -8,6 +8,7 @@ import ForestFooter from "@/components/ForestFooter";
 import Header from "@/components/Header";
 import MobileFixedFooter from "@/components/MobileFixedFooter";
 import { fetchSiteConfig } from "@/lib/api";
+import { resolveApiHostname } from "@/lib/hostname-routing";
 import type { SiteConfig } from "@/lib/site-context";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
@@ -51,6 +52,7 @@ export default async function RootLayout({
   children: ReactNode;
 }>) {
   const hostname = await getHostname();
+  const apiHostname = resolveApiHostname(hostname);
   const locale = await getRequestLocale();
   let siteConfig: Awaited<ReturnType<typeof fetchSiteConfig>> | null = null;
 
@@ -60,7 +62,7 @@ export default async function RootLayout({
     if (process.env.NODE_ENV !== "production") {
       console.error("Failed to resolve site config, trying fallback", error);
     }
-    siteConfig = FALLBACK_CONFIGS[hostname] ?? null;
+    siteConfig = FALLBACK_CONFIGS[apiHostname] ?? null;
   }
 
   if (!siteConfig) {

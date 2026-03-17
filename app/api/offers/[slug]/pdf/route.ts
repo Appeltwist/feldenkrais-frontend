@@ -1,13 +1,8 @@
 import { NextResponse } from "next/server";
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000/api").replace(/\/+$/, "");
+import { resolveApiHostname } from "@/lib/hostname-routing";
 
-function normalizeHostname(hostname: string) {
-  const cleaned = hostname.trim().toLowerCase().replace(/^https?:\/\//, "");
-  const firstPart = cleaned.split("/")[0] ?? cleaned;
-  const firstHost = firstPart.split(",")[0]?.trim() ?? firstPart;
-  return firstHost.replace(/:\d+$/, "");
-}
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000/api").replace(/\/+$/, "");
 
 type RouteContext = {
   params: Promise<{ slug: string }> | { slug: string };
@@ -16,7 +11,7 @@ type RouteContext = {
 export async function GET(request: Request, context: RouteContext) {
   const { slug } = await context.params;
   const url = new URL(request.url);
-  const hostname = normalizeHostname(url.searchParams.get("hostname") ?? "");
+  const hostname = resolveApiHostname(url.searchParams.get("hostname") ?? "");
   const locale = (url.searchParams.get("locale") ?? "").trim();
   const center = (url.searchParams.get("center") ?? "").trim();
 

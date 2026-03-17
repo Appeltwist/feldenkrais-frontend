@@ -1,5 +1,6 @@
 import "server-only";
 
+import { resolveApiHostname } from "@/lib/hostname-routing";
 import type { CalendarItem, OfferDetail, OfferSummary } from "@/lib/types";
 
 export type QueryValue = string | number | boolean | null | undefined;
@@ -92,14 +93,6 @@ export class ApiError extends Error {
 }
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000/api").replace(/\/+$/, "");
-
-function normalizeHostname(hostname: string) {
-  const cleaned = hostname.trim().toLowerCase().replace(/^https?:\/\//, "");
-  const firstPart = cleaned.split("/")[0] ?? cleaned;
-  const firstHost = firstPart.split(",")[0]?.trim() ?? firstPart;
-
-  return firstHost.replace(/:\d+$/, "");
-}
 
 function asRecord(value: unknown): RawRecord | null {
   if (typeof value === "object" && value !== null && !Array.isArray(value)) {
@@ -271,7 +264,7 @@ function normalizeSiteConfig(payload: unknown, hostname: string): SiteConfig {
 }
 
 export async function fetchSiteConfig(hostname: string) {
-  const normalizedHostname = normalizeHostname(hostname);
+  const normalizedHostname = resolveApiHostname(hostname);
   const payload = await requestJson<unknown>("/site-config", {
     domain: normalizedHostname,
   });
@@ -287,7 +280,7 @@ export async function fetchOffers({
   from,
   to,
 }: FetchOffersParams) {
-  const normalizedHostname = normalizeHostname(hostname);
+  const normalizedHostname = resolveApiHostname(hostname);
   const payload = await requestJson<unknown>("/offers", {
     domain: normalizedHostname,
     center,
@@ -301,7 +294,7 @@ export async function fetchOffers({
 }
 
 export async function fetchOfferDetail({ hostname, center, slug, locale }: FetchOfferDetailParams) {
-  const normalizedHostname = normalizeHostname(hostname);
+  const normalizedHostname = resolveApiHostname(hostname);
   const payload = await requestJson<unknown>(`/offers/${encodeURIComponent(slug)}`, {
     domain: normalizedHostname,
     center,
@@ -331,7 +324,7 @@ export async function fetchCalendar({
   offeringId,
   domainTheme,
 }: FetchCalendarParams) {
-  const normalizedHostname = normalizeHostname(hostname);
+  const normalizedHostname = resolveApiHostname(hostname);
   const payload = await requestJson<unknown>("/calendar", {
     domain: normalizedHostname,
     center,
@@ -394,7 +387,7 @@ export async function fetchCalendarWithMeta({
   offeringId,
   domainTheme,
 }: FetchCalendarParams): Promise<CalendarResponse> {
-  const normalizedHostname = normalizeHostname(hostname);
+  const normalizedHostname = resolveApiHostname(hostname);
   const payload = await requestJson<unknown>("/calendar", {
     domain: normalizedHostname,
     center,

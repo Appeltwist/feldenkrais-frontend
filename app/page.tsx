@@ -2,6 +2,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 
 import { getHostname } from "@/lib/get-hostname";
+import { isForestPreviewHostname, resolveApiHostname } from "@/lib/hostname-routing";
 import { getCanonicalOfferPathByTypeAndSlug } from "@/lib/offers";
 
 type HomeDomain = {
@@ -106,7 +107,7 @@ async function fetchHomePayload(hostname: string) {
   const locale = (requestHeaders.get("x-locale") ?? "").trim();
 
   const url = new URL("/api/home", `${protocol}://${host}`);
-  url.searchParams.set("hostname", hostname);
+  url.searchParams.set("hostname", resolveApiHostname(hostname));
   url.searchParams.set("limit", "9");
   if (locale) {
     url.searchParams.set("locale", locale);
@@ -121,7 +122,7 @@ async function fetchHomePayload(hostname: string) {
 
 function getForestHomeMedia(hostname: string): ForestHomeMedia | null {
   const normalizedHostname = hostname.toLowerCase();
-  return FOREST_HOST_MATCHERS.some((host) => normalizedHostname.includes(host))
+  return FOREST_HOST_MATCHERS.some((host) => normalizedHostname.includes(host)) || isForestPreviewHostname(normalizedHostname)
     ? FOREST_HOME_MEDIA
     : null;
 }
