@@ -414,6 +414,7 @@ export default function ForestOfferTemplate({
   /* collect ALL gallery images across every gallery block */
   const galleryImages = afterApercu.flatMap((section) => getGalleryImagesFromSection(section));
   const hasMedia = Boolean(mediaUrl) || galleryImages.length > 0;
+  const shouldShowGalleryInFaq = Boolean(mediaUrl) && galleryImages.length > 0;
 
   /* hero image: prefer local override, then explicit hero_image_url, fall back to first gallery image */
   const effectiveHeroImage =
@@ -910,11 +911,19 @@ export default function ForestOfferTemplate({
       ) : null}
 
       {/* ── FEATURED IMAGE + EVENT FAQ ── */}
-      {(heroImageUrl || faqItems.length > 0) ? (
+      {(heroImageUrl || shouldShowGalleryInFaq || faqItems.length > 0) ? (
         <>
           <div aria-hidden="true" className="fl-separator fl-separator--subtle" role="separator" />
           <section className="forest-image-faq" data-reveal="section">
-            {heroImageUrl ? (
+            {shouldShowGalleryInFaq ? (
+              <div className="forest-image-faq__media">
+                <ForestMediaEmbed
+                  fallbackImageUrl={heroImageUrl}
+                  galleryImages={galleryImages}
+                  title={title}
+                />
+              </div>
+            ) : heroImageUrl ? (
               <div className="forest-image-faq__media">
                 <img
                   alt={title}
