@@ -9591,6 +9591,17 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   justify-content: center;
 }
 
+.fc-offer-card__facilitator-avatar--group {
+  background: rgba(244, 242, 235, 0.08);
+  border-color: rgba(244, 242, 235, 0.18);
+  color: rgba(244, 242, 235, 0.82);
+}
+
+.fc-offer-card__facilitator-avatar--group svg {
+  height: 12px;
+  width: 12px;
+}
+
 .fc-offer-card__dates {
   display: flex;
   flex-direction: column;

@@ -17,6 +17,16 @@ function isOfferDetailPath(pathname: string | null) {
   );
 }
 
+function isPrivateSessionDetailPath(pathname: string | null) {
+  if (!pathname) return false;
+
+  const segments = pathname.split("/").filter(Boolean);
+  const normalizedSegments =
+    segments[0] && /^[a-z]{2}$/i.test(segments[0]) ? segments.slice(1) : segments;
+
+  return normalizedSegments.length === 2 && normalizedSegments[0] === "private-sessions";
+}
+
 function isExternalHref(href: string) {
   return /^https?:\/\//i.test(href);
 }
@@ -28,6 +38,28 @@ export default function MobileFixedFooter({ locale }: { locale: string }) {
 
   const isEn = !locale.startsWith("fr");
   const isOfferPage = isOfferDetailPath(pathname);
+  const isPrivateSessionDetailPage = isPrivateSessionDetailPath(pathname);
+
+  if (isPrivateSessionDetailPage) {
+    if (!mobileBookingCta?.href) {
+      return null;
+    }
+
+    const external = isExternalHref(mobileBookingCta.href);
+
+    return (
+      <div className="fl-mobile-footer fl-mobile-footer--offer">
+        <a
+          className="fl-mobile-footer__link fl-mobile-footer__link--cta fl-mobile-footer__link--offer"
+          href={mobileBookingCta.href}
+          rel={external ? "noopener noreferrer" : undefined}
+          target={external ? "_blank" : undefined}
+        >
+          {mobileBookingCta.label || (isEn ? "Book a session" : "Réserver une séance")}
+        </a>
+      </div>
+    );
+  }
 
   if (isOfferPage) {
     return null;

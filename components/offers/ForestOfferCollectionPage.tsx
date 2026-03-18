@@ -626,20 +626,30 @@ export default async function ForestOfferCollectionPage({
                 const overrideExcerpt = getForestExcerptOverride(title) || "";
                 const excerpt = apiExcerpt && !/(?:\.{3}|…)$/.test(apiExcerpt) ? apiExcerpt : overrideExcerpt || apiExcerpt;
                 const heroImage = pickString(offerRecord, ["hero_image_url", "heroImageUrl"]);
+                const offerType = getOfferType(offer);
+                const isDirectBookingCard = offerType === "PRIVATE_SESSION";
                 const facilitators = getFacilitators(offer as OfferDetail);
                 const firstFacilitator = facilitators[0];
                 const facilitatorOverride = getForestFacilitatorNamesOverride(slug);
-                const facilitatorName = facilitatorOverride
-                  ? formatFacilitatorNames(facilitatorOverride)
+                const facilitatorNames = facilitatorOverride
+                  ? [...facilitatorOverride]
+                  : isDirectBookingCard
+                  ? facilitators
+                    .map((facilitator) => getFacilitatorName(facilitator, ""))
+                    .filter(Boolean)
                   : firstFacilitator
-                  ? getFacilitatorName(firstFacilitator)
+                  ? [getFacilitatorName(firstFacilitator)]
+                  : [];
+                const facilitatorName = formatFacilitatorNames(facilitatorNames);
+                const useGroupFacilitatorAvatar = isDirectBookingCard && facilitatorNames.length > 1;
+                const facilitatorImage = useGroupFacilitatorAvatar || facilitatorOverride
+                  ? ""
+                  : firstFacilitator
+                  ? getFacilitatorImageUrl(firstFacilitator)
                   : "";
-                const facilitatorImage = facilitatorOverride ? "" : firstFacilitator ? getFacilitatorImageUrl(firstFacilitator) : "";
                 const cardImage = getForestImageOverride(title) || heroImage || facilitatorImage;
-                const offerType = getOfferType(offer);
                 const offerTypeVariant = getOfferTypeVariant(offerType);
                 const typeLabel = TYPE_LABELS[offerType]?.[localeCode] ?? TYPE_LABELS.WORKSHOP[localeCode];
-                const isDirectBookingCard = offerType === "PRIVATE_SESSION";
                 const bookingPath = offerType === "PRIVATE_SESSION" && slug
                   ? localizePath(requestLocale, `/private-sessions/${slug}/book`)
                   : detailsPath;
@@ -730,6 +740,18 @@ export default async function ForestOfferCollectionPage({
                                 loading="lazy"
                                 src={facilitatorImage}
                               />
+                            ) : useGroupFacilitatorAvatar ? (
+                              <div className="fc-offer-card__facilitator-avatar fc-offer-card__facilitator-avatar--placeholder fc-offer-card__facilitator-avatar--group" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                  <path
+                                    d="M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm6 1a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Zm-6 2c-3.31 0-6 1.79-6 4v1h9v-1c0-2.21-1.34-3.08-3-3.6Zm6 0c-.88 0-1.7.13-2.42.38 1.04.76 1.92 1.9 1.92 3.62v1H21v-.75c0-2.1-2.24-4.25-6-4.25Z"
+                                    stroke="currentColor"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="1.4"
+                                  />
+                                </svg>
+                              </div>
                             ) : (
                               <div className="fc-offer-card__facilitator-avatar fc-offer-card__facilitator-avatar--placeholder">
                                 {facilitatorName.charAt(0).toUpperCase()}

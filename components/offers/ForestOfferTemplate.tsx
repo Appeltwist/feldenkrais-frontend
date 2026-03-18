@@ -526,9 +526,11 @@ export default function ForestOfferTemplate({
   /* first occurrence → calendar event for "Add to Calendar" */
   const occurrences = getOccurrences(offer);
   const hasMultipleChoicePricing =
-    bookingOptions.length > 1 ||
-    priceOptions.length > 1 ||
-    (occurrences.length > 1 && (bookingOptions.length > 0 || priceOptions.length > 0));
+    offerType !== "PRIVATE_SESSION" && (
+      bookingOptions.length > 1 ||
+      priceOptions.length > 1 ||
+      (occurrences.length > 1 && (bookingOptions.length > 0 || priceOptions.length > 0))
+    );
   const heroCta = primaryCta && hasMultipleChoicePricing
     ? {
         label: localeCode === "fr" ? "Voir les dates & tarifs" : "See dates & pricing",
@@ -536,7 +538,14 @@ export default function ForestOfferTemplate({
         style: primaryCta.style ?? null,
       }
     : primaryCta;
-  const mobileBookingCta = hasMultipleChoicePricing
+  const mobileBookingCta = offerType === "PRIVATE_SESSION"
+    ? primaryCta?.url
+      ? {
+          href: primaryCta.url,
+          label: primaryCta.label || labels.book,
+        }
+      : null
+    : hasMultipleChoicePricing
     ? {
         href: "#offer-pricing",
         label: labels.chooseDatesPricing,
