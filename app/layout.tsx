@@ -44,10 +44,39 @@ const FALLBACK_CONFIGS: Record<string, SiteConfig> = {
 
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "Feldenkrais Frontend",
-  description: "Multi-site frontend for Feldenkrais Education",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const hostname = await getHostname();
+  const apiHostname = resolveApiHostname(hostname);
+
+  let siteConfig: Awaited<ReturnType<typeof fetchSiteConfig>> | null = null;
+
+  try {
+    siteConfig = await fetchSiteConfig(hostname);
+  } catch {
+    siteConfig = FALLBACK_CONFIGS[apiHostname] ?? null;
+  }
+
+  if (siteConfig?.centerSlug === "forest-lighthouse") {
+    return {
+      title: "Forest Lighthouse",
+      description: "Forest Lighthouse — embodied learning, classes, workshops, trainings, and individual sessions.",
+      icons: {
+        icon: [
+          {
+            url: "/brands/forest-lighthouse/logo/forest-lighthouse-tab-icon.svg",
+            type: "image/svg+xml",
+          },
+        ],
+        shortcut: ["/brands/forest-lighthouse/logo/forest-lighthouse-tab-icon.svg"],
+      },
+    };
+  }
+
+  return {
+    title: "Feldenkrais Frontend",
+    description: "Multi-site frontend for Feldenkrais Education",
+  };
+}
 
 export default async function RootLayout({
   children,
