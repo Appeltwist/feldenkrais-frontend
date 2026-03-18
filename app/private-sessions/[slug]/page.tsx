@@ -3,6 +3,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import PrivateSessionTemplate from "@/components/offers/PrivateSessionTemplate";
 import { ApiError, fetchOfferDetail, fetchSiteConfig, type OfferDetail } from "@/lib/api";
 import { getHostname } from "@/lib/get-hostname";
+import { getRequestLocale } from "@/lib/get-locale";
 import { getCanonicalOfferPath, getOfferType } from "@/lib/offers";
 
 type OfferPageProps = {
@@ -13,6 +14,7 @@ export default async function PrivateSessionDetailPage({ params }: OfferPageProp
   const { slug } = await params;
   const hostname = await getHostname();
   const siteConfig = await fetchSiteConfig(hostname).catch(() => null);
+  const locale = await getRequestLocale(siteConfig?.defaultLocale ?? "fr");
 
   if (!siteConfig) {
     return (
@@ -30,7 +32,7 @@ export default async function PrivateSessionDetailPage({ params }: OfferPageProp
       hostname,
       slug,
       center: siteConfig.centerSlug,
-      locale: siteConfig.defaultLocale,
+      locale,
     });
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
@@ -52,5 +54,5 @@ export default async function PrivateSessionDetailPage({ params }: OfferPageProp
     permanentRedirect(canonicalPath);
   }
 
-  return <PrivateSessionTemplate offer={offer} locale={siteConfig.defaultLocale} />;
+  return <PrivateSessionTemplate offer={offer} locale={locale} />;
 }

@@ -1,5 +1,6 @@
 import BlockRenderer from "@/components/blocks/BlockRenderer";
 import { getOfferLabels, resolveLocale } from "@/lib/i18n";
+import { isExternalHref } from "@/lib/private-booking";
 import type { OfferDetail } from "@/lib/types";
 import {
   getBookingOptions,
@@ -50,6 +51,16 @@ function normalizeText(value: unknown) {
   }
 
   return "";
+}
+
+function renderOfferLink(href: string, label: string, className = "button-link") {
+  const external = isExternalHref(href);
+
+  return (
+    <a className={className} href={href} rel={external ? "noreferrer" : undefined} target={external ? "_blank" : undefined}>
+      {label}
+    </a>
+  );
 }
 
 export default function OfferTemplateBase({
@@ -143,14 +154,11 @@ export default function OfferTemplateBase({
         {subtitle ? <p className="offer-subtitle">{subtitle}</p> : null}
         {heroCta ? (
           <p>
-            <a
-              className={`button-link ${heroCta.style ? `button-link--${heroCta.style}` : ""}`.trim()}
-              href={heroCta.url}
-              rel={heroCta.url.startsWith("http") ? "noreferrer" : undefined}
-              target={heroCta.url.startsWith("http") ? "_blank" : undefined}
-            >
-              {heroCta.label || `${labels.book} / En savoir plus`}
-            </a>
+            {renderOfferLink(
+              heroCta.url,
+              heroCta.label || `${labels.book} / En savoir plus`,
+              `button-link ${heroCta.style ? `button-link--${heroCta.style}` : ""}`.trim(),
+            )}
           </p>
         ) : null}
         {bodyHtml ? <div className="rich-text" dangerouslySetInnerHTML={{ __html: bodyHtml }} /> : null}
@@ -216,9 +224,7 @@ export default function OfferTemplateBase({
                   {dateSummary ? <p>{dateSummary}</p> : null}
                   {bookingUrl ? (
                     <div className="link-row">
-                      <a className="button-link" href={bookingUrl} rel="noreferrer" target="_blank">
-                        {labels.book}
-                      </a>
+                      {renderOfferLink(bookingUrl, labels.book)}
                     </div>
                   ) : null}
                 </li>
@@ -265,11 +271,7 @@ export default function OfferTemplateBase({
                   <p>{label || line || "-"}</p>
                   {label ? <p>{line || "-"}</p> : null}
                   <div className="link-row">
-                    {bookingUrl && bookingOptions.length === 0 ? (
-                      <a className="button-link" href={bookingUrl} rel="noreferrer" target="_blank">
-                        {labels.book}
-                      </a>
-                    ) : null}
+                    {bookingUrl && bookingOptions.length === 0 ? renderOfferLink(bookingUrl, labels.book) : null}
                     {icsUrl ? (
                       <a className="text-link" href={icsUrl}>
                         Add to calendar
