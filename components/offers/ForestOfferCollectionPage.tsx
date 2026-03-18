@@ -631,6 +631,15 @@ export default async function ForestOfferCollectionPage({
                 const facilitators = getFacilitators(offer as OfferDetail);
                 const firstFacilitator = facilitators[0];
                 const facilitatorOverride = getForestFacilitatorNamesOverride(slug);
+                const facilitatorAvatarImages = facilitatorOverride
+                  ? []
+                  : facilitators
+                    .map((facilitator) => ({
+                      name: getFacilitatorName(facilitator, ""),
+                      src: getFacilitatorImageUrl(facilitator),
+                    }))
+                    .filter((avatar): avatar is { name: string; src: string } => Boolean(avatar.name) && Boolean(avatar.src))
+                    .slice(0, 2);
                 const facilitatorNames = facilitatorOverride
                   ? [...facilitatorOverride]
                   : isDirectBookingCard
@@ -641,8 +650,9 @@ export default async function ForestOfferCollectionPage({
                   ? [getFacilitatorName(firstFacilitator)]
                   : [];
                 const facilitatorName = formatFacilitatorNames(facilitatorNames);
-                const useGroupFacilitatorAvatar = isDirectBookingCard && facilitatorNames.length > 1;
-                const facilitatorImage = useGroupFacilitatorAvatar || facilitatorOverride
+                const useFacilitatorAvatarStack = isDirectBookingCard && facilitatorNames.length > 1 && facilitatorAvatarImages.length > 1;
+                const useGroupFacilitatorAvatar = isDirectBookingCard && facilitatorNames.length > 1 && !useFacilitatorAvatarStack;
+                const facilitatorImage = useFacilitatorAvatarStack || useGroupFacilitatorAvatar || facilitatorOverride
                   ? ""
                   : firstFacilitator
                   ? getFacilitatorImageUrl(firstFacilitator)
@@ -732,7 +742,20 @@ export default async function ForestOfferCollectionPage({
                       <div className="fc-offer-card__meta">
                         {facilitatorName ? (
                           <div className="fc-offer-card__facilitator">
-                            {facilitatorImage ? (
+                            {useFacilitatorAvatarStack ? (
+                              <div className="fc-offer-card__facilitator-avatar-stack" aria-hidden="true">
+                                {facilitatorAvatarImages.map((avatar, avatarIndex) => (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    alt=""
+                                    className="fc-offer-card__facilitator-avatar fc-offer-card__facilitator-avatar--stacked"
+                                    key={`${avatar.name}-${avatarIndex}`}
+                                    loading="lazy"
+                                    src={avatar.src}
+                                  />
+                                ))}
+                              </div>
+                            ) : facilitatorImage ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
                                 alt={facilitatorName}

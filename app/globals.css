@@ -9586,6 +9586,22 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   width: 24px;
 }
 
+.fc-offer-card__facilitator-avatar-stack {
+  align-items: center;
+  display: inline-flex;
+  isolation: isolate;
+  min-width: 40px;
+}
+
+.fc-offer-card__facilitator-avatar--stacked {
+  box-shadow: 0 0 0 1.5px rgba(4, 23, 22, 0.95);
+  position: relative;
+}
+
+.fc-offer-card__facilitator-avatar--stacked + .fc-offer-card__facilitator-avatar--stacked {
+  margin-left: -8px;
+}
+
 .fc-offer-card__facilitator-avatar--placeholder {
   align-items: center;
   background: linear-gradient(135deg, rgba(15, 83, 76, 0.9), rgba(6, 45, 44, 0.95));

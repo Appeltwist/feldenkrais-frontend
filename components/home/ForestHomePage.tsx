@@ -33,7 +33,8 @@ import { localizePath } from "@/lib/locale-path";
 import type { OfferDetail, OfferSummary, OfferType } from "@/lib/types";
 
 const FALLBACK_HIGHLIGHT_IMAGE = "/brands/forest-lighthouse/home/hero-main-hall.jpg";
-const MAX_CARD_DATE_PILLS = 2;
+const MAX_HIGHLIGHT_DATE_PILLS = 4;
+const MIN_MULTI_DATE_SUMMARY_COUNT = 3;
 
 type ForestHomePageProps = {
   hostname: string;
@@ -353,7 +354,7 @@ function formatDateRangeLabel(
 }
 
 function getDateSummary(offerType: OfferType, labels: string[], locale: string) {
-  if (labels.length <= MAX_CARD_DATE_PILLS) {
+  if (labels.length < MIN_MULTI_DATE_SUMMARY_COUNT) {
     return "";
   }
 
@@ -543,7 +544,7 @@ function buildHighlightCard(
         })()
       : formatWorkshopDateLabels(offer, locale);
   const fallbackDate = getFallbackDateLabel(offer, locale);
-  const dateLabels = rawDateLabels.slice(0, MAX_CARD_DATE_PILLS);
+  const dateLabels = rawDateLabels.slice(0, MAX_HIGHLIGHT_DATE_PILLS);
   const resolvedDateLabels = dateLabels.length > 0 ? dateLabels : [fallbackDate || fallbackDateLabel];
 
   const title = getOfferTitle(offer, "Untitled");
