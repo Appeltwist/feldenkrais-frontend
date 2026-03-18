@@ -9,6 +9,7 @@ import ForestFooter from "@/components/ForestFooter";
 import Header from "@/components/Header";
 import MobileFixedFooter from "@/components/MobileFixedFooter";
 import { fetchSiteConfig } from "@/lib/api";
+import { resolveApiHostname } from "@/lib/hostname-routing";
 import type { SiteConfig } from "@/lib/site-context";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
@@ -35,6 +36,8 @@ const FL_CONFIG: SiteConfig = {
 
 const FALLBACK_CONFIGS: Record<string, SiteConfig> = {
   "forest-lighthouse.local": FL_CONFIG,
+  "forest-lighthouse.be": FL_CONFIG,
+  "www.forest-lighthouse.be": FL_CONFIG,
   "localhost": FL_CONFIG,
   "127.0.0.1": FL_CONFIG,
 };
@@ -52,6 +55,7 @@ export default async function RootLayout({
   children: ReactNode;
 }>) {
   const hostname = await getHostname();
+  const apiHostname = resolveApiHostname(hostname);
   let siteConfig: Awaited<ReturnType<typeof fetchSiteConfig>> | null = null;
 
   try {
@@ -60,7 +64,7 @@ export default async function RootLayout({
     if (process.env.NODE_ENV !== "production") {
       console.error("Failed to resolve site config, trying fallback", error);
     }
-    siteConfig = FALLBACK_CONFIGS[hostname] ?? null;
+    siteConfig = FALLBACK_CONFIGS[apiHostname] ?? null;
   }
 
   const locale = await getRequestLocale(siteConfig?.defaultLocale ?? "en");

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { resolveApiHostname } from "@/lib/hostname-routing";
 import { getRequiredApiBase } from "@/lib/server-env";
 import { resolveHostname } from "@/lib/server-hostname";
 
@@ -7,7 +8,7 @@ const API_BASE = getRequiredApiBase();
 
 export async function POST(request: Request) {
   const url = new URL(request.url);
-  const hostname = resolveHostname(url.searchParams.get("hostname") ?? "");
+  const hostname = resolveApiHostname(resolveHostname(url.searchParams.get("hostname") ?? ""));
   const locale = (url.searchParams.get("locale") ?? "").trim();
   const center = (url.searchParams.get("center") ?? "").trim();
 

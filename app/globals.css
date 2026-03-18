@@ -4557,6 +4557,37 @@ a {
     height: 20px;
   }
 
+  .site-forest-lighthouse .page-wrapper {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  }
+
+  .fl-mobile-footer--offer {
+    display: block;
+  }
+
+  .fl-mobile-footer__link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    text-decoration: none;
+    font-family: var(--fl-body);
+    font-weight: 600;
+  }
+
+  .fl-mobile-footer__link--cta {
+    padding: 14px 22px;
+    background: linear-gradient(135deg, #ba5a55 0%, #9f3d3d 100%);
+    color: #fff;
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18);
+  }
+
+  .fl-mobile-footer__link--offer {
+    width: min(960px, calc(100vw - 32px));
+    margin: 0 auto;
+    min-height: 48px;
+  }
+
 }
 
 

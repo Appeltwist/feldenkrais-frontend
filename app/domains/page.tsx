@@ -1,13 +1,15 @@
 import Link from "next/link";
-import { headers } from "next/headers";
 
 import { ForestPageShell } from "@/components/forest/ForestPageShell";
 import RevealObserver from "@/components/motion/RevealObserver";
 import { fetchSiteConfig } from "@/lib/api";
 import { getHostname } from "@/lib/get-hostname";
+import { getRequestLocale } from "@/lib/get-locale";
+import { resolveApiHostname } from "@/lib/hostname-routing";
 import { isForestCenter } from "@/lib/forest-theme";
 import { getCanonicalOfferPathByTypeAndSlug } from "@/lib/offers";
 import { localizePath } from "@/lib/locale-path";
+import { getRequiredApiBase } from "@/lib/server-env";
 
 type DomainPreviewCard = {
   offer: {
@@ -41,16 +43,11 @@ type DomainsPayload = {
   }>;
 };
 
-async function fetchDomainsPayload() {
-  const hostname = await getHostname();
-  const requestHeaders = await headers();
-  const forwardedHost = requestHeaders.get("x-forwarded-host");
-  const host = forwardedHost ?? requestHeaders.get("host") ?? `${hostname}:3000`;
-  const protocol = requestHeaders.get("x-forwarded-proto") ?? "http";
-  const locale = (requestHeaders.get("x-locale") ?? "").trim();
+const API_BASE = getRequiredApiBase();
 
-  const url = new URL("/api/domains", `${protocol}://${host}`);
-  url.searchParams.set("hostname", hostname);
+async function fetchDomainsPayload(hostname: string, locale: string) {
+  const url = new URL(`${API_BASE}/domains`);
+  url.searchParams.set("domain", resolveApiHostname(hostname));
   url.searchParams.set("include_previews", "1");
   url.searchParams.set("preview_limit", "10");
   if (locale) {
@@ -82,9 +79,9 @@ function formatOccurrence(value: string, locale: string, timezone?: string) {
 
 export default async function DomainsPage() {
   const hostname = await getHostname();
+  const locale = await getRequestLocale("en");
   const siteConfig = await fetchSiteConfig(hostname).catch(() => null);
-  const payload = await fetchDomainsPayload();
-  const locale = (await headers()).get("x-locale") ?? "en";
+  const payload = await fetchDomainsPayload(hostname, locale);
 
   if (!payload) {
     return (

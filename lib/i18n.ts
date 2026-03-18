@@ -27,6 +27,10 @@ export type ForestPlaceholderCopy = {
   discoverDescription: string;
   discoverCta: string;
   extraFaqHeading: string;
+  extraFaqItems: Array<{
+    question: string;
+    answer: string;
+  }>;
   pdfPrompt: string;
   pdfPlaceholder: string;
   pdfCta: string;
@@ -81,6 +85,18 @@ const FOREST_PLACEHOLDER_COPY: Record<LocaleCode, ForestPlaceholderCopy> = {
       "Retrouvez d'autres ateliers, cours et parcours publiés dans le calendrier Forest Lighthouse.",
     discoverCta: "Voir les autres offres",
     extraFaqHeading: "Questions fréquentes",
+    extraFaqItems: [
+      {
+        question: "Comment choisir le bon format ?",
+        answer:
+          "Commencez par le type d’expérience recherché : atelier ponctuel, pratique régulière, séance individuelle ou formation au long cours.",
+      },
+      {
+        question: "Puis-je vous contacter avant de réserver ?",
+        answer:
+          "Oui. Si vous hésitez entre plusieurs formats ou si vous avez une question pratique, l’équipe peut vous orienter avant l’inscription.",
+      },
+    ],
     pdfPrompt: "Recevez la présentation complète de cet événement par e-mail.",
     pdfPlaceholder: "Votre e-mail",
     pdfCta: "Recevoir le PDF",
@@ -96,6 +112,18 @@ const FOREST_PLACEHOLDER_COPY: Record<LocaleCode, ForestPlaceholderCopy> = {
       "Find other workshops, classes, and training pathways currently published in the Forest Lighthouse calendar.",
     discoverCta: "See more offers",
     extraFaqHeading: "Frequently asked questions",
+    extraFaqItems: [
+      {
+        question: "How do I choose the right format?",
+        answer:
+          "Start from the kind of experience you need: a one-off workshop, ongoing practice, an individual session, or a longer training pathway.",
+      },
+      {
+        question: "Can I contact you before booking?",
+        answer:
+          "Yes. If you are unsure which format fits best or have a practical question, the team can help you choose before you register.",
+      },
+    ],
     pdfPrompt: "Get the full event presentation sent to your inbox.",
     pdfPlaceholder: "Your email",
     pdfCta: "Get the PDF",

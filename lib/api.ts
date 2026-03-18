@@ -4,6 +4,7 @@ import { cleanDisplayText, cleanRichTextHtml, isFacilitatorOnlySubtitle } from "
 import { getForestExcerptOverride } from "@/lib/forest-excerpts";
 import { getForestFacilitatorNamesOverride } from "@/lib/forest-facilitator-overrides";
 import { rewriteForestMediaPayload } from "@/lib/forest-media";
+import { resolveApiHostname } from "@/lib/hostname-routing";
 import { getRequiredApiBase } from "@/lib/server-env";
 import { resolveHostname } from "@/lib/server-hostname";
 import type { CalendarItem, OfferDetail, OfferSummary, PrivateBookingConfig, SiteFaqSection } from "@/lib/types";
@@ -120,7 +121,7 @@ export class ApiError extends Error {
 const API_BASE = getRequiredApiBase();
 
 function normalizeHostname(hostname: string) {
-  return resolveHostname(hostname);
+  return resolveApiHostname(resolveHostname(hostname));
 }
 
 function isForestRequest(hostname: string, center?: string) {

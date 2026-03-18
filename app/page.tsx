@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { headers } from "next/headers";
 
 import ForestHomePage from "@/components/home/ForestHomePage";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
+import { resolveApiHostname } from "@/lib/hostname-routing";
 import { getCanonicalOfferPathByTypeAndSlug } from "@/lib/offers";
 import { localizePath } from "@/lib/locale-path";
+import { getRequiredApiBase } from "@/lib/server-env";
 
 type HomeDomain = {
   slug: string;
@@ -74,17 +75,11 @@ type HomeDetailImage = {
 };
 
 const MAX_WHATS_ON_CARDS = 9;
-const FOREST_HOST_MATCHERS = ["forest-lighthouse.local", "forest-lighthouse"];
+const API_BASE = getRequiredApiBase();
 
-async function fetchHomePayload(hostname: string) {
-  const requestHeaders = await headers();
-  const forwardedHost = requestHeaders.get("x-forwarded-host");
-  const host = forwardedHost ?? requestHeaders.get("host") ?? `${hostname}:3000`;
-  const protocol = requestHeaders.get("x-forwarded-proto") ?? "http";
-  const locale = (requestHeaders.get("x-locale") ?? "").trim();
-
-  const url = new URL("/api/home", `${protocol}://${host}`);
-  url.searchParams.set("hostname", hostname);
+async function fetchHomePayload(hostname: string, locale: string) {
+  const url = new URL(`${API_BASE}/home`);
+  url.searchParams.set("domain", resolveApiHostname(hostname));
   url.searchParams.set("limit", "9");
   if (locale) {
     url.searchParams.set("locale", locale);
@@ -98,8 +93,7 @@ async function fetchHomePayload(hostname: string) {
 }
 
 function isForestHomepage(hostname: string) {
-  const normalizedHostname = hostname.toLowerCase();
-  return FOREST_HOST_MATCHERS.some((host) => normalizedHostname.includes(host));
+  return resolveApiHostname(hostname).includes("forest-lighthouse");
 }
 
 function formatOccurrence(value: string, locale: string, timezone?: string) {
@@ -405,12 +399,12 @@ function HomeDomainsTeaser({
 
 export default async function HomePage() {
   const hostname = await getHostname();
+  const requestedLocale = await getRequestLocale("en");
   if (isForestHomepage(hostname)) {
-    const locale = await getRequestLocale("fr");
-    return <ForestHomePage hostname={hostname} locale={locale} />;
+    return <ForestHomePage hostname={hostname} locale={requestedLocale} />;
   }
 
-  const home = await fetchHomePayload(hostname);
+  const home = await fetchHomePayload(hostname, requestedLocale);
 
   if (!home) {
     return (
@@ -421,7 +415,7 @@ export default async function HomePage() {
     );
   }
 
-  const locale = home.meta.locale || "en";
+  const locale = home.meta.locale || requestedLocale || "en";
   const homeContent = (
     <section className="page-section home-page">
       <HomeHero
