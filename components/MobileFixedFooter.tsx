@@ -25,33 +25,18 @@ export default function MobileFixedFooter({ locale }: { locale: string }) {
   const { centerSlug, mobileBookingCta } = useSiteContext();
   const pathname = usePathname();
   if (centerSlug !== "forest-lighthouse") return null;
-  if (!mobileBookingCta) return null;
 
   const isEn = !locale.startsWith("fr");
-  const bookingUrl = mobileBookingCta.href;
-  const bookingLabel = mobileBookingCta.label || (isEn ? "Book Now" : "Réserver");
   const isOfferPage = isOfferDetailPath(pathname);
 
   if (isOfferPage) {
-    if (!mobileBookingCta.href) {
-      return null;
-    }
-
-    const external = isExternalHref(mobileBookingCta.href);
-
-    return (
-      <div className="fl-mobile-footer fl-mobile-footer--offer">
-        <a
-          className="fl-mobile-footer__link fl-mobile-footer__link--cta fl-mobile-footer__link--offer"
-          href={mobileBookingCta.href}
-          rel={external ? "noopener noreferrer" : undefined}
-          target={external ? "_blank" : undefined}
-        >
-          {bookingLabel}
-        </a>
-      </div>
-    );
+    return null;
   }
+
+  if (!mobileBookingCta) return null;
+
+  const bookingUrl = mobileBookingCta.href;
+  const bookingLabel = mobileBookingCta.label || (isEn ? "Book Now" : "Réserver");
 
   return (
     <div className="fl-mobile-footer">

@@ -199,6 +199,48 @@ function formatOfferMoney(amount: unknown, currency: unknown) {
   return [normalizeText(amount), normalizeText(currency)].filter(Boolean).join(" ");
 }
 
+function buildMindbodyEnrollmentUrl(scheduleId: number) {
+  return `https://cart.mindbodyonline.com/sites/124505/cart/add_booking?item[class_schedule_id]=${scheduleId}&item[mbo_id]=${scheduleId}&item[type]=Enrollment&item[mbo_location_id]=1`;
+}
+
+function resolveBookingOptionUrl(
+  offerSlug: string,
+  optionRecord: Record<string, unknown>,
+  offerType: OfferType,
+  primaryCta: PrimaryCTA | null | undefined,
+) {
+  if (offerType === "PRIVATE_SESSION") {
+    return primaryCta?.url || "";
+  }
+
+  const explicitUrl = pickString(optionRecord, ["booking_url", "bookingUrl"]);
+  if (explicitUrl) {
+    return explicitUrl;
+  }
+
+  if (offerSlug === "week-end-gaga-dancer") {
+    const optionLabel = pickString(optionRecord, ["label", "name", "title"]).toLowerCase();
+    const dateSummary = pickString(optionRecord, ["date_summary", "dateSummary"]).toLowerCase();
+    const occurrenceIds = Array.isArray(optionRecord.occurrence_ids)
+      ? optionRecord.occurrence_ids.map((value) => Number(value)).filter((value) => Number.isFinite(value))
+      : [];
+
+    const isMayWeekend =
+      optionLabel.includes("2/3 may")
+      || optionLabel.includes("2/3 mai")
+      || dateSummary.includes("2 may 2026")
+      || dateSummary.includes("2 mai 2026")
+      || occurrenceIds.includes(10)
+      || occurrenceIds.includes(11);
+
+    if (isMayWeekend) {
+      return buildMindbodyEnrollmentUrl(55);
+    }
+  }
+
+  return "";
+}
+
 function isActivePromo(promo: Record<string, unknown>) {
   const explicit = promo.is_active;
   if (typeof explicit === "boolean") {
@@ -501,7 +543,12 @@ export default function ForestOfferTemplate({
       }
     : bookingOptions.length === 1
     ? (() => {
-        const bookingUrl = pickString(bookingOptions[0], ["booking_url", "bookingUrl"]);
+        const bookingUrl = resolveBookingOptionUrl(
+          offerSlug,
+          bookingOptions[0] as Record<string, unknown>,
+          offerType,
+          primaryCta,
+        );
         if (!bookingUrl) {
           return primaryCta?.url
             ? {
@@ -930,9 +977,7 @@ export default function ForestOfferTemplate({
                 const summary = pickString(optionRecord, ["summary"]);
                 const dateSummary = pickString(optionRecord, ["date_summary", "dateSummary"]);
                 const supportingText = [summary, dateSummary].filter(Boolean).join(" · ");
-                const bookingUrl = offerType === "PRIVATE_SESSION"
-                  ? primaryCta?.url || ""
-                  : pickString(optionRecord, ["booking_url", "bookingUrl"]);
+                const bookingUrl = resolveBookingOptionUrl(offerSlug, optionRecord, offerType, primaryCta);
                 return (
                   <div className="forest-pricing-compact__row" key={`booking-option-${label}-${index}`}>
                     <div className="forest-pricing-compact__copy">
@@ -1118,6 +1163,36 @@ export default function ForestOfferTemplate({
 
       {/* Tags integrated into Aperçu pills — no standalone section */}
       </section>
+      {mobileBookingCta ? (
+        <div className="fl-mobile-footer fl-mobile-footer--offer">
+          {isExternalHref(mobileBookingCta.href) ? (
+            <a
+              className="fl-mobile-footer__link fl-mobile-footer__link--cta fl-mobile-footer__link--offer"
+              href={mobileBookingCta.href}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              {mobileBookingCta.label || labels.book}
+            </a>
+          ) : (
+            mobileBookingCta.href.startsWith("#") ? (
+              <a
+                className="fl-mobile-footer__link fl-mobile-footer__link--cta fl-mobile-footer__link--offer"
+                href={mobileBookingCta.href}
+              >
+                {mobileBookingCta.label || labels.book}
+              </a>
+            ) : (
+              <Link
+                className="fl-mobile-footer__link fl-mobile-footer__link--cta fl-mobile-footer__link--offer"
+                href={mobileBookingCta.href}
+              >
+                {mobileBookingCta.label || labels.book}
+              </Link>
+            )
+          )}
+        </div>
+      ) : null}
     </ForestPageShell>
   );
 }
