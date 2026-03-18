@@ -7616,6 +7616,11 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   width: 100%;
 }
 
+.forest-hero-media__video--embed {
+  border: 0;
+  pointer-events: none;
+}
+
 .forest-hero-media__gradient {
   background: linear-gradient(135deg, rgba(5, 31, 31, 0.92), rgba(16, 75, 72, 0.85));
 }

@@ -1,6 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  buildVimeoEmbedUrl,
+  buildYouTubeEmbedUrl,
+  parseVimeoVideo,
+  parseYouTubeId,
+  type ParsedVimeoVideo,
+} from "@/lib/video-embed";
 
 /* ── types ── */
 
@@ -16,30 +23,6 @@ type ForestMediaEmbedProps = {
   title: string;
 };
 
-/* ── helpers ── */
-
-function parseVimeoId(url: string): string | null {
-  // https://vimeo.com/76979871
-  // https://player.vimeo.com/video/76979871
-  const match = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
-  return match ? match[1] : null;
-}
-
-function parseYouTubeId(url: string): string | null {
-  const embedMatch = url.match(/youtube\.com\/embed\/([A-Za-z0-9_-]+)/);
-  if (embedMatch) {
-    return embedMatch[1];
-  }
-
-  const watchMatch = url.match(/[?&]v=([A-Za-z0-9_-]+)/);
-  if (watchMatch) {
-    return watchMatch[1];
-  }
-
-  const shortMatch = url.match(/youtu\.be\/([A-Za-z0-9_-]+)/);
-  return shortMatch ? shortMatch[1] : null;
-}
-
 /* ── component ── */
 
 export default function ForestMediaEmbed({
@@ -49,13 +32,13 @@ export default function ForestMediaEmbed({
   title,
 }: ForestMediaEmbedProps) {
   const normalizedVideoUrl = (videoUrl || "").trim();
-  const vimeoId = normalizedVideoUrl ? parseVimeoId(normalizedVideoUrl) : null;
+  const vimeoVideo = normalizedVideoUrl ? parseVimeoVideo(normalizedVideoUrl) : null;
   const youTubeId = normalizedVideoUrl ? parseYouTubeId(normalizedVideoUrl) : null;
   const images = galleryImages?.filter((img) => img.url) ?? [];
 
   /* ── Vimeo embed with thumbnail + play overlay ── */
-  if (vimeoId) {
-    return <VimeoPlayer fallbackImageUrl={fallbackImageUrl} title={title} vimeoId={vimeoId} />;
+  if (vimeoVideo) {
+    return <VimeoPlayer fallbackImageUrl={fallbackImageUrl} title={title} vimeoVideo={vimeoVideo} />;
   }
 
   /* ── YouTube embed with thumbnail + play overlay ── */
@@ -89,16 +72,16 @@ export default function ForestMediaEmbed({
 /* ── Vimeo player — thumbnail + play button, loads iframe on click ── */
 
 function VimeoPlayer({
-  vimeoId,
+  vimeoVideo,
   title,
   fallbackImageUrl,
 }: {
-  vimeoId: string;
+  vimeoVideo: ParsedVimeoVideo;
   title: string;
   fallbackImageUrl?: string;
 }) {
   const [playing, setPlaying] = useState(false);
-  const thumbUrl = `https://vumbnail.com/${vimeoId}.jpg`;
+  const thumbUrl = `https://vumbnail.com/${vimeoVideo.id}.jpg`;
 
   if (playing) {
     return (
@@ -107,7 +90,13 @@ function VimeoPlayer({
           <iframe
             allow="autoplay; fullscreen; picture-in-picture"
             allowFullScreen
-            src={`https://player.vimeo.com/video/${vimeoId}?dnt=1&byline=0&portrait=0&title=0&autoplay=1`}
+            src={buildVimeoEmbedUrl(vimeoVideo, {
+              autoplay: 1,
+              byline: 0,
+              dnt: 1,
+              portrait: 0,
+              title: 0,
+            })}
             title={title}
           />
         </div>
@@ -147,7 +136,10 @@ function YouTubePlayer({
           <iframe
             allow="autoplay; fullscreen; picture-in-picture"
             allowFullScreen
-            src={`https://www.youtube.com/embed/${youTubeId}?autoplay=1&rel=0`}
+            src={buildYouTubeEmbedUrl(youTubeId, {
+              autoplay: 1,
+              rel: 0,
+            })}
             title={title}
           />
         </div>
