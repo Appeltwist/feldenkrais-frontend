@@ -8,6 +8,7 @@ import ForestHeroMedia from "@/components/offers/ForestHeroMedia";
 import ForestMediaEmbed from "@/components/offers/ForestMediaEmbed";
 import ForestPdfForm from "@/components/offers/ForestPdfForm";
 import OfferActionBar from "@/components/offers/OfferActionBar";
+import OfferMobileCtaSync from "@/components/offers/OfferMobileCtaSync";
 import { FOREST_DEFAULT_HERO_IMAGE } from "@/lib/brand-assets";
 import { getForestBookingUrl } from "@/lib/forest-booking";
 import { getForestHeroImageOverride, getForestImageOverride } from "@/lib/forest-excerpts";
@@ -493,6 +494,34 @@ export default function ForestOfferTemplate({
         style: primaryCta.style ?? null,
       }
     : primaryCta;
+  const mobileBookingCta = hasMultipleChoicePricing
+    ? {
+        href: "#offer-pricing",
+        label: labels.chooseDatesPricing,
+      }
+    : bookingOptions.length === 1
+    ? (() => {
+        const bookingUrl = pickString(bookingOptions[0], ["booking_url", "bookingUrl"]);
+        if (!bookingUrl) {
+          return primaryCta?.url
+            ? {
+                href: primaryCta.url,
+                label: primaryCta.label || labels.book,
+              }
+            : null;
+        }
+
+        return {
+          href: bookingUrl,
+          label: primaryCta?.label || labels.book,
+        };
+      })()
+    : primaryCta?.url
+    ? {
+        href: primaryCta.url,
+        label: primaryCta.label || labels.book,
+      }
+    : null;
   const firstOcc = occurrences[0] as Record<string, unknown> | undefined;
   const calendarEvent =
     !isTraining && firstOcc && typeof firstOcc.start_datetime === "string" && typeof firstOcc.end_datetime === "string"
@@ -519,6 +548,7 @@ export default function ForestOfferTemplate({
 
   return (
     <ForestPageShell className="forest-site-shell--offer">
+      <OfferMobileCtaSync cta={mobileBookingCta} />
       <section className="page-section forest-offer-page" id="offer-motion">
         <RevealObserver scopeId="offer-motion" />
         {/* ── CINEMATIC HERO ── */}
