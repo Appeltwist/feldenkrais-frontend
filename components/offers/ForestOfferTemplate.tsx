@@ -5,6 +5,7 @@ import ForestHeroMedia from "@/components/offers/ForestHeroMedia";
 import { FOREST_DEFAULT_HERO_IMAGE } from "@/lib/brand-assets";
 import { getForestPlaceholderCopy, getOfferLabels, resolveLocale } from "@/lib/i18n";
 import {
+  getBookingOptions,
   getFacilitatorBio,
   getFacilitatorImageUrl,
   getFacilitatorName,
@@ -118,6 +119,10 @@ function FactIcon({ iconKey }: { iconKey: string }) {
   );
 }
 
+function isExternalHref(href: string) {
+  return /^https?:\/\//i.test(href);
+}
+
 /* ── component ── */
 
 export default function ForestOfferTemplate({ offer, locale, offerType }: ForestOfferTemplateProps) {
@@ -136,10 +141,27 @@ export default function ForestOfferTemplate({ offer, locale, offerType }: Forest
   const scheduleCards = getScheduleCards(offer);
   const themes = getThemes(offer);
   const sections = getSections(offer);
+  const bookingOptions = getBookingOptions(offer);
   const priceOptions = getPriceOptions(offer);
   const facilitators = getFacilitators(offer);
   const tags = getTags(offer);
   const showScheduleCards = offerType === "WORKSHOP" || offerType === "CLASS";
+  const hasMultipleBookingOptions = bookingOptions.length > 1;
+  const heroCta = primaryCta
+    ? hasMultipleBookingOptions
+      ? {
+          label: labels.chooseDatesPricing,
+          url: "#offer-pricing",
+          style: primaryCta.style,
+        }
+      : bookingOptions.length === 1
+      ? {
+          label: primaryCta.label || labels.book,
+          url: pickString(bookingOptions[0], ["booking_url", "bookingUrl"]) || primaryCta.url,
+          style: primaryCta.style,
+        }
+      : primaryCta
+    : null;
 
   /* quick‑fact rows */
   const factRows = quickFacts
@@ -191,17 +213,17 @@ export default function ForestOfferTemplate({ offer, locale, offerType }: Forest
           <p className="forest-hero__facilitator">w/ {facilitatorNames.join(", ")}</p>
         ) : null}
 
-        {primaryCta ? (
+        {heroCta ? (
           <p>
             <a
               className={`button-link forest-primary-cta ${
-                primaryCta.style ? `button-link--${primaryCta.style.toLowerCase()}` : ""
+                heroCta.style ? `button-link--${heroCta.style.toLowerCase()}` : ""
               }`.trim()}
-              href={primaryCta.url}
-              rel="noreferrer"
-              target="_blank"
+              href={heroCta.url}
+              rel={isExternalHref(heroCta.url) ? "noreferrer" : undefined}
+              target={isExternalHref(heroCta.url) ? "_blank" : undefined}
             >
-              {primaryCta.label || labels.book}
+              {heroCta.label || labels.book}
             </a>
           </p>
         ) : null}
@@ -341,11 +363,42 @@ export default function ForestOfferTemplate({ offer, locale, offerType }: Forest
       ) : null}
 
       {/* ── PRICING ── */}
-      {priceOptions.length > 0 ? (
-        <section className="forest-panel forest-pricing">
+      {(bookingOptions.length > 0 || priceOptions.length > 0) ? (
+        <section className="forest-panel forest-pricing" id="offer-pricing">
           <h2>{labels.pricing}</h2>
           <div className="forest-pricing__grid">
-            {priceOptions.map((price, index) => {
+            {bookingOptions.length > 0 ? bookingOptions.map((option, index) => {
+              const label = pickString(option, ["label", "name", "title"], "Option");
+              const amount = normalizeText(option.amount ?? option.price ?? option.value ?? option.formatted);
+              const currency = normalizeText(option.currency ?? option.currency_code);
+              const detail = [amount, currency].filter(Boolean).join(" ");
+              const summary = pickString(option, ["summary"]);
+              const dateSummary = pickString(option, ["date_summary", "dateSummary"]);
+              const bookingUrl = pickString(option, ["booking_url", "bookingUrl"]);
+
+              return (
+                <div className="forest-pricing__card forest-pricing__card--booking" key={`booking-${label}-${index}`}>
+                  <div className="forest-pricing__content">
+                    <span className="forest-pricing__label">{label}</span>
+                    {summary ? <span className="forest-pricing__summary">{summary}</span> : null}
+                    {dateSummary ? <span className="forest-pricing__summary">{dateSummary}</span> : null}
+                  </div>
+                  <div className="forest-pricing__aside">
+                    {detail ? <span className="forest-pricing__amount">{detail}</span> : null}
+                    {bookingUrl ? (
+                      <a
+                        className="button-link forest-pricing__cta"
+                        href={bookingUrl}
+                        rel="noreferrer"
+                        target="_blank"
+                      >
+                        {labels.book}
+                      </a>
+                    ) : null}
+                  </div>
+                </div>
+              );
+            }) : priceOptions.map((price, index) => {
               const label = pickString(price, ["label", "name", "title"], "Option");
               const amount = normalizeText(price.amount ?? price.price ?? price.value ?? price.formatted);
               const currency = normalizeText(price.currency ?? price.currency_code);
