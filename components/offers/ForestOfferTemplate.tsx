@@ -8,7 +8,6 @@ import ForestHeroMedia from "@/components/offers/ForestHeroMedia";
 import ForestMediaEmbed from "@/components/offers/ForestMediaEmbed";
 import ForestPdfForm from "@/components/offers/ForestPdfForm";
 import OfferActionBar from "@/components/offers/OfferActionBar";
-import OfferMobileCtaSync from "@/components/offers/OfferMobileCtaSync";
 import { FOREST_DEFAULT_HERO_IMAGE } from "@/lib/brand-assets";
 import { getForestBookingUrl } from "@/lib/forest-booking";
 import { getForestHeroImageOverride, getForestImageOverride } from "@/lib/forest-excerpts";
@@ -199,48 +198,6 @@ function formatOfferMoney(amount: unknown, currency: unknown) {
   return [normalizeText(amount), normalizeText(currency)].filter(Boolean).join(" ");
 }
 
-function buildMindbodyEnrollmentUrl(scheduleId: number) {
-  return `https://cart.mindbodyonline.com/sites/124505/cart/add_booking?item[class_schedule_id]=${scheduleId}&item[mbo_id]=${scheduleId}&item[type]=Enrollment&item[mbo_location_id]=1`;
-}
-
-function resolveBookingOptionUrl(
-  offerSlug: string,
-  optionRecord: Record<string, unknown>,
-  offerType: OfferType,
-  primaryCta: PrimaryCTA | null | undefined,
-) {
-  if (offerType === "PRIVATE_SESSION") {
-    return primaryCta?.url || "";
-  }
-
-  const explicitUrl = pickString(optionRecord, ["booking_url", "bookingUrl"]);
-  if (explicitUrl) {
-    return explicitUrl;
-  }
-
-  if (offerSlug === "week-end-gaga-dancer") {
-    const optionLabel = pickString(optionRecord, ["label", "name", "title"]).toLowerCase();
-    const dateSummary = pickString(optionRecord, ["date_summary", "dateSummary"]).toLowerCase();
-    const occurrenceIds = Array.isArray(optionRecord.occurrence_ids)
-      ? optionRecord.occurrence_ids.map((value) => Number(value)).filter((value) => Number.isFinite(value))
-      : [];
-
-    const isMayWeekend =
-      optionLabel.includes("2/3 may")
-      || optionLabel.includes("2/3 mai")
-      || dateSummary.includes("2 may 2026")
-      || dateSummary.includes("2 mai 2026")
-      || occurrenceIds.includes(10)
-      || occurrenceIds.includes(11);
-
-    if (isMayWeekend) {
-      return buildMindbodyEnrollmentUrl(55);
-    }
-  }
-
-  return "";
-}
-
 function isActivePromo(promo: Record<string, unknown>) {
   const explicit = promo.is_active;
   if (typeof explicit === "boolean") {
@@ -414,7 +371,6 @@ export default function ForestOfferTemplate({
   /* collect ALL gallery images across every gallery block */
   const galleryImages = afterApercu.flatMap((section) => getGalleryImagesFromSection(section));
   const hasMedia = Boolean(mediaUrl) || galleryImages.length > 0;
-  const shouldShowGalleryInFaq = Boolean(mediaUrl) && galleryImages.length > 0;
 
   /* hero image: prefer local override, then explicit hero_image_url, fall back to first gallery image */
   const effectiveHeroImage =
@@ -527,13 +483,9 @@ export default function ForestOfferTemplate({
   /* first occurrence → calendar event for "Add to Calendar" */
   const occurrences = getOccurrences(offer);
   const hasMultipleChoicePricing =
-    offerType !== "PRIVATE_SESSION" && (
-      bookingOptions.length > 1 ||
-      priceOptions.length > 1 ||
-      (occurrences.length > 1 && (bookingOptions.length > 0 || priceOptions.length > 0))
-    );
-  const hasPricingSection =
-    bookingOptions.length > 0 || activePricingPromos.length > 0 || priceOptions.length > 0;
+    bookingOptions.length > 1 ||
+    priceOptions.length > 1 ||
+    (occurrences.length > 1 && (bookingOptions.length > 0 || priceOptions.length > 0));
   const heroCta = primaryCta && hasMultipleChoicePricing
     ? {
         label: localeCode === "fr" ? "Voir les dates & tarifs" : "See dates & pricing",
@@ -541,52 +493,6 @@ export default function ForestOfferTemplate({
         style: primaryCta.style ?? null,
       }
     : primaryCta;
-  const journeyCta = primaryCta && hasPricingSection && (offerType === "WORKSHOP" || offerType === "TRAINING_INFO")
-    ? {
-        label: primaryCta.label || labels.book,
-        url: "#offer-pricing",
-      }
-    : primaryCta;
-  const mobileBookingCta = offerType === "PRIVATE_SESSION"
-    ? primaryCta?.url
-      ? {
-          href: primaryCta.url,
-          label: primaryCta.label || labels.book,
-        }
-      : null
-    : hasMultipleChoicePricing
-    ? {
-        href: "#offer-pricing",
-        label: labels.chooseDatesPricing,
-      }
-    : bookingOptions.length === 1
-    ? (() => {
-        const bookingUrl = resolveBookingOptionUrl(
-          offerSlug,
-          bookingOptions[0] as Record<string, unknown>,
-          offerType,
-          primaryCta,
-        );
-        if (!bookingUrl) {
-          return primaryCta?.url
-            ? {
-                href: primaryCta.url,
-                label: primaryCta.label || labels.book,
-              }
-            : null;
-        }
-
-        return {
-          href: bookingUrl,
-          label: primaryCta?.label || labels.book,
-        };
-      })()
-    : primaryCta?.url
-    ? {
-        href: primaryCta.url,
-        label: primaryCta.label || labels.book,
-      }
-    : null;
   const firstOcc = occurrences[0] as Record<string, unknown> | undefined;
   const calendarEvent =
     !isTraining && firstOcc && typeof firstOcc.start_datetime === "string" && typeof firstOcc.end_datetime === "string"
@@ -613,7 +519,6 @@ export default function ForestOfferTemplate({
 
   return (
     <ForestPageShell className="forest-site-shell--offer">
-      <OfferMobileCtaSync cta={mobileBookingCta} />
       <section className="page-section forest-offer-page" id="offer-motion">
         <RevealObserver scopeId="offer-motion" />
         {/* ── CINEMATIC HERO ── */}
@@ -736,8 +641,11 @@ export default function ForestOfferTemplate({
                     : null;
                   const timeRange = [startParsed?.time, endParsed?.time].filter(Boolean).join(" – ");
 
-                  /* Per-card facilitator (from API) → fallback to offer-level */
-                  const cardFacImg = card.facilitator?.photo_url || defaultFacImg;
+                  /* Per-card facilitator (from API) wins. If they have no photo, keep the name and fall back to initials. */
+                  const hasOccurrenceFacilitator = Boolean(card.facilitator?.display_name);
+                  const cardFacImg = hasOccurrenceFacilitator
+                    ? (card.facilitator?.photo_url || "")
+                    : defaultFacImg;
                   const cardFacName = card.facilitator?.display_name || defaultFacName;
 
                   return (
@@ -749,6 +657,13 @@ export default function ForestOfferTemplate({
                           loading="lazy"
                           src={cardFacImg}
                         />
+                      ) : cardFacName ? (
+                        <span
+                          aria-hidden="true"
+                          className="forest-hero__schedule-avatar forest-hero__schedule-avatar--placeholder"
+                        >
+                          {cardFacName.charAt(0).toUpperCase()}
+                        </span>
                       ) : null}
                       {startParsed ? (
                         <>
@@ -760,6 +675,9 @@ export default function ForestOfferTemplate({
                       ) : null}
                       {timeRange ? (
                         <span className="forest-hero__schedule-time">{timeRange}</span>
+                      ) : null}
+                      {cardFacName ? (
+                        <span className="forest-hero__schedule-label">{cardFacName}</span>
                       ) : null}
                     </div>
                   );
@@ -884,19 +802,15 @@ export default function ForestOfferTemplate({
                 </li>
               ))}
             </ol>
-            {journeyCta ? (
+            {primaryCta ? (
               <div className="forest-journey__cta">
-                {isExternalHref(journeyCta.url) ? (
-                  <a className="fl-btn fl-btn--primary" href={journeyCta.url} rel="noreferrer" target="_blank">
-                    {journeyCta.label || labels.book}
-                  </a>
-                ) : journeyCta.url.startsWith("#") ? (
-                  <a className="fl-btn fl-btn--primary" href={journeyCta.url}>
-                    {journeyCta.label || labels.book}
+                {isExternalHref(primaryCta.url) ? (
+                  <a className="fl-btn fl-btn--primary" href={primaryCta.url} rel="noreferrer" target="_blank">
+                    {primaryCta.label || labels.book}
                   </a>
                 ) : (
-                  <Link className="fl-btn fl-btn--primary" href={journeyCta.url}>
-                    {journeyCta.label || labels.book}
+                  <Link className="fl-btn fl-btn--primary" href={primaryCta.url}>
+                    {primaryCta.label || labels.book}
                   </Link>
                 )}
               </div>
@@ -923,19 +837,11 @@ export default function ForestOfferTemplate({
       ) : null}
 
       {/* ── FEATURED IMAGE + EVENT FAQ ── */}
-      {(heroImageUrl || shouldShowGalleryInFaq || faqItems.length > 0) ? (
+      {(heroImageUrl || faqItems.length > 0) ? (
         <>
           <div aria-hidden="true" className="fl-separator fl-separator--subtle" role="separator" />
           <section className="forest-image-faq" data-reveal="section">
-            {shouldShowGalleryInFaq ? (
-              <div className="forest-image-faq__media">
-                <ForestMediaEmbed
-                  fallbackImageUrl={heroImageUrl}
-                  galleryImages={galleryImages}
-                  title={title}
-                />
-              </div>
-            ) : heroImageUrl ? (
+            {heroImageUrl ? (
               <div className="forest-image-faq__media">
                 <img
                   alt={title}
@@ -1007,7 +913,9 @@ export default function ForestOfferTemplate({
                 const summary = pickString(optionRecord, ["summary"]);
                 const dateSummary = pickString(optionRecord, ["date_summary", "dateSummary"]);
                 const supportingText = [summary, dateSummary].filter(Boolean).join(" · ");
-                const bookingUrl = resolveBookingOptionUrl(offerSlug, optionRecord, offerType, primaryCta);
+                const bookingUrl = offerType === "PRIVATE_SESSION"
+                  ? primaryCta?.url || ""
+                  : pickString(optionRecord, ["booking_url", "bookingUrl"]) || primaryCta?.url || "";
                 return (
                   <div className="forest-pricing-compact__row" key={`booking-option-${label}-${index}`}>
                     <div className="forest-pricing-compact__copy">
@@ -1193,36 +1101,6 @@ export default function ForestOfferTemplate({
 
       {/* Tags integrated into Aperçu pills — no standalone section */}
       </section>
-      {mobileBookingCta ? (
-        <div className="fl-mobile-footer fl-mobile-footer--offer">
-          {isExternalHref(mobileBookingCta.href) ? (
-            <a
-              className="fl-mobile-footer__link fl-mobile-footer__link--cta fl-mobile-footer__link--offer"
-              href={mobileBookingCta.href}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              {mobileBookingCta.label || labels.book}
-            </a>
-          ) : (
-            mobileBookingCta.href.startsWith("#") ? (
-              <a
-                className="fl-mobile-footer__link fl-mobile-footer__link--cta fl-mobile-footer__link--offer"
-                href={mobileBookingCta.href}
-              >
-                {mobileBookingCta.label || labels.book}
-              </a>
-            ) : (
-              <Link
-                className="fl-mobile-footer__link fl-mobile-footer__link--cta fl-mobile-footer__link--offer"
-                href={mobileBookingCta.href}
-              >
-                {mobileBookingCta.label || labels.book}
-              </Link>
-            )
-          )}
-        </div>
-      ) : null}
     </ForestPageShell>
   );
 }

@@ -1,6 +1,6 @@
-import { fetchOffers, fetchTeachersList } from "@/lib/api";
+import { fetchCalendar, fetchOffers } from "@/lib/api";
 import { getHostname } from "@/lib/get-hostname";
-import { getPricingContent, type ScheduleDay } from "@/lib/pricing-content";
+import { getPricingContent, type ScheduleDay, type ScheduleEntry } from "@/lib/pricing-content";
 
 import ForestScheduleList from "./ForestScheduleList";
 
@@ -14,13 +14,60 @@ type ForestWeeklyScheduleSectionProps = {
   parallax?: boolean;
 };
 
-type InstructorProfile = {
-  display_name: string;
-  photo_url: string;
+type RawRecord = Record<string, unknown>;
+
+type LiveOccurrence = {
+  id: number;
+  startDateTime: string;
+  endDateTime: string;
+  timezone: string;
+  offerType: string;
+  bookingUrl?: string;
+  facilitatorName: string;
+  facilitatorPhotoUrl?: string;
+  offerSlug: string;
+  offerTitle: string;
+  offerExcerpt?: string;
+  offerCanonicalUrl?: string;
+  offerPrimaryCtaUrl?: string;
 };
+
+type OfferMetadata = {
+  title: string;
+  slug: string;
+  excerpt?: string;
+  canonicalUrl?: string;
+  primaryCtaUrl?: string;
+};
+
+const WEEKDAY_ORDER = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
+
+function asRecord(value: unknown): RawRecord | null {
+  if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+    return value as RawRecord;
+  }
+  return null;
+}
+
+function pickString(source: RawRecord | null, keys: string[], fallback = "") {
+  if (!source) {
+    return fallback;
+  }
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+  return fallback;
+}
 
 function normalizeName(value: string | null | undefined) {
   return (value ?? "").trim().toLowerCase();
+}
+
+function normalizeClassKey(value: string | null | undefined) {
+  return normalizeName(value).replace(/[^a-z0-9à-ÿ/&]+/gi, " ").replace(/\s+/g, " ").trim();
 }
 
 function firstWord(value: string | null | undefined) {
@@ -32,87 +79,263 @@ function firstWord(value: string | null | undefined) {
   return normalized.split(/\s+/)[0] ?? normalized;
 }
 
-function profileFromUnknown(value: unknown): InstructorProfile | null {
-  if (typeof value !== "object" || value === null) {
-    return null;
+function formatTimeLabel(value: string, locale: string, timezone?: string) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return "";
   }
-
-  const record = value as Record<string, unknown>;
-  const display_name = typeof record.display_name === "string" ? record.display_name : null;
-  const photo_url = typeof record.photo_url === "string" ? record.photo_url : null;
-
-  if (!display_name || !photo_url) {
-    return null;
-  }
-
-  return { display_name, photo_url };
+  return new Intl.DateTimeFormat(locale || "en", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    ...(timezone ? { timeZone: timezone } : {}),
+  }).format(parsed);
 }
 
-function buildInstructorImageMap(days: ScheduleDay[], classOffers: unknown[], teachers: InstructorProfile[]) {
-  const instructorNames = Array.from(
-    new Set(
-      days.flatMap((day) => day.entries.map((entry) => entry.instructor)).filter(Boolean),
-    ),
-  );
+function weekdayOrder(value: string, timezone?: string) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return 999;
+  }
+  const weekday = new Intl.DateTimeFormat("en-GB", {
+    weekday: "short",
+    ...(timezone ? { timeZone: timezone } : {}),
+  }).format(parsed);
+  const index = WEEKDAY_ORDER.indexOf(weekday as (typeof WEEKDAY_ORDER)[number]);
+  return index === -1 ? 999 : index;
+}
 
-  const instructors = instructorNames.map((name) => ({
-    original: name,
-    normalized: normalizeName(name),
-    first: firstWord(name),
-  }));
+function weekdayLabel(value: string, locale: string, timezone?: string) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return "";
+  }
+  return new Intl.DateTimeFormat(locale || "en", {
+    weekday: "long",
+    ...(timezone ? { timeZone: timezone } : {}),
+  }).format(parsed);
+}
 
-  const profiles: InstructorProfile[] = [
-    ...classOffers.flatMap((offer) => {
-      if (typeof offer !== "object" || offer === null) {
-        return [];
-      }
+function profileFromUnknown(value: unknown) {
+  const record = asRecord(value);
+  if (!record) {
+    return null;
+  }
 
-      const facilitators = Array.isArray((offer as Record<string, unknown>).facilitators)
-        ? ((offer as Record<string, unknown>).facilitators as unknown[])
-        : [];
+  const displayName = pickString(record, ["display_name", "displayName", "name"]);
+  const photoUrl = pickString(record, ["photo_url", "photoUrl", "image_url", "imageUrl"]);
+  if (!displayName) {
+    return null;
+  }
 
-      return facilitators
-        .map(profileFromUnknown)
-        .filter((profile): profile is InstructorProfile => profile !== null);
-    }),
-    ...teachers,
-  ];
+  return {
+    displayName,
+    photoUrl: photoUrl || undefined,
+  };
+}
 
-  const imageMap = new Map<string, string>();
+function parseOccurrence(value: unknown): LiveOccurrence | null {
+  const record = asRecord(value);
+  const offer = asRecord(record?.offer);
+  if (!record || !offer) {
+    return null;
+  }
 
-  for (const instructor of instructors) {
-    const match = profiles.find((profile) => {
-      const displayName = normalizeName(profile.display_name);
-      return (
-        displayName === instructor.normalized ||
-        displayName.startsWith(`${instructor.first} `) ||
-        firstWord(displayName) === instructor.first
-      );
+  const id = Number.parseInt(String(record.id ?? ""), 10);
+  const startDateTime = pickString(record, ["start_datetime", "start", "start_at"]);
+  const endDateTime = pickString(record, ["end_datetime", "end", "end_at"]);
+  const offerSlug = pickString(offer, ["slug"]);
+  const offerTitle = pickString(offer, ["title", "name"]);
+  if (!Number.isFinite(id) || !startDateTime || !endDateTime || !offerSlug || !offerTitle) {
+    return null;
+  }
+
+  const facilitator = profileFromUnknown(record.facilitator);
+  return {
+    id,
+    startDateTime,
+    endDateTime,
+    timezone: pickString(record, ["timezone", "tz", "time_zone"]),
+    offerType: pickString(offer, ["type"], "CLASS").toUpperCase(),
+    bookingUrl: pickString(record, ["booking_url", "bookingUrl"]) || undefined,
+    facilitatorName: facilitator?.displayName || "",
+    facilitatorPhotoUrl: facilitator?.photoUrl,
+    offerSlug,
+    offerTitle,
+    offerExcerpt: pickString(offer, ["excerpt", "summary", "description"]) || undefined,
+    offerCanonicalUrl: pickString(offer, ["canonical_url", "canonicalUrl"]) || undefined,
+    offerPrimaryCtaUrl: pickString(offer, ["primary_cta_url", "primaryCtaUrl"]) || undefined,
+  };
+}
+
+function buildOfferMetadataMap(classOffers: unknown[]) {
+  const metadata = new Map<string, OfferMetadata>();
+
+  for (const offer of classOffers) {
+    const record = asRecord(offer);
+    const slug = pickString(record, ["slug"]);
+    if (!slug) {
+      continue;
+    }
+
+    metadata.set(slug, {
+      title: pickString(record, ["title", "name"]),
+      slug,
+      excerpt: pickString(record, ["excerpt", "summary", "description"]) || undefined,
+      canonicalUrl: pickString(record, ["canonical_url", "canonicalUrl"]) || undefined,
+      primaryCtaUrl: pickString(record, ["primary_cta_url", "primaryCtaUrl"]) || undefined,
     });
+  }
 
-    if (match?.photo_url) {
-      imageMap.set(instructor.normalized, match.photo_url);
+  return metadata;
+}
+
+function buildStaticScheduleMetadata(days: ScheduleDay[]) {
+  const metadata = new Map<string, Partial<ScheduleEntry>>();
+
+  for (const day of days) {
+    for (const entry of day.entries) {
+      const key = normalizeClassKey(entry.className);
+      if (!key || metadata.has(key)) {
+        continue;
+      }
+      metadata.set(key, {
+        className: entry.className,
+        languages: entry.languages,
+        level: entry.level,
+        description: entry.description,
+        bookingUrl: entry.bookingUrl,
+        color: entry.color,
+      });
     }
   }
 
-  return imageMap;
+  return metadata;
 }
 
-function mergeInstructorImages(days: ScheduleDay[], imageMap: Map<string, string>) {
-  return days.map((day) => ({
-    ...day,
-    entries: day.entries.map((entry) => {
-      const resolvedImage = imageMap.get(normalizeName(entry.instructor));
-      if (!resolvedImage || entry.instructorImage === resolvedImage) {
-        return entry;
-      }
+function resolveStaticMetadata(
+  title: string,
+  slug: string,
+  metadataByTitle: Map<string, Partial<ScheduleEntry>>,
+) {
+  const titleKey = normalizeClassKey(title);
+  if (metadataByTitle.has(titleKey)) {
+    return metadataByTitle.get(titleKey) ?? null;
+  }
 
-      return {
-        ...entry,
-        instructorImage: resolvedImage,
-      };
-    }),
-  }));
+  const slugKey = normalizeClassKey(slug.replace(/-/g, " "));
+  if (metadataByTitle.has(slugKey)) {
+    return metadataByTitle.get(slugKey) ?? null;
+  }
+
+  const titleFirstWord = firstWord(title);
+  for (const [candidate, value] of metadataByTitle.entries()) {
+    if (!titleFirstWord) {
+      continue;
+    }
+    if (candidate.startsWith(titleFirstWord) || titleFirstWord.startsWith(firstWord(candidate))) {
+      return value;
+    }
+  }
+
+  return null;
+}
+
+function buildLiveScheduleDays(
+  occurrences: LiveOccurrence[],
+  metadataByTitle: Map<string, Partial<ScheduleEntry>>,
+  offerMetadataBySlug: Map<string, OfferMetadata>,
+  locale: string,
+) {
+  const uniqueSlots = new Map<
+    string,
+    {
+      weekday: string;
+      weekdayOrder: number;
+      timeSort: string;
+      entry: ScheduleEntry;
+    }
+  >();
+
+  const sortedOccurrences = [...occurrences].sort((left, right) =>
+    left.startDateTime.localeCompare(right.startDateTime),
+  );
+
+  for (const occurrence of sortedOccurrences) {
+    const fallbackMetadata =
+      resolveStaticMetadata(occurrence.offerTitle, occurrence.offerSlug, metadataByTitle) ?? {};
+    const offerMetadata = offerMetadataBySlug.get(occurrence.offerSlug);
+    const weekday = weekdayLabel(occurrence.startDateTime, locale, occurrence.timezone);
+    const order = weekdayOrder(occurrence.startDateTime, occurrence.timezone);
+    if (!weekday || order === 999) {
+      continue;
+    }
+
+    const startTime = formatTimeLabel(occurrence.startDateTime, locale, occurrence.timezone);
+    const endTime = formatTimeLabel(occurrence.endDateTime, locale, occurrence.timezone);
+    if (!startTime) {
+      continue;
+    }
+
+    const entry: ScheduleEntry = {
+      time: endTime ? `${startTime} – ${endTime}` : startTime,
+      className: offerMetadata?.title || occurrence.offerTitle,
+      instructor: occurrence.facilitatorName || "",
+      languages: fallbackMetadata.languages ?? [],
+      level: fallbackMetadata.level,
+      description:
+        fallbackMetadata.description
+        || offerMetadata?.excerpt
+        || occurrence.offerExcerpt
+        || undefined,
+      bookingUrl:
+        occurrence.bookingUrl
+        || offerMetadata?.primaryCtaUrl
+        || offerMetadata?.canonicalUrl
+        || fallbackMetadata.bookingUrl,
+      color: fallbackMetadata.color,
+      instructorImage: occurrence.facilitatorPhotoUrl,
+    };
+
+    const slotKey = [
+      order,
+      startTime,
+      normalizeClassKey(entry.className),
+      normalizeName(entry.instructor),
+    ].join("|");
+    if (uniqueSlots.has(slotKey)) {
+      continue;
+    }
+
+    uniqueSlots.set(slotKey, {
+      weekday,
+      weekdayOrder: order,
+      timeSort: startTime,
+      entry,
+    });
+  }
+
+  const grouped = new Map<string, { weekdayOrder: number; entries: Array<{ timeSort: string; entry: ScheduleEntry }> }>();
+  for (const slot of uniqueSlots.values()) {
+    const existing = grouped.get(slot.weekday);
+    if (existing) {
+      existing.entries.push({ timeSort: slot.timeSort, entry: slot.entry });
+      continue;
+    }
+    grouped.set(slot.weekday, {
+      weekdayOrder: slot.weekdayOrder,
+      entries: [{ timeSort: slot.timeSort, entry: slot.entry }],
+    });
+  }
+
+  return [...grouped.entries()]
+    .sort((left, right) => left[1].weekdayOrder - right[1].weekdayOrder)
+    .map(([day, value]) => ({
+      day,
+      entries: [...value.entries]
+        .sort((left, right) => left.timeSort.localeCompare(right.timeSort))
+        .map((item) => item.entry),
+    }));
 }
 
 export default async function ForestWeeklyScheduleSection({
@@ -131,33 +354,39 @@ export default async function ForestWeeklyScheduleSection({
 
   try {
     const hostname = await getHostname();
-    const [classOffers, teachers] = await Promise.all([
+    const today = new Date();
+    const horizon = new Date(today);
+    horizon.setDate(today.getDate() + 14);
+
+    const [calendarItems, classOffers] = await Promise.all([
+      fetchCalendar({
+        hostname,
+        center: "forest-lighthouse",
+        locale,
+        from: today.toISOString().slice(0, 10),
+        to: horizon.toISOString().slice(0, 10),
+      }),
       fetchOffers({
         hostname,
         center: "forest-lighthouse",
         type: "CLASS",
         locale,
       }),
-      fetchTeachersList({
-        hostname,
-        center: "forest-lighthouse",
-        locale,
-      }),
     ]);
 
-    const teacherProfiles: InstructorProfile[] = teachers.flatMap((teacher) => {
-      const display_name = typeof teacher.display_name === "string" ? teacher.display_name : "";
-      const photo_url = typeof teacher.photo_url === "string" ? teacher.photo_url : "";
+    const classOccurrences = calendarItems
+      .map((item) => parseOccurrence(item))
+      .filter((item): item is LiveOccurrence => item !== null)
+      .filter((item) => item.offerType === "CLASS");
 
-      if (!display_name || !photo_url) {
-        return [];
-      }
-
-      return [{ display_name, photo_url }];
-    });
-
-    const imageMap = buildInstructorImageMap(scheduleDays, classOffers, teacherProfiles);
-    scheduleDays = mergeInstructorImages(scheduleDays, imageMap);
+    if (classOccurrences.length > 0) {
+      scheduleDays = buildLiveScheduleDays(
+        classOccurrences,
+        buildStaticScheduleMetadata(content.schedule.days),
+        buildOfferMetadataMap(classOffers),
+        locale,
+      );
+    }
   } catch {
     /* Keep the static schedule content as a safe fallback when the API is unavailable. */
   }

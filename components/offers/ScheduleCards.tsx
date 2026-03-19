@@ -29,11 +29,14 @@ export default function ScheduleCards({ cards, locale }: ScheduleCardsProps) {
           const end = formatDateTime(card.end_datetime ?? "", locale, card.timezone ?? undefined);
           const label = typeof card.date_label === "string" ? card.date_label.trim() : "";
           const timeLine = [start, end].filter(Boolean).join(" -> ");
+          const facilitatorName =
+            typeof card.facilitator?.display_name === "string" ? card.facilitator.display_name.trim() : "";
 
           return (
             <article className="card" key={`${label || timeLine || "schedule"}-${index}`}>
               {label ? <h3>{label}</h3> : null}
               {timeLine ? <p>{timeLine}</p> : null}
+              {facilitatorName ? <p>{facilitatorName}</p> : null}
             </article>
           );
         })}
