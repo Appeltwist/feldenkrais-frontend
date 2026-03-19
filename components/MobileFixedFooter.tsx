@@ -54,14 +54,16 @@ export default function MobileFixedFooter({ locale }: { locale: string }) {
 
     return (
       <div className="fl-mobile-footer fl-mobile-footer--offer">
-        <a
-          className="fl-mobile-footer__link fl-mobile-footer__link--cta fl-mobile-footer__link--offer"
-          href={mobileBookingCta.href}
-          rel={external ? "noopener noreferrer" : undefined}
-          target={external ? "_blank" : undefined}
-        >
-          {offerLabel}
-        </a>
+        <div className="fl-mobile-footer__inner">
+          <a
+            className="fl-mobile-footer__book fl-mobile-footer__book--offer"
+            href={mobileBookingCta.href}
+            rel={external ? "noopener noreferrer" : undefined}
+            target={external ? "_blank" : undefined}
+          >
+            {offerLabel}
+          </a>
+        </div>
       </div>
     );
   }
