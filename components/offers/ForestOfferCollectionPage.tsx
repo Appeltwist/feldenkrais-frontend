@@ -22,6 +22,7 @@ import {
   getFacilitatorImageUrl,
   getFacilitatorName,
   getFacilitators,
+  getOccurrenceFacilitator,
   getOccurrences,
   getOfferSlug,
   getOfferTitle,
@@ -290,33 +291,25 @@ function formatOccurrence(
 }
 
 /** Resolve a single occurrence from the offer (next_occurrence fallback) */
-function resolveOneOccurrence(offer: unknown, locale: string): FormattedOccurrence | null {
+function resolveOneOccurrenceEntry(offer: unknown): RawRecord | null {
   const record = asRecord(offer);
   if (!record) return null;
 
-  /* Try occurrences array first */
   const allOccs = getOccurrenceEntries(offer);
   if (allOccs.length > 0) {
-    const tz = pickString(allOccs[0], ["timezone", "tz", "time_zone"]);
-    return formatOccurrence(allOccs[0], locale, tz);
+    return allOccs[0];
   }
 
-  /* Fallback: next_occurrence / nextOccurrence */
   const nextRaw = record.next_occurrence ?? record.nextOccurrence;
   if (!nextRaw) return null;
-
   if (typeof nextRaw === "string") {
-    const parsed = new Date(nextRaw);
-    if (Number.isNaN(parsed.getTime())) return null;
-    const dateOpts: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" };
-    const timeOpts: Intl.DateTimeFormatOptions = { hour: "numeric", minute: "2-digit" };
-    return {
-      date: new Intl.DateTimeFormat(locale || "en", dateOpts).format(parsed),
-      timeRange: new Intl.DateTimeFormat(locale || "en", timeOpts).format(parsed),
-    };
+    return { start_datetime: nextRaw };
   }
+  return asRecord(nextRaw);
+}
 
-  const nextOcc = asRecord(nextRaw);
+function resolveOneOccurrence(offer: unknown, locale: string): FormattedOccurrence | null {
+  const nextOcc = resolveOneOccurrenceEntry(offer);
   if (!nextOcc) return null;
   const tz = pickString(nextOcc, ["timezone", "tz", "time_zone"]);
   return formatOccurrence(nextOcc, locale, tz);
@@ -515,7 +508,8 @@ export default async function ForestOfferCollectionPage({
     result.status === "fulfilled" ? result.value : [],
   );
 
-  /* Fetch calendar grouped by offer → gives us 1-3 next_occurrences per offer */
+  /* Classes use flat occurrences so cards can preview the real next session teacher.
+     Workshops/trainings stay on the grouped offer feed. */
   const today = new Date();
   const horizon = new Date(today);
   const fetchesClassesOnly =
@@ -529,7 +523,7 @@ export default async function ForestOfferCollectionPage({
     locale: requestLocale,
     from,
     to,
-    groupBy: "offer",
+    groupBy: fetchesClassesOnly ? undefined : "offer",
   }).catch(() => [] as CalendarItem[]);
 
   /* Build slug → occurrences map */
@@ -538,8 +532,18 @@ export default async function ForestOfferCollectionPage({
     const rec = asRecord(item);
     const offerRec = asRecord(rec?.offer);
     const slug = pickString(offerRec, ["slug"]);
+    if (!slug) {
+      continue;
+    }
+
+    if (fetchesClassesOnly) {
+      const existing = occurrencesBySlug.get(slug) ?? [];
+      occurrencesBySlug.set(slug, [...existing, rec]);
+      continue;
+    }
+
     const occs = rec?.next_occurrences;
-    if (slug && Array.isArray(occs)) {
+    if (Array.isArray(occs)) {
       occurrencesBySlug.set(slug, occs);
     }
   }
@@ -618,6 +622,7 @@ export default async function ForestOfferCollectionPage({
                 const offerRecord = asRecord(offer);
                 const slug = getOfferSlug(offer);
                 const title = getOfferTitle(offer, "Untitled");
+                const offerType = getOfferType(offer);
                 const canonicalPath = getCanonicalOfferPath(offer);
                 const detailsPath = localizePath(requestLocale, canonicalPath || `/workshops/${slug}`);
                 const rawExcerpt = pickString(offerRecord, ["excerpt", "summary", "short_description"]);
@@ -626,40 +631,23 @@ export default async function ForestOfferCollectionPage({
                 const overrideExcerpt = getForestExcerptOverride(title) || "";
                 const excerpt = apiExcerpt && !/(?:\.{3}|…)$/.test(apiExcerpt) ? apiExcerpt : overrideExcerpt || apiExcerpt;
                 const heroImage = pickString(offerRecord, ["hero_image_url", "heroImageUrl"]);
-                const offerType = getOfferType(offer);
-                const isDirectBookingCard = offerType === "PRIVATE_SESSION";
                 const facilitators = getFacilitators(offer as OfferDetail);
                 const firstFacilitator = facilitators[0];
                 const facilitatorOverride = getForestFacilitatorNamesOverride(slug);
-                const facilitatorAvatarImages = facilitatorOverride
-                  ? []
-                  : facilitators
-                    .map((facilitator) => ({
-                      name: getFacilitatorName(facilitator, ""),
-                      src: getFacilitatorImageUrl(facilitator),
-                    }))
-                    .filter((avatar): avatar is { name: string; src: string } => Boolean(avatar.name) && Boolean(avatar.src))
-                    .slice(0, 2);
-                const facilitatorNames = facilitatorOverride
-                  ? [...facilitatorOverride]
-                  : isDirectBookingCard
-                  ? facilitators
-                    .map((facilitator) => getFacilitatorName(facilitator, ""))
-                    .filter(Boolean)
-                  : firstFacilitator
-                  ? [getFacilitatorName(firstFacilitator)]
-                  : [];
-                const facilitatorName = formatFacilitatorNames(facilitatorNames);
-                const useFacilitatorAvatarStack = isDirectBookingCard && facilitatorNames.length > 1 && facilitatorAvatarImages.length > 1;
-                const useGroupFacilitatorAvatar = isDirectBookingCard && facilitatorNames.length > 1 && !useFacilitatorAvatarStack;
-                const facilitatorImage = useFacilitatorAvatarStack || useGroupFacilitatorAvatar || facilitatorOverride
-                  ? ""
-                  : firstFacilitator
-                  ? getFacilitatorImageUrl(firstFacilitator)
-                  : "";
+                const primaryOccurrence = resolveOneOccurrenceEntry(offer);
+                const occurrenceFacilitator =
+                  offerType === "CLASS" && primaryOccurrence
+                    ? getOccurrenceFacilitator(primaryOccurrence)
+                    : null;
+                const facilitatorName = occurrenceFacilitator?.display_name
+                  || (facilitatorOverride ? formatFacilitatorNames(facilitatorOverride) : "")
+                  || (firstFacilitator ? getFacilitatorName(firstFacilitator) : "");
+                const facilitatorImage = occurrenceFacilitator?.photo_url
+                  || (facilitatorOverride ? "" : firstFacilitator ? getFacilitatorImageUrl(firstFacilitator) : "");
                 const cardImage = getForestImageOverride(title) || heroImage || facilitatorImage;
                 const offerTypeVariant = getOfferTypeVariant(offerType);
                 const typeLabel = TYPE_LABELS[offerType]?.[localeCode] ?? TYPE_LABELS.WORKSHOP[localeCode];
+                const isDirectBookingCard = offerType === "PRIVATE_SESSION";
                 const bookingPath = offerType === "PRIVATE_SESSION" && slug
                   ? localizePath(requestLocale, `/private-sessions/${slug}/book`)
                   : detailsPath;
@@ -742,20 +730,7 @@ export default async function ForestOfferCollectionPage({
                       <div className="fc-offer-card__meta">
                         {facilitatorName ? (
                           <div className="fc-offer-card__facilitator">
-                            {useFacilitatorAvatarStack ? (
-                              <div className="fc-offer-card__facilitator-avatar-stack" aria-hidden="true">
-                                {facilitatorAvatarImages.map((avatar, avatarIndex) => (
-                                  // eslint-disable-next-line @next/next/no-img-element
-                                  <img
-                                    alt=""
-                                    className="fc-offer-card__facilitator-avatar fc-offer-card__facilitator-avatar--stacked"
-                                    key={`${avatar.name}-${avatarIndex}`}
-                                    loading="lazy"
-                                    src={avatar.src}
-                                  />
-                                ))}
-                              </div>
-                            ) : facilitatorImage ? (
+                            {facilitatorImage ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
                                 alt={facilitatorName}
@@ -763,18 +738,6 @@ export default async function ForestOfferCollectionPage({
                                 loading="lazy"
                                 src={facilitatorImage}
                               />
-                            ) : useGroupFacilitatorAvatar ? (
-                              <div className="fc-offer-card__facilitator-avatar fc-offer-card__facilitator-avatar--placeholder fc-offer-card__facilitator-avatar--group" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" fill="none">
-                                  <path
-                                    d="M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm6 1a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Zm-6 2c-3.31 0-6 1.79-6 4v1h9v-1c0-2.21-1.34-3.08-3-3.6Zm6 0c-.88 0-1.7.13-2.42.38 1.04.76 1.92 1.9 1.92 3.62v1H21v-.75c0-2.1-2.24-4.25-6-4.25Z"
-                                    stroke="currentColor"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="1.4"
-                                  />
-                                </svg>
-                              </div>
                             ) : (
                               <div className="fc-offer-card__facilitator-avatar fc-offer-card__facilitator-avatar--placeholder">
                                 {facilitatorName.charAt(0).toUpperCase()}

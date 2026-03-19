@@ -3,6 +3,7 @@ import { getOfferLabels as getLocalizedOfferLabels } from "@/lib/i18n";
 import type {
   BookingOption,
   Facilitator,
+  Occurrence,
   OfferDetail,
   OfferSummary,
   OfferType,
@@ -11,6 +12,7 @@ import type {
   PrimaryCTA,
   QuickFacts,
   ScheduleCard,
+  ScheduleCardFacilitator,
   SectionBlock,
   ThemeTag,
 } from "@/lib/types";
@@ -220,7 +222,7 @@ export function getOccurrences(offer: OfferDetail) {
     return [] as RawRecord[];
   }
 
-  return asRecords(record.occurrences ?? record.next_occurrences ?? record.sessions);
+  return asRecords(record.occurrences ?? record.next_occurrences ?? record.sessions) as Occurrence[];
 }
 
 export function getPriceOptions(offer: OfferDetail) {
@@ -249,6 +251,7 @@ export function getPricingPromos(offer: OfferDetail) {
 
   return asRecords(record.pricing_promos ?? record.pricingPromos ?? record.discounts) as PricingPromo[];
 }
+
 export function getFacilitators(offer: OfferDetail) {
   const record = asRecord(offer);
   if (!record) {
@@ -365,6 +368,7 @@ export function getScheduleCards(offer: OfferDetail) {
               id: (facRaw.id as number | string) ?? undefined,
               display_name: pickString(facRaw, ["display_name", "displayName", "name"]),
               photo_url: pickString(facRaw, ["photo_url", "photoUrl", "image_url", "imageUrl"]),
+              has_public_profile: typeof facRaw.has_public_profile === "boolean" ? facRaw.has_public_profile : undefined,
             }
           : null,
       };
@@ -373,6 +377,30 @@ export function getScheduleCards(offer: OfferDetail) {
       return hasAny ? normalized : null;
     })
     .filter((card): card is ScheduleCard => card !== null);
+}
+
+export function getOccurrenceFacilitator(occurrence: unknown): ScheduleCardFacilitator | null {
+  const record = asRecord(occurrence);
+  const facRaw = asRecord(record?.facilitator);
+  if (!facRaw) {
+    return null;
+  }
+
+  const displayName = pickString(facRaw, ["display_name", "displayName", "name"]);
+  const photoUrl = pickString(facRaw, ["photo_url", "photoUrl", "image_url", "imageUrl"]);
+  const hasPublicProfile =
+    typeof facRaw.has_public_profile === "boolean" ? facRaw.has_public_profile : undefined;
+
+  if (!displayName && !photoUrl && typeof hasPublicProfile === "undefined") {
+    return null;
+  }
+
+  return {
+    id: (facRaw.id as number | string) ?? undefined,
+    display_name: displayName || null,
+    photo_url: photoUrl || null,
+    has_public_profile: hasPublicProfile,
+  };
 }
 
 export function getThemes(offer: OfferDetail) {

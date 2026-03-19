@@ -8,6 +8,7 @@ import ForestCalendarList, {
 } from "@/components/calendar/ForestCalendarList";
 import { ForestPageShell } from "@/components/forest/ForestPageShell";
 import {
+  fetchCalendar,
   fetchCalendarWithMeta,
   fetchOffers,
   fetchSiteConfig,
@@ -16,6 +17,7 @@ import {
 } from "@/lib/api";
 import { isForestCenter } from "@/lib/forest-theme";
 import { getHostname } from "@/lib/get-hostname";
+import { getRequestLocale } from "@/lib/get-locale";
 import { localizePath } from "@/lib/locale-path";
 import { getForestImageOverride } from "@/lib/forest-excerpts";
 import { getCanonicalOfferPathByTypeAndSlug } from "@/lib/offers";
@@ -194,6 +196,28 @@ type ForestCalendarOfferCopy = {
   facilitatorNames: string;
 };
 
+type FlatClassOccurrence = {
+  id: number;
+  startDateTime: string;
+  endDateTime: string;
+  timezone: string;
+  facilitatorName: string;
+  offer: {
+    id: number;
+    type: string;
+    title: string;
+    slug: string;
+    heroImageUrl?: string;
+    canonicalUrl?: string;
+    domains: CalendarDomainLabel[];
+  };
+};
+
+type DatedListEntry = {
+  sortKey: number;
+  value: CalendarListEntry;
+};
+
 function parseFacilitatorNames(value: unknown) {
   if (!Array.isArray(value)) {
     return "";
@@ -228,9 +252,60 @@ function buildOfferCopyMap(offers: unknown[]) {
   return copyBySlug;
 }
 
+function parseFacilitatorName(value: unknown) {
+  const record = asRecord(value);
+  return pickString(record, ["display_name", "displayName", "name", "full_name"]);
+}
+
+function parseFlatClassOccurrences(items: CalendarItem[]) {
+  const parsed: FlatClassOccurrence[] = [];
+
+  for (const item of items) {
+    const record = asRecord(item);
+    const offer = asRecord(record?.offer);
+    const offerId = toPositiveInt(offer?.id);
+    const title = pickString(offer, ["title", "name"]);
+    const slug = pickString(offer, ["slug"]);
+    const startDateTime = pickString(record, ["start_datetime", "start", "start_at"]);
+    const endDateTime = pickString(record, ["end_datetime", "end", "end_at"]);
+    const id = toPositiveInt(record?.id);
+    if (!offerId || !title || !slug || !startDateTime || !endDateTime || !id) {
+      continue;
+    }
+
+    parsed.push({
+      id,
+      startDateTime,
+      endDateTime,
+      timezone: pickString(record, ["timezone", "tz", "time_zone"]),
+      facilitatorName: parseFacilitatorName(record?.facilitator),
+      offer: {
+        id: offerId,
+        type: pickString(offer, ["type"], "CLASS"),
+        title,
+        slug,
+        heroImageUrl: pickString(offer, ["hero_image_url", "heroImageUrl"]) || undefined,
+        canonicalUrl: pickString(offer, ["canonical_url", "canonicalUrl"]) || undefined,
+        domains: parseDomains(offer?.domains),
+      },
+    });
+  }
+
+  return parsed;
+}
+
+function toSortTimestamp(value: string) {
+  const parsed = new Date(value);
+  const timestamp = parsed.getTime();
+  return Number.isNaN(timestamp) ? Number.MAX_SAFE_INTEGER : timestamp;
+}
+
 export default async function CalendarPage({ searchParams }: CalendarPageProps) {
   const hostname = await getHostname();
+  const requestLocale = await getRequestLocale();
   const today = new Date();
+  const weekLater = new Date(today);
+  weekLater.setDate(today.getDate() + 7);
   const from = toIsoDate(today);
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const selectedDomainTheme = pickSingleSearchParam(
@@ -259,7 +334,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
   const calendar = await fetchCalendarWithMeta({
     hostname,
     center: siteConfig.centerSlug,
-    locale: siteConfig.defaultLocale,
+    locale: requestLocale,
     from,
     to,
     groupBy: "offer",
@@ -281,9 +356,9 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
 
 
   if (isForest) {
-    const isFrench = siteConfig.defaultLocale.toLowerCase().startsWith("fr");
-    const locale = siteConfig.defaultLocale;
-    const [classOffers, workshopOffers, trainingOffers] = await Promise.all([
+    const isFrench = requestLocale.toLowerCase().startsWith("fr");
+    const locale = requestLocale;
+    const [classOffers, workshopOffers, trainingOffers, classCalendarItems] = await Promise.all([
       fetchOffers({
         hostname,
         center: siteConfig.centerSlug,
@@ -302,6 +377,14 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
         locale,
         type: "TRAINING_INFO",
       }).catch(() => []),
+      fetchCalendar({
+        hostname,
+        center: siteConfig.centerSlug,
+        locale,
+        from,
+        to: toIsoDate(weekLater),
+        domainTheme: selectedDomainTheme || undefined,
+      }).catch(() => []),
     ]);
     const offerCopyBySlug = buildOfferCopyMap([
       ...classOffers,
@@ -309,47 +392,88 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
       ...trainingOffers,
     ]);
 
-    const featuredEntries = sortEntriesByNextOccurrence(entries).filter((entry) =>
-      Boolean(nextOccurrenceStart(entry)),
-    );
+    const classEntries = parseFlatClassOccurrences(classCalendarItems)
+      .filter((entry) => entry.offer.type === "CLASS")
+      .sort((left, right) => left.startDateTime.localeCompare(right.startDateTime));
+    const workshops = sortEntriesByNextOccurrence(
+      entries.filter((entry) => entry.offer.type === "WORKSHOP"),
+    ).slice(0, 5);
+    const trainings = sortEntriesByNextOccurrence(
+      entries.filter((entry) => entry.offer.type === "TRAINING_INFO"),
+    ).slice(0, 2);
+    const datedEntries: DatedListEntry[] = [
+      ...classEntries.map((entry) => {
+        const dt = new Date(entry.startDateTime);
+        const offerPath = localizePath(
+          locale,
+          getCanonicalOfferPathByTypeAndSlug(entry.offer.type, entry.offer.slug) || `/offer/${entry.offer.slug}`,
+        );
+        return {
+          sortKey: toSortTimestamp(entry.startDateTime),
+          value: {
+            id: `class-${entry.id}`,
+            title: entry.offer.title,
+            href: offerPath,
+            type: entry.offer.type,
+            typeLabel: isFrench ? "Cours" : "Class",
+            description: offerCopyBySlug.get(entry.offer.slug)?.excerpt ?? "",
+            facilitator: entry.facilitatorName || offerCopyBySlug.get(entry.offer.slug)?.facilitatorNames || "",
+            dateLabel: dt.toLocaleDateString(isFrench ? "fr-FR" : "en-GB", {
+              weekday: "short",
+              day: "numeric",
+              month: "short",
+            }),
+            timeLabel: dt.toLocaleTimeString(isFrench ? "fr-FR" : "en-GB", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            domainsLabel: entry.offer.domains.map((d) => d.name).join(" · "),
+            heroImageUrl: getForestImageOverride(entry.offer.title) || entry.offer.heroImageUrl,
+            color: calendarTypeColor(entry.offer.type),
+          } satisfies CalendarListEntry,
+        };
+      }),
+      ...[...workshops, ...trainings].map((entry) => {
+        const nextOcc = entry.nextOccurrences[0];
+        const offerPath = localizePath(
+          locale,
+          getCanonicalOfferPathByTypeAndSlug(entry.offer.type, entry.offer.slug) || `/offer/${entry.offer.slug}`,
+        );
+        let dateLabel = "";
+        let timeLabel = "";
+        if (nextOcc) {
+          const dt = new Date(nextOcc.startDateTime);
+          dateLabel = dt.toLocaleDateString(isFrench ? "fr-FR" : "en-GB", {
+            weekday: "short",
+            day: "numeric",
+            month: "short",
+          });
+          timeLabel = dt.toLocaleTimeString(isFrench ? "fr-FR" : "en-GB", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        }
 
-    /* Pre-compute display data for the client component */
-    const listEntries: CalendarListEntry[] = featuredEntries.map((entry) => {
-      const nextOcc = entry.nextOccurrences[0];
-      const offerPath = localizePath(
-        locale,
-        getCanonicalOfferPathByTypeAndSlug(entry.offer.type, entry.offer.slug) || `/offer/${entry.offer.slug}`,
-      );
-      let dateLabel = "";
-      let timeLabel = "";
-      if (nextOcc) {
-        const dt = new Date(nextOcc.startDateTime);
-        dateLabel = dt.toLocaleDateString(isFrench ? "fr-FR" : "en-GB", {
-          weekday: "short",
-          day: "numeric",
-          month: "short",
-        });
-        timeLabel = dt.toLocaleTimeString(isFrench ? "fr-FR" : "en-GB", {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-      }
-
-      return {
-        id: entry.offer.id,
-        title: entry.offer.title,
-        href: offerPath,
-        type: entry.offer.type,
-        typeLabel: ({ CLASS: isFrench ? "Cours" : "Class", WORKSHOP: isFrench ? "Atelier" : "Workshop", TRAINING_INFO: isFrench ? "Formation" : "Training" } as Record<string, string>)[entry.offer.type] ?? entry.offer.type,
-        description: offerCopyBySlug.get(entry.offer.slug)?.excerpt ?? "",
-        facilitator: offerCopyBySlug.get(entry.offer.slug)?.facilitatorNames ?? "",
-        dateLabel,
-        timeLabel,
-        domainsLabel: entry.offer.domains.map((d) => d.name).join(" · "),
-        heroImageUrl: getForestImageOverride(entry.offer.title) || entry.offer.heroImageUrl,
-        color: calendarTypeColor(entry.offer.type),
-      };
-    });
+        return {
+          sortKey: nextOcc?.startDateTime ? toSortTimestamp(nextOcc.startDateTime) : Number.MAX_SAFE_INTEGER,
+          value: {
+            id: `${entry.offer.type.toLowerCase()}-${entry.offer.id}`,
+            title: entry.offer.title,
+            href: offerPath,
+            type: entry.offer.type,
+            typeLabel: ({ WORKSHOP: isFrench ? "Atelier" : "Workshop", TRAINING_INFO: isFrench ? "Formation" : "Training" } as Record<string, string>)[entry.offer.type] ?? entry.offer.type,
+            description: offerCopyBySlug.get(entry.offer.slug)?.excerpt ?? "",
+            facilitator: offerCopyBySlug.get(entry.offer.slug)?.facilitatorNames ?? "",
+            dateLabel,
+            timeLabel,
+            domainsLabel: entry.offer.domains.map((d) => d.name).join(" · "),
+            heroImageUrl: getForestImageOverride(entry.offer.title) || entry.offer.heroImageUrl,
+            color: calendarTypeColor(entry.offer.type),
+          } satisfies CalendarListEntry,
+        };
+      }),
+    ].sort((left, right) => left.sortKey - right.sortKey);
+    const listEntries: CalendarListEntry[] = datedEntries.map((entry) => entry.value);
 
     return (
       <ForestPageShell>
@@ -359,8 +483,8 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
             <h1 className="fc-intro__title">{isFrench ? "Calendrier" : "Calendar"}</h1>
             <p className="fc-intro__subtitle">
               {isFrench
-                ? "Les 12 prochaines offres à venir, puis davantage sur demande."
-                : "The next 12 upcoming offers, with more available on demand."}
+                ? "Les cours de la semaine, puis les prochains ateliers et formations."
+                : "This week’s classes, followed by the next workshops and training programmes."}
             </p>
           </section>
 
@@ -371,7 +495,6 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
               classes: isFrench ? "Cours" : "Classes",
               workshops: isFrench ? "Ateliers" : "Workshops",
               trainings: isFrench ? "Formations" : "Trainings",
-              loadMore: isFrench ? "Afficher plus" : "Load more",
             }}
           />
         </div>

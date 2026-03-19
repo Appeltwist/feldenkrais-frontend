@@ -22,6 +22,7 @@ export type ScheduleCardFacilitator = {
   id?: number | string;
   display_name?: string | null;
   photo_url?: string | null;
+  has_public_profile?: boolean | null;
 };
 
 export type ScheduleCard = {
@@ -57,6 +58,7 @@ export type Occurrence = {
   end_datetime?: string | null;
   timezone?: string | null;
   label?: string | null;
+  facilitator?: ScheduleCardFacilitator | null;
   booking_url?: string | null;
   ics_url?: string | null;
   [key: string]: unknown;
@@ -98,6 +100,7 @@ export type PricingPromo = {
   is_active?: boolean | null;
   [key: string]: unknown;
 };
+
 export type Facilitator = {
   id?: number | string;
   name?: string | null;
