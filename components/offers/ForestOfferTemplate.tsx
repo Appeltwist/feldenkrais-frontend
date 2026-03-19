@@ -6,6 +6,7 @@ import RevealObserver from "@/components/motion/RevealObserver";
 import ForestFacilitatorShowcase from "@/components/offers/ForestFacilitatorShowcase";
 import ForestHeroMedia from "@/components/offers/ForestHeroMedia";
 import ForestMediaEmbed from "@/components/offers/ForestMediaEmbed";
+import OfferMobileCtaSync from "@/components/offers/OfferMobileCtaSync";
 import ForestPdfForm from "@/components/offers/ForestPdfForm";
 import OfferActionBar from "@/components/offers/OfferActionBar";
 import { FOREST_DEFAULT_HERO_IMAGE } from "@/lib/brand-assets";
@@ -493,6 +494,12 @@ export default function ForestOfferTemplate({
         style: primaryCta.style ?? null,
       }
     : primaryCta;
+  const mobileBookingCta = heroCta?.url
+    ? {
+        href: heroCta.url,
+        label: heroCta.label || labels.book,
+      }
+    : null;
   const firstOcc = occurrences[0] as Record<string, unknown> | undefined;
   const calendarEvent =
     !isTraining && firstOcc && typeof firstOcc.start_datetime === "string" && typeof firstOcc.end_datetime === "string"
@@ -519,6 +526,7 @@ export default function ForestOfferTemplate({
 
   return (
     <ForestPageShell className="forest-site-shell--offer">
+      <OfferMobileCtaSync cta={mobileBookingCta} />
       <section className="page-section forest-offer-page" id="offer-motion">
         <RevealObserver scopeId="offer-motion" />
         {/* ── CINEMATIC HERO ── */}
