@@ -40,12 +40,17 @@ export default function MobileFixedFooter({ locale }: { locale: string }) {
   const isOfferPage = isOfferDetailPath(pathname);
   const isPrivateSessionDetailPage = isPrivateSessionDetailPath(pathname);
 
-  if (isPrivateSessionDetailPage) {
+  if (isOfferPage) {
     if (!mobileBookingCta?.href) {
       return null;
     }
 
     const external = isExternalHref(mobileBookingCta.href);
+    const offerLabel = mobileBookingCta.label || (
+      isPrivateSessionDetailPage
+        ? (isEn ? "Book a session" : "Réserver une séance")
+        : (isEn ? "Book Now" : "Réserver")
+    );
 
     return (
       <div className="fl-mobile-footer fl-mobile-footer--offer">
@@ -55,14 +60,10 @@ export default function MobileFixedFooter({ locale }: { locale: string }) {
           rel={external ? "noopener noreferrer" : undefined}
           target={external ? "_blank" : undefined}
         >
-          {mobileBookingCta.label || (isEn ? "Book a session" : "Réserver une séance")}
+          {offerLabel}
         </a>
       </div>
     );
-  }
-
-  if (isOfferPage) {
-    return null;
   }
 
   if (!mobileBookingCta) return null;
