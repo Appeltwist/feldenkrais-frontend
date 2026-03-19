@@ -41,7 +41,8 @@ a {
 
 /* ── Page wrapper — definitive overflow containment ── */
 .page-wrapper {
-  overflow: clip;
+  overflow-x: clip;
+  overflow-y: visible;
   width: 100%;
 }
 
