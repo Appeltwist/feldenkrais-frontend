@@ -166,7 +166,13 @@ export type OfferSummary = {
   id?: number | string;
   slug?: string;
   title?: string;
+  seo_title?: string | null;
+  seo_description?: string | null;
   excerpt?: string | null;
+  canonical_url?: string | null;
+  hero_image_url?: string | null;
+  image_url?: string | null;
+  featured_image?: string | null;
   next_occurrence?: NextOccurrence | string | null;
   type?: OfferType | string;
   [key: string]: unknown;
@@ -177,12 +183,27 @@ export type OfferDetail = {
   slug?: string;
   type?: OfferType | string;
   title?: string;
+  seo_title?: string | null;
+  seo_description?: string | null;
   subtitle?: string | null;
   excerpt?: string | null;
   body?: string | null;
   body_html?: string | null;
   canonical_url?: string | null;
+  hero_image_url?: string | null;
+  image_url?: string | null;
+  featured_image?: string | null;
+  seo_image_url?: string | null;
   media_url?: string | null;
+  images?:
+    | Array<{
+        image_url?: string | null;
+        imageUrl?: string | null;
+        url?: string | null;
+        src?: string | null;
+        alt?: string | null;
+      }>
+    | null;
   trial_eligible?: boolean;
   primary_cta?: PrimaryCTA | null;
   quick_facts?: QuickFacts | null;

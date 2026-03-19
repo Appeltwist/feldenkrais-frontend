@@ -24,6 +24,8 @@
 .DS_Store
 *.pem
 /.scratch/
+.claude/
+test-results/
 
 # debug
 npm-debug.log*
@@ -42,5 +44,4 @@ yarn-error.log*
 next-env.d.ts
 .env.local
 
-# local/raw image drops (curated assets live in public/brands/forest-lighthouse/home)
-public/brands/forest-lighthouse/photos/
+# local/raw image drops should go in a separate scratch folder, not in tracked public assets

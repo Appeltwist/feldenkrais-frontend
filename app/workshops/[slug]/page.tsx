@@ -1,18 +1,32 @@
+import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 
 import WorkshopTemplate from "@/components/offers/WorkshopTemplate";
-import { ApiError, fetchOfferDetail, fetchSiteConfig, type OfferDetail } from "@/lib/api";
-import { getHostname } from "@/lib/get-hostname";
+import { buildOfferMetadata, loadOfferRouteData } from "@/lib/offer-page";
 import { getCanonicalOfferPath, getOfferType } from "@/lib/offers";
 
 type OfferPageProps = {
   params: Promise<{ slug: string }> | { slug: string };
 };
 
+export async function generateMetadata({ params }: OfferPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const { offer, origin, siteConfig } = await loadOfferRouteData(slug);
+
+  if (!offer) {
+    return {};
+  }
+
+  return buildOfferMetadata({
+    offer,
+    origin,
+    siteName: siteConfig?.siteName,
+  });
+}
+
 export default async function WorkshopDetailPage({ params }: OfferPageProps) {
   const { slug } = await params;
-  const hostname = await getHostname();
-  const siteConfig = await fetchSiteConfig(hostname).catch(() => null);
+  const { locale, notFound: offerNotFound, offer, siteConfig } = await loadOfferRouteData(slug);
 
   if (!siteConfig) {
     return (
@@ -23,23 +37,7 @@ export default async function WorkshopDetailPage({ params }: OfferPageProps) {
     );
   }
 
-  let offer: OfferDetail | null = null;
-
-  try {
-    offer = await fetchOfferDetail({
-      hostname,
-      slug,
-      center: siteConfig.centerSlug,
-      locale: siteConfig.defaultLocale,
-    });
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 404) {
-      notFound();
-    }
-    throw error;
-  }
-
-  if (!offer) {
+  if (offerNotFound || !offer) {
     notFound();
   }
 
@@ -52,5 +50,5 @@ export default async function WorkshopDetailPage({ params }: OfferPageProps) {
     permanentRedirect(canonicalPath);
   }
 
-  return <WorkshopTemplate offer={offer} locale={siteConfig.defaultLocale} />;
+  return <WorkshopTemplate offer={offer} locale={locale} />;
 }
