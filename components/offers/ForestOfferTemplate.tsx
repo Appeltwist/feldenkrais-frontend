@@ -532,11 +532,19 @@ export default function ForestOfferTemplate({
       priceOptions.length > 1 ||
       (occurrences.length > 1 && (bookingOptions.length > 0 || priceOptions.length > 0))
     );
+  const hasPricingSection =
+    bookingOptions.length > 0 || activePricingPromos.length > 0 || priceOptions.length > 0;
   const heroCta = primaryCta && hasMultipleChoicePricing
     ? {
         label: localeCode === "fr" ? "Voir les dates & tarifs" : "See dates & pricing",
         url: "#offer-pricing",
         style: primaryCta.style ?? null,
+      }
+    : primaryCta;
+  const journeyCta = primaryCta && hasPricingSection && (offerType === "WORKSHOP" || offerType === "TRAINING_INFO")
+    ? {
+        label: primaryCta.label || labels.book,
+        url: "#offer-pricing",
       }
     : primaryCta;
   const mobileBookingCta = offerType === "PRIVATE_SESSION"
@@ -876,15 +884,19 @@ export default function ForestOfferTemplate({
                 </li>
               ))}
             </ol>
-            {primaryCta ? (
+            {journeyCta ? (
               <div className="forest-journey__cta">
-                {isExternalHref(primaryCta.url) ? (
-                  <a className="fl-btn fl-btn--primary" href={primaryCta.url} rel="noreferrer" target="_blank">
-                    {primaryCta.label || labels.book}
+                {isExternalHref(journeyCta.url) ? (
+                  <a className="fl-btn fl-btn--primary" href={journeyCta.url} rel="noreferrer" target="_blank">
+                    {journeyCta.label || labels.book}
+                  </a>
+                ) : journeyCta.url.startsWith("#") ? (
+                  <a className="fl-btn fl-btn--primary" href={journeyCta.url}>
+                    {journeyCta.label || labels.book}
                   </a>
                 ) : (
-                  <Link className="fl-btn fl-btn--primary" href={primaryCta.url}>
-                    {primaryCta.label || labels.book}
+                  <Link className="fl-btn fl-btn--primary" href={journeyCta.url}>
+                    {journeyCta.label || labels.book}
                   </Link>
                 )}
               </div>
