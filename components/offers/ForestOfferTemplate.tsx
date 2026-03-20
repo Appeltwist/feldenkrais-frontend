@@ -387,6 +387,11 @@ export default function ForestOfferTemplate({
     (journeySection?.value as Record<string, unknown> | undefined)?.items as
       Array<Record<string, unknown>> | undefined
   ) ?? [];
+  const journeyHeading = pickString(
+    journeySection?.value as Record<string, unknown> | undefined,
+    ["heading"],
+    localeCode === "fr" ? "Ce que vous apprendrez" : "What you’ll learn",
+  );
   /* Wagtail ListBlock wraps each item as {type:"item", value:{…}} — unwrap */
   const journeyItems = rawJourneyItems.map((item) => {
     const inner = (item.value ?? item) as { title?: string; description?: string };
@@ -791,9 +796,7 @@ export default function ForestOfferTemplate({
         <>
           <div aria-hidden="true" className="fl-separator fl-separator--subtle" role="separator" />
           <section className="forest-journey" data-reveal="section">
-            <h2 className="forest-journey__heading">
-              {localeCode === "fr" ? "Ce que vous apprendrez" : "What you\u2019ll learn"}
-            </h2>
+            <h2 className="forest-journey__heading">{journeyHeading}</h2>
             <ol className="forest-journey__trail" data-reveal="stagger">
               {journeyItems.map((step, index) => (
                 <li className="forest-journey__waypoint" key={`step-${index}`}>
@@ -879,106 +882,108 @@ export default function ForestOfferTemplate({
       ) : null}
 
       {/* ── PRICING & BENEFITS ── */}
-      {(bookingOptions.length > 0 || activePricingPromos.length > 0 || priceOptions.length > 0) ? (
-        <section className={`forest-pricing-benefits${benefits ? " forest-pricing-benefits--two-col" : ""}`} data-reveal="section" id="offer-pricing">
+      {(bookingOptions.length > 0 || activePricingPromos.length > 0 || priceOptions.length > 0 || (benefits && benefits.items.length > 0)) ? (
+        <section className={`forest-pricing-benefits${benefits && (bookingOptions.length > 0 || activePricingPromos.length > 0 || priceOptions.length > 0) ? " forest-pricing-benefits--two-col" : ""}`} data-reveal="section" id="offer-pricing">
           {/* compact pricing box */}
-          <div className="forest-panel forest-pricing-compact forest-pricing-compact--glow" data-hover-lift>
-            <p className="fp-chapter__eyebrow">{localeCode === "fr" ? "Tarifs" : "Pricing"}</p>
-            <h2>{labels.pricing}</h2>
-            {activePricingPromos.length > 0 ? (
-              <div className="forest-pricing-compact__promo-list">
-                {activePricingPromos.map((promo, index) => {
-                  const promoRecord = promo as Record<string, unknown>;
-                  const label = pickString(promoRecord, ["label", "name", "title"], "Promo");
-                  const detail = formatOfferMoney(
-                    promoRecord.amount ?? promoRecord.price ?? promoRecord.value ?? promoRecord.formatted,
-                    promoRecord.currency ?? promoRecord.currency_code,
-                  );
-                  const supportingText = formatPromoSupportingText(promoRecord, localeCode);
+          {(bookingOptions.length > 0 || activePricingPromos.length > 0 || priceOptions.length > 0) ? (
+            <div className="forest-panel forest-pricing-compact forest-pricing-compact--glow" data-hover-lift>
+              <p className="fp-chapter__eyebrow">{localeCode === "fr" ? "Tarifs" : "Pricing"}</p>
+              <h2>{labels.pricing}</h2>
+              {activePricingPromos.length > 0 ? (
+                <div className="forest-pricing-compact__promo-list">
+                  {activePricingPromos.map((promo, index) => {
+                    const promoRecord = promo as Record<string, unknown>;
+                    const label = pickString(promoRecord, ["label", "name", "title"], "Promo");
+                    const detail = formatOfferMoney(
+                      promoRecord.amount ?? promoRecord.price ?? promoRecord.value ?? promoRecord.formatted,
+                      promoRecord.currency ?? promoRecord.currency_code,
+                    );
+                    const supportingText = formatPromoSupportingText(promoRecord, localeCode);
 
+                    return (
+                      <div className="forest-pricing-compact__promo" key={`promo-${label}-${index}`}>
+                        <div className="forest-pricing-compact__promo-copy">
+                          <span className="forest-pricing-compact__promo-label">{label}</span>
+                          {supportingText ? (
+                            <span className="forest-pricing-compact__promo-note">{supportingText}</span>
+                          ) : null}
+                        </div>
+                        {detail ? <span className="forest-pricing-compact__promo-amount">{detail}</span> : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
+              <div className="forest-pricing-compact__list">
+                {bookingOptions.length > 0 ? bookingOptions.map((option, index) => {
+                  const optionRecord = option as Record<string, unknown>;
+                  const label = pickString(optionRecord, ["label", "name", "title"], "Option");
+                  const detail = formatOfferMoney(
+                    optionRecord.amount ?? optionRecord.price ?? optionRecord.value ?? optionRecord.formatted,
+                    optionRecord.currency ?? optionRecord.currency_code,
+                  );
+                  const summary = pickString(optionRecord, ["summary"]);
+                  const dateSummary = pickString(optionRecord, ["date_summary", "dateSummary"]);
+                  const supportingText = [summary, dateSummary].filter(Boolean).join(" · ");
+                  const bookingUrl = offerType === "PRIVATE_SESSION"
+                    ? primaryCta?.url || ""
+                    : pickString(optionRecord, ["booking_url", "bookingUrl"]) || primaryCta?.url || "";
                   return (
-                    <div className="forest-pricing-compact__promo" key={`promo-${label}-${index}`}>
-                      <div className="forest-pricing-compact__promo-copy">
-                        <span className="forest-pricing-compact__promo-label">{label}</span>
+                    <div className="forest-pricing-compact__row" key={`booking-option-${label}-${index}`}>
+                      <div className="forest-pricing-compact__copy">
+                        <span className="forest-pricing-compact__label">{label}</span>
                         {supportingText ? (
-                          <span className="forest-pricing-compact__promo-note">{supportingText}</span>
+                          <span className="forest-pricing-compact__summary">{supportingText}</span>
                         ) : null}
                       </div>
-                      {detail ? <span className="forest-pricing-compact__promo-amount">{detail}</span> : null}
+                      <div className="forest-pricing-compact__meta">
+                        {detail ? <span className="forest-pricing-compact__amount">{detail}</span> : null}
+                        {bookingUrl ? (
+                          isExternalHref(bookingUrl) ? (
+                            <a
+                              className="forest-pricing-compact__row-cta"
+                              href={bookingUrl}
+                              rel="noreferrer"
+                              target="_blank"
+                            >
+                              {primaryCta?.label || labels.book}
+                            </a>
+                          ) : (
+                            <Link className="forest-pricing-compact__row-cta" href={bookingUrl}>
+                              {primaryCta?.label || labels.book}
+                            </Link>
+                          )
+                        ) : null}
+                      </div>
+                    </div>
+                  );
+                }) : priceOptions.map((price, index) => {
+                  const label = pickString(price, ["label", "name", "title"], "Option");
+                  const detail = formatOfferMoney(
+                    price.amount ?? price.price ?? price.value ?? price.formatted,
+                    price.currency ?? price.currency_code,
+                  );
+                  return (
+                    <div className="forest-pricing-compact__row" key={`price-${label}-${index}`}>
+                      <span className="forest-pricing-compact__label">{label}</span>
+                      {detail ? <span className="forest-pricing-compact__amount">{detail}</span> : null}
                     </div>
                   );
                 })}
               </div>
-            ) : null}
-            <div className="forest-pricing-compact__list">
-              {bookingOptions.length > 0 ? bookingOptions.map((option, index) => {
-                const optionRecord = option as Record<string, unknown>;
-                const label = pickString(optionRecord, ["label", "name", "title"], "Option");
-                const detail = formatOfferMoney(
-                  optionRecord.amount ?? optionRecord.price ?? optionRecord.value ?? optionRecord.formatted,
-                  optionRecord.currency ?? optionRecord.currency_code,
-                );
-                const summary = pickString(optionRecord, ["summary"]);
-                const dateSummary = pickString(optionRecord, ["date_summary", "dateSummary"]);
-                const supportingText = [summary, dateSummary].filter(Boolean).join(" · ");
-                const bookingUrl = offerType === "PRIVATE_SESSION"
-                  ? primaryCta?.url || ""
-                  : pickString(optionRecord, ["booking_url", "bookingUrl"]) || primaryCta?.url || "";
-                return (
-                  <div className="forest-pricing-compact__row" key={`booking-option-${label}-${index}`}>
-                    <div className="forest-pricing-compact__copy">
-                      <span className="forest-pricing-compact__label">{label}</span>
-                      {supportingText ? (
-                        <span className="forest-pricing-compact__summary">{supportingText}</span>
-                      ) : null}
-                    </div>
-                    <div className="forest-pricing-compact__meta">
-                      {detail ? <span className="forest-pricing-compact__amount">{detail}</span> : null}
-                      {bookingUrl ? (
-                        isExternalHref(bookingUrl) ? (
-                          <a
-                            className="forest-pricing-compact__row-cta"
-                            href={bookingUrl}
-                            rel="noreferrer"
-                            target="_blank"
-                          >
-                            {primaryCta?.label || labels.book}
-                          </a>
-                        ) : (
-                          <Link className="forest-pricing-compact__row-cta" href={bookingUrl}>
-                            {primaryCta?.label || labels.book}
-                          </Link>
-                        )
-                      ) : null}
-                    </div>
-                  </div>
-                );
-              }) : priceOptions.map((price, index) => {
-                const label = pickString(price, ["label", "name", "title"], "Option");
-                const detail = formatOfferMoney(
-                  price.amount ?? price.price ?? price.value ?? price.formatted,
-                  price.currency ?? price.currency_code,
-                );
-                return (
-                  <div className="forest-pricing-compact__row" key={`price-${label}-${index}`}>
-                    <span className="forest-pricing-compact__label">{label}</span>
-                    {detail ? <span className="forest-pricing-compact__amount">{detail}</span> : null}
-                  </div>
-                );
-              })}
+              {primaryCta && bookingOptions.length === 0 ? (
+                isExternalHref(primaryCta.url) ? (
+                  <a className="fl-btn fl-btn--primary forest-pricing-compact__cta" href={primaryCta.url} rel="noreferrer" target="_blank">
+                    {primaryCta.label || labels.book}
+                  </a>
+                ) : (
+                  <Link className="fl-btn fl-btn--primary forest-pricing-compact__cta" href={primaryCta.url}>
+                    {primaryCta.label || labels.book}
+                  </Link>
+                )
+              ) : null}
             </div>
-            {primaryCta && bookingOptions.length === 0 ? (
-              isExternalHref(primaryCta.url) ? (
-                <a className="fl-btn fl-btn--primary forest-pricing-compact__cta" href={primaryCta.url} rel="noreferrer" target="_blank">
-                  {primaryCta.label || labels.book}
-                </a>
-              ) : (
-                <Link className="fl-btn fl-btn--primary forest-pricing-compact__cta" href={primaryCta.url}>
-                  {primaryCta.label || labels.book}
-                </Link>
-              )
-            ) : null}
-          </div>
+          ) : null}
 
           {/* benefits column */}
           {benefits && benefits.items.length > 0 ? (
