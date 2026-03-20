@@ -1,105 +1,44 @@
-import Link from "next/link";
-import { notFound, permanentRedirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
-import { ForestPageShell } from "@/components/forest/ForestPageShell";
-import PrivateBookingPanel from "@/components/private-booking/PrivateBookingPanel";
-import { ApiError, fetchOfferDetail, fetchPrivateBookingConfig, fetchSiteConfig, type OfferDetail } from "@/lib/api";
+import { fetchSiteConfig } from "@/lib/api";
+import PrivateBookingForm from "@/components/private-booking/PrivateBookingForm";
 import { getHostname } from "@/lib/get-hostname";
-import { getPrivateBookingLabels } from "@/lib/i18n";
 import { getRequestLocale } from "@/lib/get-locale";
-import { localizePath } from "@/lib/locale-path";
-import { getCanonicalOfferPath, getOfferTitle, getOfferType } from "@/lib/offers";
+import { fetchPrivateBookingConfig, PrivateBookingApiError } from "@/lib/private-booking-api";
 
-type PrivateBookingEntryPageProps = {
-  params: Promise<{ slug: string }>;
+type PrivateSessionBookingPageProps = {
+  params: Promise<{ slug: string }> | { slug: string };
 };
 
-export default async function PrivateBookingEntryPage({ params }: PrivateBookingEntryPageProps) {
+export default async function PrivateSessionBookingPage({ params }: PrivateSessionBookingPageProps) {
   const { slug } = await params;
   const hostname = await getHostname();
   const siteConfig = await fetchSiteConfig(hostname).catch(() => null);
+  const locale = await getRequestLocale(siteConfig?.defaultLocale ?? "en");
 
-  if (!siteConfig) {
+  try {
+    const config = await fetchPrivateBookingConfig(hostname, slug, locale);
+
+    return <PrivateBookingForm config={config} locale={locale} />;
+  } catch (error) {
+    if (error instanceof PrivateBookingApiError && error.status === 404) {
+      notFound();
+    }
+
     return (
-      <section className="page-section">
-        <h1>Private booking</h1>
-        <p>Unable to load booking details right now.</p>
+      <section className="private-booking-shell">
+        <div className="private-booking-header">
+          <p className="private-booking-eyebrow">
+            {locale.startsWith("fr") ? "Reservation privee" : "Private booking"}
+          </p>
+          <h1>{locale.startsWith("fr") ? "Impossible de charger cette reservation" : "Unable to load this booking page"}</h1>
+          <p>
+            {locale.startsWith("fr")
+              ? "Le systeme de reservation n'est pas accessible pour cette offre pour le moment."
+              : "The booking system is not currently available for this offer."}
+          </p>
+        </div>
       </section>
     );
   }
-
-  const requestLocale = await getRequestLocale(siteConfig.defaultLocale);
-  const labels = getPrivateBookingLabels(requestLocale);
-
-  let offer: OfferDetail | null = null;
-
-  try {
-    offer = await fetchOfferDetail({
-      hostname,
-      slug,
-      center: siteConfig.centerSlug,
-      locale: requestLocale,
-    });
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 404) {
-      notFound();
-    }
-    throw error;
-  }
-
-  if (!offer) {
-    notFound();
-  }
-
-  const offerType = getOfferType(offer);
-  if (offerType !== "PRIVATE_SESSION") {
-    const canonicalPath = getCanonicalOfferPath(offer);
-    if (!canonicalPath) {
-      notFound();
-    }
-    permanentRedirect(canonicalPath);
-  }
-
-  if (siteConfig.centerSlug !== "forest-lighthouse") {
-    permanentRedirect(localizePath(requestLocale, `/private-sessions/${offer.slug ?? slug}`));
-  }
-
-  const title = getOfferTitle(offer);
-  const returnHref = localizePath(requestLocale, `/private-sessions/${offer.slug ?? slug}`);
-  const bookingConfig = await fetchPrivateBookingConfig({
-    hostname,
-    center: siteConfig.centerSlug,
-    slug: offer.slug ?? slug,
-    locale: requestLocale,
-  }).catch(() => null);
-  const pageDescription = bookingConfig?.requires_intro_call
-    ? labels.pageDescriptionIntro
-    : labels.pageDescriptionStandard;
-
-  return (
-    <>
-      <ForestPageShell className="forest-site-shell--booking">
-        <section className="forest-booking-entry">
-          <div className="forest-booking-entry__intro">
-            <div className="forest-booking-entry__toolbar">
-              <Link className="forest-booking-entry__back" href={returnHref}>
-                ← {labels.backToSession}
-              </Link>
-            </div>
-            <h1 className="forest-booking-entry__title">{title}</h1>
-            <p className="forest-booking-entry__description">{pageDescription}</p>
-          </div>
-
-          <PrivateBookingPanel
-            centerSlug={siteConfig.centerSlug}
-            hostname={hostname}
-            initialConfig={bookingConfig}
-            locale={requestLocale}
-            mode="page"
-            offerSlug={offer.slug ?? slug}
-          />
-        </section>
-      </ForestPageShell>
-    </>
-  );
 }

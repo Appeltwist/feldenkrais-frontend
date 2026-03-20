@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 
 import LocaleSwitchSync from "@/components/LocaleSwitchSync";
@@ -6,12 +7,28 @@ import WorkshopTemplate from "@/components/offers/WorkshopTemplate";
 import { ApiError, fetchOfferDetail, fetchOffers, fetchSiteConfig, fetchSiteFaq, type OfferDetail, type OfferSummary } from "@/lib/api";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
+import { buildOfferMetadata, loadOfferRouteData } from "@/lib/offer-page";
 import { buildOfferLocaleSwitchPaths } from "@/lib/offer-locale-paths";
 import { getCanonicalOfferPath, getDomains, getOfferType } from "@/lib/offers";
 
 type OfferPageProps = {
   params: Promise<{ slug: string }>;
 };
+
+export async function generateMetadata({ params }: OfferPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const { offer, origin, siteConfig } = await loadOfferRouteData(slug, "request");
+
+  if (!offer) {
+    return {};
+  }
+
+  return buildOfferMetadata({
+    offer,
+    origin,
+    siteName: siteConfig?.siteName,
+  });
+}
 
 export default async function WorkshopDetailPage({ params }: OfferPageProps) {
   const { slug } = await params;
@@ -30,9 +47,6 @@ export default async function WorkshopDetailPage({ params }: OfferPageProps) {
   const requestLocale = await getRequestLocale(siteConfig.defaultLocale);
 
   let offer: OfferDetail | null = null;
-  /* contentLocale tracks which language the API actually returned.
-     requestLocale is always the user's preferred language (from the URL)
-     and drives UI labels/chrome regardless of content fallback. */
   let contentLocale = requestLocale;
 
   try {
@@ -44,8 +58,6 @@ export default async function WorkshopDetailPage({ params }: OfferPageProps) {
     });
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
-      /* If the URL locale differs from the site default, retry with the
-         default locale — the offer may only exist in one language. */
       if (requestLocale !== siteConfig.defaultLocale) {
         try {
           offer = await fetchOfferDetail({

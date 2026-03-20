@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 
 import LocaleSwitchSync from "@/components/LocaleSwitchSync";
@@ -7,12 +8,28 @@ import { ApiError, fetchOfferDetail, fetchOffers, fetchSiteConfig, fetchSiteFaq,
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
 import { localizePath } from "@/lib/locale-path";
+import { buildOfferMetadata, loadOfferRouteData } from "@/lib/offer-page";
 import { buildOfferLocaleSwitchPaths } from "@/lib/offer-locale-paths";
 import { getCanonicalOfferPath, getDomains, getOfferType } from "@/lib/offers";
 
 type OfferPageProps = {
   params: Promise<{ slug: string }>;
 };
+
+export async function generateMetadata({ params }: OfferPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const { offer, origin, siteConfig } = await loadOfferRouteData(slug, "request");
+
+  if (!offer) {
+    return {};
+  }
+
+  return buildOfferMetadata({
+    offer,
+    origin,
+    siteName: siteConfig?.siteName,
+  });
+}
 
 export default async function PrivateSessionDetailPage({ params }: OfferPageProps) {
   const { slug } = await params;

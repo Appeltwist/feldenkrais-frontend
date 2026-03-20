@@ -135,6 +135,16 @@ export function getOfferTitle(offer: OfferDetail | OfferSummary, fallback = "Off
   return pickString(record, ["title", "name"], fallback);
 }
 
+export function getOfferSeoTitle(offer: OfferDetail | OfferSummary) {
+  const record = asRecord(offer);
+  return pickString(record, ["seo_title", "seoTitle", "title", "name"]);
+}
+
+export function getOfferSeoDescription(offer: OfferDetail | OfferSummary) {
+  const record = asRecord(offer);
+  return pickString(record, ["seo_description", "seoDescription", "excerpt"]);
+}
+
 export function getOfferSubtitle(offer: OfferDetail) {
   const record = asRecord(offer);
   return pickString(record, ["subtitle", "sub_title"]);
@@ -147,12 +157,19 @@ export function getOfferBodyHtml(offer: OfferDetail) {
 
 export function getOfferHeroImageUrl(offer: OfferDetail) {
   const record = asRecord(offer);
-  return pickString(record, ["hero_image_url", "heroImageUrl", "offer_hero_image_url", "image_url", "imageUrl"]);
+  return pickString(record, [
+    "hero_image_url",
+    "heroImageUrl",
+    "offer_hero_image_url",
+    "image_url",
+    "imageUrl",
+    "featured_image",
+  ]);
 }
 
 export function getOfferHeroVideoUrl(offer: OfferDetail) {
   const record = asRecord(offer);
-  return pickString(record, ["hero_video_url", "heroVideoUrl", "video_url", "videoUrl"]);
+  return pickString(record, ["hero_video_url", "heroVideoUrl", "video_url", "videoUrl", "media_url", "mediaUrl"]);
 }
 
 export function getCanonicalUrl(offer: OfferDetail) {
@@ -160,9 +177,59 @@ export function getCanonicalUrl(offer: OfferDetail) {
   return pickString(record, ["canonical_url", "canonicalUrl", "url"]);
 }
 
+export function getDeclaredCanonicalUrl(offer: OfferDetail) {
+  const record = asRecord(offer);
+  return pickString(record, ["canonical_url", "canonicalUrl"]);
+}
+
 export function getMediaUrl(offer: OfferDetail) {
   const record = asRecord(offer);
   return pickString(record, ["media_url", "mediaUrl", "video_url", "videoUrl"]);
+}
+
+function pickImageUrlFromRecords(records: RawRecord[]) {
+  for (const record of records) {
+    const imageUrl = pickString(record, ["image_url", "imageUrl", "url", "src"]);
+    if (imageUrl) {
+      return imageUrl;
+    }
+  }
+
+  return "";
+}
+
+export function getOfferSocialImageUrl(offer: OfferDetail) {
+  const record = asRecord(offer);
+
+  const directImage = pickString(record, [
+    "seo_image_url",
+    "seoImageUrl",
+    "og_image_url",
+    "ogImageUrl",
+    "hero_image_url",
+    "heroImageUrl",
+    "image_url",
+    "imageUrl",
+    "featured_image",
+  ]);
+  if (directImage) {
+    return directImage;
+  }
+
+  const images = pickImageUrlFromRecords(asRecords(record?.images));
+  if (images) {
+    return images;
+  }
+
+  for (const section of asRecords(record?.sections)) {
+    const sectionValue = asRecord(section.value);
+    const sectionImages = pickImageUrlFromRecords(asRecords(sectionValue?.images));
+    if (sectionImages) {
+      return sectionImages;
+    }
+  }
+
+  return "";
 }
 
 export function isTrialEligible(offer: OfferDetail) {
