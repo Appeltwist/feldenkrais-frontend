@@ -1,6 +1,7 @@
 import "server-only";
 
 import { fetchSiteConfig } from "@/lib/api";
+import { rewriteForestMediaPayload } from "@/lib/forest-media";
 import { resolveRuntimeHost } from "@/lib/get-hostname";
 import { resolveApiHostname } from "@/lib/hostname-routing";
 import type {
@@ -30,6 +31,10 @@ type RequestContext = {
 };
 
 type QueryValue = string | number | boolean | null | undefined;
+
+function rewriteForestPrivateBookingPayload<T>(apiHostname: string, payload: T): T {
+  return apiHostname.includes("forest-lighthouse") ? rewriteForestMediaPayload(payload) : payload;
+}
 
 function buildUrl(path: string, query: Record<string, QueryValue>) {
   const url = new URL(`${API_BASE}${path.startsWith("/") ? path : `/${path}`}`);
@@ -82,12 +87,13 @@ export async function fetchPrivateBookingConfig(
   packageToken?: string | null,
 ) {
   const context = await resolvePrivateBookingRequestContext(rawHost);
-  return requestJson<PrivateBookingConfig>(`/private-booking/config/${encodeURIComponent(slug)}`, {
+  const payload = await requestJson<PrivateBookingConfig>(`/private-booking/config/${encodeURIComponent(slug)}`, {
     domain: context.apiHostname,
     center: context.centerSlug,
     locale,
     package_token: packageToken ?? undefined,
   });
+  return rewriteForestPrivateBookingPayload(context.apiHostname, payload);
 }
 
 export async function fetchPrivateBookingAvailability(
@@ -96,28 +102,31 @@ export async function fetchPrivateBookingAvailability(
   params: Record<string, QueryValue>,
 ) {
   const context = await resolvePrivateBookingRequestContext(rawHost);
-  return requestJson<PrivateBookingAvailability>("/private-booking/availability", {
+  const payload = await requestJson<PrivateBookingAvailability>("/private-booking/availability", {
     domain: context.apiHostname,
     center: context.centerSlug,
     locale,
     ...params,
   });
+  return rewriteForestPrivateBookingPayload(context.apiHostname, payload);
 }
 
 export async function fetchPrivateBookingDetail(rawHost: string | null | undefined, token: string) {
   const context = await resolvePrivateBookingRequestContext(rawHost);
-  return requestJson<PrivateBookingSummary>(`/private-booking/bookings/${encodeURIComponent(token)}`, {
+  const payload = await requestJson<PrivateBookingSummary>(`/private-booking/bookings/${encodeURIComponent(token)}`, {
     domain: context.apiHostname,
     center: context.centerSlug,
   });
+  return rewriteForestPrivateBookingPayload(context.apiHostname, payload);
 }
 
 export async function fetchPrivateBookingPackage(rawHost: string | null | undefined, token: string) {
   const context = await resolvePrivateBookingRequestContext(rawHost);
-  return requestJson<PrivateBookingPackageSummary>(`/private-booking/packages/${encodeURIComponent(token)}`, {
+  const payload = await requestJson<PrivateBookingPackageSummary>(`/private-booking/packages/${encodeURIComponent(token)}`, {
     domain: context.apiHostname,
     center: context.centerSlug,
   });
+  return rewriteForestPrivateBookingPayload(context.apiHostname, payload);
 }
 
 export async function proxyPrivateBookingMutation<T>(
