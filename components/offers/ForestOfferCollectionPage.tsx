@@ -642,6 +642,25 @@ export default async function ForestOfferCollectionPage({
                   offerType === "CLASS" && primaryOccurrence
                     ? getOccurrenceFacilitator(primaryOccurrence)
                     : null;
+                const facilitatorAvatars = occurrenceFacilitator
+                  ? [
+                      {
+                        name: occurrenceFacilitator.display_name,
+                        imageUrl: occurrenceFacilitator.photo_url || "",
+                      },
+                    ]
+                  : facilitatorOverride
+                    ? facilitatorOverride.slice(0, 2).map((name) => ({
+                        name,
+                        imageUrl: "",
+                      }))
+                    : facilitators
+                        .map((facilitator) => ({
+                          name: getFacilitatorName(facilitator, ""),
+                          imageUrl: getFacilitatorImageUrl(facilitator),
+                        }))
+                        .filter((facilitator) => facilitator.name)
+                        .slice(0, 2);
                 const facilitatorName = occurrenceFacilitator?.display_name
                   || (facilitatorOverride ? formatFacilitatorNames(facilitatorOverride) : "")
                   || facilitatorNames;
@@ -733,19 +752,41 @@ export default async function ForestOfferCollectionPage({
                       <div className="fc-offer-card__meta">
                         {facilitatorName ? (
                           <div className="fc-offer-card__facilitator">
-                            {facilitatorImage ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                alt={facilitatorName}
-                                className="fc-offer-card__facilitator-avatar"
-                                loading="lazy"
-                                src={facilitatorImage}
-                              />
-                            ) : (
-                              <div className="fc-offer-card__facilitator-avatar fc-offer-card__facilitator-avatar--placeholder">
-                                {facilitatorName.charAt(0).toUpperCase()}
-                              </div>
-                            )}
+                            <div className="fc-offer-card__facilitator-avatars" aria-hidden="true">
+                              {facilitatorAvatars.length > 0 ? (
+                                facilitatorAvatars.map((facilitator, avatarIndex) =>
+                                  facilitator.imageUrl ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      alt=""
+                                      className="fc-offer-card__facilitator-avatar"
+                                      key={`${facilitator.name}-${avatarIndex}`}
+                                      loading="lazy"
+                                      src={facilitator.imageUrl}
+                                    />
+                                  ) : (
+                                    <div
+                                      className="fc-offer-card__facilitator-avatar fc-offer-card__facilitator-avatar--placeholder"
+                                      key={`${facilitator.name}-${avatarIndex}`}
+                                    >
+                                      {(facilitator.name || facilitatorName).charAt(0).toUpperCase()}
+                                    </div>
+                                  ),
+                                )
+                              ) : facilitatorImage ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  alt=""
+                                  className="fc-offer-card__facilitator-avatar"
+                                  loading="lazy"
+                                  src={facilitatorImage}
+                                />
+                              ) : (
+                                <div className="fc-offer-card__facilitator-avatar fc-offer-card__facilitator-avatar--placeholder">
+                                  {facilitatorName.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                            </div>
                             <span>{copy.facilitatedByLabel} {facilitatorName}</span>
                           </div>
                         ) : null}

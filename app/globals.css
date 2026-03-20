@@ -9782,12 +9782,21 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   gap: 0.5rem;
 }
 
+.fc-offer-card__facilitator-avatars {
+  display: flex;
+  flex-shrink: 0;
+}
+
 .fc-offer-card__facilitator-avatar {
   border: 1px solid var(--offer-card-avatar-border);
   border-radius: 50%;
   height: 24px;
   object-fit: cover;
   width: 24px;
+}
+
+.fc-offer-card__facilitator-avatars .fc-offer-card__facilitator-avatar + .fc-offer-card__facilitator-avatar {
+  margin-left: -0.45rem;
 }
 
 .fc-offer-card__facilitator-avatar--placeholder {
