@@ -10064,13 +10064,15 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
 
 /* ── discover slider ── */
 .forest-discover-slider {
+  width: 100%;
   max-width: 1120px;
   margin: 0 auto;
+  overflow-x: clip;
   padding: 0 1rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  align-items: center;
+  align-items: stretch;
 }
 
 .forest-offer-page .forest-discover-slider__heading {
@@ -10085,6 +10087,7 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   display: flex;
   gap: 1rem;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   padding-bottom: 0.5rem;
@@ -10522,6 +10525,21 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
     border-radius: 12px;
   }
 
+  .forest-discover-slider {
+    padding: 0;
+  }
+
+  .forest-discover-slider > .fp-chapter__eyebrow,
+  .forest-offer-page .forest-discover-slider__heading {
+    padding: 0 0.75rem;
+    text-align: left;
+  }
+
+  .forest-discover-slider__track {
+    padding: 0 0.75rem 0.5rem;
+    scroll-padding-inline: 0.75rem;
+  }
+
   .site-forest-lighthouse .calendar-filter-form__select {
     min-width: 0;
     width: 100%;
@@ -10667,6 +10685,10 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
 
   .forest-pricing-compact__row-cta {
     width: 100%;
+  }
+
+  .forest-discover-slider__card {
+    flex-basis: min(82vw, 260px);
   }
 
 }
