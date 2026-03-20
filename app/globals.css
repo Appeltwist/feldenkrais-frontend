@@ -10677,6 +10677,8 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   display: flex;
   flex-direction: column;
   gap: 0;
+  overflow-x: clip;
+  width: 100%;
 }
 
 /* spacer between two-column area and full-width sections below */
@@ -10691,22 +10693,25 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
 /* two-column grid */
 .forest-teacher-columns {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 3rem;
   padding: 3rem 3rem 2.5rem;
-  max-width: 1200px;
+  width: min(100%, 1200px);
   margin: 0 auto;
   align-items: start;
+  min-width: 0;
 }
 
 .forest-teacher-columns__left {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .forest-teacher-columns__right {
   position: sticky;
   top: 6.5rem; /* clear the sticky header */
+  min-width: 0;
 }
 
 /* identity block */
@@ -10717,6 +10722,8 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   text-align: center;
   padding: 0 0 2rem;
   gap: 0.8rem;
+  min-width: 0;
+  width: 100%;
 }
 
 .forest-teacher-identity__back {
@@ -10726,6 +10733,8 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   transition: color 0.2s;
   align-self: flex-start;
   margin-bottom: 1rem;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .forest-teacher-identity__back:hover {
@@ -10771,6 +10780,9 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   letter-spacing: -0.02em;
   color: #f4f2eb;
   margin: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
 .forest-teacher-identity__title {
@@ -10794,6 +10806,7 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   border-top: 1px solid rgba(244, 213, 138, 0.15);
   text-align: center;
   max-width: 560px;
+  min-width: 0;
 }
 
 .forest-teacher-quote__mark {
@@ -10819,12 +10832,15 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   max-width: none;
   margin: 0;
   padding: 1.5rem 1.5rem 2rem;
+  min-width: 0;
 }
 
 .forest-teacher-bio {
   color: rgba(244, 242, 235, 0.8);
   font-size: 1rem;
   line-height: 1.75;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .forest-teacher-bio p {
@@ -10838,8 +10854,8 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
 /* responsive — stack on narrow screens */
 @media (max-width: 860px) {
   .forest-teacher-columns {
-    grid-template-columns: 1fr;
-    padding: 1.5rem 1.25rem 1rem;
+    grid-template-columns: minmax(0, 1fr);
+    padding: 1.5rem 1rem 1rem;
     gap: 1.5rem;
   }
 
@@ -10848,17 +10864,24 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   }
 
   .forest-teacher-identity {
+    align-items: flex-start;
+    text-align: left;
     padding: 0 0 1.5rem;
   }
 
   .forest-teacher-identity__back {
-    align-self: center;
+    align-self: flex-start;
+    margin-bottom: 0.5rem;
   }
 
   .forest-teacher-identity__photo,
   .forest-teacher-identity__photo-placeholder {
-    width: 140px;
-    height: 140px;
+    width: clamp(116px, 34vw, 140px);
+    height: clamp(116px, 34vw, 140px);
+  }
+
+  .forest-teacher-identity__eyebrow {
+    margin: 0.25rem 0 -0.2rem;
   }
 
   .forest-teacher-identity__name {
@@ -10866,11 +10889,21 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   }
 
   .forest-teacher-quote {
-    padding: 0.5rem 0.5rem 1.5rem;
+    justify-content: flex-start;
+    padding: 0.5rem 0 1.5rem;
+  }
+
+  .forest-teacher-quote__block {
+    max-width: none;
+    text-align: left;
+  }
+
+  .forest-teacher-quote__mark {
+    margin: 0 0 -0.8rem;
   }
 
   .forest-teacher-bio-section {
-    padding: 1rem 0.5rem 2rem;
+    padding: 1rem 0 2rem;
   }
 
   .forest-teacher-page > .forest-discover-slider {
