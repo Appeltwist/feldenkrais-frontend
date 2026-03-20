@@ -388,7 +388,7 @@ export default function ForestOfferTemplate({
       Array<Record<string, unknown>> | undefined
   ) ?? [];
   const journeyHeading = pickString(
-    journeySection?.value as Record<string, unknown> | undefined,
+    (journeySection?.value as Record<string, unknown> | undefined) ?? null,
     ["heading"],
     localeCode === "fr" ? "Ce que vous apprendrez" : "What you’ll learn",
   );
