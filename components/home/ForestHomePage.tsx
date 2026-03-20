@@ -614,11 +614,12 @@ function buildExploreCard(
   const slug = getOfferSlug(offer);
   const facilitatorOverride = getForestFacilitatorNamesOverride(slug);
   const firstFacilitator = facilitators[0];
+  const facilitatorNames = formatFacilitatorNames(
+    facilitators.map((facilitator) => getFacilitatorName(facilitator, "")).filter(Boolean),
+  );
   const facilitatorName = facilitatorOverride
     ? formatFacilitatorNames(facilitatorOverride)
-    : firstFacilitator
-    ? getFacilitatorName(firstFacilitator)
-    : "";
+    : facilitatorNames;
   const excerpt = getOfferDescription(offer, 160);
   const imageUrl =
     pickString(record, ["hero_image_url", "heroImageUrl", "image_url", "imageUrl"]) ||

@@ -634,6 +634,9 @@ export default async function ForestOfferCollectionPage({
                 const facilitators = getFacilitators(offer as OfferDetail);
                 const firstFacilitator = facilitators[0];
                 const facilitatorOverride = getForestFacilitatorNamesOverride(slug);
+                const facilitatorNames = formatFacilitatorNames(
+                  facilitators.map((facilitator) => getFacilitatorName(facilitator, "")).filter(Boolean),
+                );
                 const primaryOccurrence = resolveOneOccurrenceEntry(offer);
                 const occurrenceFacilitator =
                   offerType === "CLASS" && primaryOccurrence
@@ -641,7 +644,7 @@ export default async function ForestOfferCollectionPage({
                     : null;
                 const facilitatorName = occurrenceFacilitator?.display_name
                   || (facilitatorOverride ? formatFacilitatorNames(facilitatorOverride) : "")
-                  || (firstFacilitator ? getFacilitatorName(firstFacilitator) : "");
+                  || facilitatorNames;
                 const facilitatorImage = occurrenceFacilitator?.photo_url
                   || (facilitatorOverride ? "" : firstFacilitator ? getFacilitatorImageUrl(firstFacilitator) : "");
                 const cardImage = getForestImageOverride(title) || heroImage || facilitatorImage;
