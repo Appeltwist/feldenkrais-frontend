@@ -5052,6 +5052,7 @@ a {
   --forest-shell-backdrop-max: 1280px;
   display: grid;
   gap: 1.75rem;
+  grid-template-columns: minmax(0, 1fr);
   isolation: isolate;
   padding: 1.5rem 1rem 1.5rem;
   position: relative;
@@ -5060,8 +5061,9 @@ a {
 .forest-site-shell > :not(.forest-site-shell__backdrop):not(.forest-site-shell__botanical) {
   margin: 0 auto;
   max-width: 1120px;
+  min-width: 0;
   position: relative;
-  width: min(100%, 1120px);
+  width: 100%;
   z-index: 1;
 }
 
@@ -7044,6 +7046,7 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
 
 /* ── newsletter CTA — unified pill form ── */
 .forest-newsletter-cta {
+  width: 100%;
   max-width: 560px;
   margin: 0 auto;
   text-align: center;
@@ -10439,6 +10442,10 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
     padding: 0.75rem 0.625rem 1.25rem;
   }
 
+  .forest-site-shell--teacher {
+    overflow-x: clip;
+  }
+
   .forest-site-shell--offer {
     padding-top: 0;
   }
@@ -10514,6 +10521,23 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
     padding: 6px;
   }
 
+  .forest-newsletter-cta {
+    display: grid;
+    justify-items: center;
+    padding: 0 0.75rem;
+  }
+
+  .forest-newsletter-cta__eyebrow,
+  .forest-newsletter-cta__heading,
+  .forest-newsletter-cta__body {
+    text-align: center;
+    width: 100%;
+  }
+
+  .forest-newsletter-cta__body {
+    max-width: 32rem;
+  }
+
   .forest-newsletter-cta__form input {
     text-align: center;
     padding: 0.7rem 1rem;
@@ -10523,6 +10547,12 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
     width: 100%;
     padding: 0.75rem 1.25rem;
     border-radius: 12px;
+  }
+
+  .forest-newsletter-cta__form {
+    width: 100%;
+    max-width: 32rem;
+    margin-inline: auto;
   }
 
   .forest-discover-slider {
@@ -10536,8 +10566,16 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   }
 
   .forest-discover-slider__track {
-    padding: 0 0.75rem 0.5rem;
+    padding: 0 0 0.5rem;
     scroll-padding-inline: 0.75rem;
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+
+  .forest-discover-slider__track::before,
+  .forest-discover-slider__track::after {
+    content: "";
+    flex: 0 0 0.75rem;
   }
 
   .site-forest-lighthouse .calendar-filter-form__select {
@@ -10718,7 +10756,8 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 3rem;
   padding: 3rem 3rem 2.5rem;
-  width: min(100%, 1200px);
+  width: 100%;
+  max-width: 1200px;
   margin: 0 auto;
   align-items: start;
   min-width: 0;
