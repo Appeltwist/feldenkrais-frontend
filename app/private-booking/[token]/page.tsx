@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
+import PrivateBookingPortal from "@/components/private-booking/PrivateBookingPortal";
 import { fetchSiteConfig } from "@/lib/api";
-import PrivateBookingManagePage from "@/components/private-booking/PrivateBookingManagePage";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
 import type { PrivateBookingPageEntity } from "@/lib/private-booking";
@@ -76,7 +76,15 @@ export default async function PrivateBookingTokenPage({
       packageToken,
     );
 
-    return <PrivateBookingManagePage config={config} initialEntity={entity} locale={locale} notice={notice} />;
+    return (
+      <PrivateBookingPortal
+        centerSlug={siteConfig?.centerSlug ?? ""}
+        hostname={hostname}
+        key={`${config.offer_slug}:${notice}`}
+        locale={locale}
+        token={token}
+      />
+    );
   } catch (error) {
     if (error instanceof PrivateBookingApiError && error.status === 404) {
       notFound();

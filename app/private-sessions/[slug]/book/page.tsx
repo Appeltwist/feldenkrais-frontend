@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
 
+import PrivateBookingPanel from "@/components/private-booking/PrivateBookingPanel";
 import { fetchSiteConfig } from "@/lib/api";
-import PrivateBookingForm from "@/components/private-booking/PrivateBookingForm";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
 import { fetchPrivateBookingConfig, PrivateBookingApiError } from "@/lib/private-booking-api";
+import type { PrivateBookingConfig as PanelPrivateBookingConfig } from "@/lib/types";
 
 type PrivateSessionBookingPageProps = {
   params: Promise<{ slug: string }> | { slug: string };
@@ -19,7 +20,15 @@ export default async function PrivateSessionBookingPage({ params }: PrivateSessi
   try {
     const config = await fetchPrivateBookingConfig(hostname, slug, locale);
 
-    return <PrivateBookingForm config={config} locale={locale} />;
+    return (
+      <PrivateBookingPanel
+        centerSlug={siteConfig?.centerSlug ?? ""}
+        hostname={hostname}
+        initialConfig={config as PanelPrivateBookingConfig}
+        locale={locale}
+        offerSlug={config.offer_slug || slug}
+      />
+    );
   } catch (error) {
     if (error instanceof PrivateBookingApiError && error.status === 404) {
       notFound();

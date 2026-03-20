@@ -7384,8 +7384,18 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   padding-top: var(--fl-space-deep, 6rem);
 }
 
+.fp-calendar-sections {
+  display: grid;
+  gap: clamp(2.5rem, 4vw, 3.75rem);
+  margin-top: 2rem;
+}
+
 .fp-calendar-list-wrap {
-  margin-top: 1.5rem;
+  margin-top: 0;
+}
+
+.fp-calendar-section {
+  gap: 1.25rem;
 }
 
 /* ── Filter chips ── */

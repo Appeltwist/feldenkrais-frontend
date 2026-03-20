@@ -3,12 +3,10 @@ import GroupedCalendar, {
   type CalendarOccurrenceOption,
   type GroupedCalendarEntry,
 } from "@/components/calendar/GroupedCalendar";
-import ForestCalendarList, {
-  type CalendarListEntry,
-} from "@/components/calendar/ForestCalendarList";
+import ForestCalendarList, { type CalendarListEntry } from "@/components/calendar/ForestCalendarList";
+import MindbodyScheduleWidget from "@/components/classes/MindbodyScheduleWidget";
 import { ForestPageShell } from "@/components/forest/ForestPageShell";
 import {
-  fetchCalendar,
   fetchCalendarWithMeta,
   fetchOffers,
   fetchSiteConfig,
@@ -196,28 +194,6 @@ type ForestCalendarOfferCopy = {
   facilitatorNames: string;
 };
 
-type FlatClassOccurrence = {
-  id: number;
-  startDateTime: string;
-  endDateTime: string;
-  timezone: string;
-  facilitatorName: string;
-  offer: {
-    id: number;
-    type: string;
-    title: string;
-    slug: string;
-    heroImageUrl?: string;
-    canonicalUrl?: string;
-    domains: CalendarDomainLabel[];
-  };
-};
-
-type DatedListEntry = {
-  sortKey: number;
-  value: CalendarListEntry;
-};
-
 function parseFacilitatorNames(value: unknown) {
   if (!Array.isArray(value)) {
     return "";
@@ -252,60 +228,104 @@ function buildOfferCopyMap(offers: unknown[]) {
   return copyBySlug;
 }
 
-function parseFacilitatorName(value: unknown) {
-  const record = asRecord(value);
-  return pickString(record, ["display_name", "displayName", "name", "full_name"]);
-}
-
-function parseFlatClassOccurrences(items: CalendarItem[]) {
-  const parsed: FlatClassOccurrence[] = [];
-
-  for (const item of items) {
-    const record = asRecord(item);
-    const offer = asRecord(record?.offer);
-    const offerId = toPositiveInt(offer?.id);
-    const title = pickString(offer, ["title", "name"]);
-    const slug = pickString(offer, ["slug"]);
-    const startDateTime = pickString(record, ["start_datetime", "start", "start_at"]);
-    const endDateTime = pickString(record, ["end_datetime", "end", "end_at"]);
-    const id = toPositiveInt(record?.id);
-    if (!offerId || !title || !slug || !startDateTime || !endDateTime || !id) {
-      continue;
-    }
-
-    parsed.push({
-      id,
-      startDateTime,
-      endDateTime,
-      timezone: pickString(record, ["timezone", "tz", "time_zone"]),
-      facilitatorName: parseFacilitatorName(record?.facilitator),
-      offer: {
-        id: offerId,
-        type: pickString(offer, ["type"], "CLASS"),
-        title,
-        slug,
-        heroImageUrl: pickString(offer, ["hero_image_url", "heroImageUrl"]) || undefined,
-        canonicalUrl: pickString(offer, ["canonical_url", "canonicalUrl"]) || undefined,
-        domains: parseDomains(offer?.domains),
-      },
-    });
+function formatForestDateLabel(value: string, locale: string) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return "";
   }
 
-  return parsed;
+  return parsed.toLocaleDateString(locale.toLowerCase().startsWith("fr") ? "fr-FR" : "en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
 }
 
-function toSortTimestamp(value: string) {
+function formatForestTimeLabel(value: string, locale: string) {
   const parsed = new Date(value);
-  const timestamp = parsed.getTime();
-  return Number.isNaN(timestamp) ? Number.MAX_SAFE_INTEGER : timestamp;
+  if (Number.isNaN(parsed.getTime())) {
+    return "";
+  }
+
+  return parsed.toLocaleTimeString(locale.toLowerCase().startsWith("fr") ? "fr-FR" : "en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function buildGroupedOfferEntries(
+  entries: GroupedCalendarEntry[],
+  offerCopyBySlug: Map<string, ForestCalendarOfferCopy>,
+  locale: string,
+) {
+  const isFrench = locale.toLowerCase().startsWith("fr");
+
+  return entries.map((entry) => {
+    const nextOccurrence = entry.nextOccurrences[0];
+    const offerPath = localizePath(
+      locale,
+      getCanonicalOfferPathByTypeAndSlug(entry.offer.type, entry.offer.slug) || `/offer/${entry.offer.slug}`,
+    );
+
+    return {
+      id: `${entry.offer.type.toLowerCase()}-${entry.offer.id}`,
+      title: entry.offer.title,
+      href: offerPath,
+      type: entry.offer.type,
+      typeLabel:
+        ({
+          WORKSHOP: isFrench ? "Atelier" : "Workshop",
+          TRAINING_INFO: isFrench ? "Formation" : "Training",
+        } as Record<string, string>)[entry.offer.type] ?? entry.offer.type,
+      description: offerCopyBySlug.get(entry.offer.slug)?.excerpt ?? "",
+      facilitator: offerCopyBySlug.get(entry.offer.slug)?.facilitatorNames ?? "",
+      dateLabel: nextOccurrence ? formatForestDateLabel(nextOccurrence.startDateTime, locale) : "",
+      timeLabel: nextOccurrence ? formatForestTimeLabel(nextOccurrence.startDateTime, locale) : "",
+      domainsLabel: entry.offer.domains.map((domain) => domain.name).join(" · "),
+      heroImageUrl: getForestImageOverride(entry.offer.title) || entry.offer.heroImageUrl,
+      color: calendarTypeColor(entry.offer.type),
+    } satisfies CalendarListEntry;
+  });
+}
+
+function buildPrivateSessionEntries(offers: unknown[], locale: string) {
+  const isFrench = locale.toLowerCase().startsWith("fr");
+
+  return offers.flatMap((offer, index) => {
+    const record = asRecord(offer);
+    const slug = pickString(record, ["slug"]);
+    const title = pickString(record, ["title", "name"]);
+
+    if (!slug || !title) {
+      return [];
+    }
+
+    return [
+      {
+        id: `private-session-${slug || index}`,
+        title,
+        href: localizePath(locale, `/private-sessions/${slug}/book`),
+        type: "PRIVATE_SESSION",
+        typeLabel: isFrench ? "Séance individuelle" : "Private session",
+        description: pickString(record, ["excerpt", "summary", "short_description", "description"]),
+        facilitator: parseFacilitatorNames(record?.facilitators),
+        dateLabel: isFrench ? "Sur rendez-vous" : "By appointment",
+        timeLabel: "",
+        domainsLabel: parseDomains(record?.domains).map((domain) => domain.name).join(" · "),
+        heroImageUrl:
+          getForestImageOverride(title) ||
+          pickString(record, ["hero_image_url", "heroImageUrl", "image_url", "imageUrl"]) ||
+          undefined,
+        color: calendarTypeColor("PRIVATE_SESSION"),
+      } satisfies CalendarListEntry,
+    ];
+  });
 }
 
 export default async function CalendarPage({ searchParams }: CalendarPageProps) {
   const hostname = await getHostname();
   const requestLocale = await getRequestLocale();
   const today = new Date();
-  const weekLater = new Date(today);
-  weekLater.setDate(today.getDate() + 7);
   const from = toIsoDate(today);
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const selectedDomainTheme = pickSingleSearchParam(
@@ -353,18 +373,10 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
   const domains = sortDomains(calendar.meta.domains);
   const isForest = isForestCenter(siteConfig.centerSlug);
 
-
-
   if (isForest) {
     const isFrench = requestLocale.toLowerCase().startsWith("fr");
     const locale = requestLocale;
-    const [classOffers, workshopOffers, trainingOffers, classCalendarItems] = await Promise.all([
-      fetchOffers({
-        hostname,
-        center: siteConfig.centerSlug,
-        locale,
-        type: "CLASS",
-      }).catch(() => []),
+    const [workshopOffers, trainingOffers, privateSessionOffers] = await Promise.all([
       fetchOffers({
         hostname,
         center: siteConfig.centerSlug,
@@ -377,103 +389,30 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
         locale,
         type: "TRAINING_INFO",
       }).catch(() => []),
-      fetchCalendar({
+      fetchOffers({
         hostname,
         center: siteConfig.centerSlug,
         locale,
-        from,
-        to: toIsoDate(weekLater),
-        domainTheme: selectedDomainTheme || undefined,
+        type: "PRIVATE_SESSION",
       }).catch(() => []),
     ]);
     const offerCopyBySlug = buildOfferCopyMap([
-      ...classOffers,
       ...workshopOffers,
       ...trainingOffers,
+      ...privateSessionOffers,
     ]);
 
-    const classEntries = parseFlatClassOccurrences(classCalendarItems)
-      .filter((entry) => entry.offer.type === "CLASS")
-      .sort((left, right) => left.startDateTime.localeCompare(right.startDateTime));
-    const workshops = sortEntriesByNextOccurrence(
-      entries.filter((entry) => entry.offer.type === "WORKSHOP"),
+    const workshopEntries = buildGroupedOfferEntries(
+      sortEntriesByNextOccurrence(entries.filter((entry) => entry.offer.type === "WORKSHOP")),
+      offerCopyBySlug,
+      locale,
     ).slice(0, 5);
-    const trainings = sortEntriesByNextOccurrence(
-      entries.filter((entry) => entry.offer.type === "TRAINING_INFO"),
+    const trainingEntries = buildGroupedOfferEntries(
+      sortEntriesByNextOccurrence(entries.filter((entry) => entry.offer.type === "TRAINING_INFO")),
+      offerCopyBySlug,
+      locale,
     ).slice(0, 2);
-    const datedEntries: DatedListEntry[] = [
-      ...classEntries.map((entry) => {
-        const dt = new Date(entry.startDateTime);
-        const offerPath = localizePath(
-          locale,
-          getCanonicalOfferPathByTypeAndSlug(entry.offer.type, entry.offer.slug) || `/offer/${entry.offer.slug}`,
-        );
-        return {
-          sortKey: toSortTimestamp(entry.startDateTime),
-          value: {
-            id: `class-${entry.id}`,
-            title: entry.offer.title,
-            href: offerPath,
-            type: entry.offer.type,
-            typeLabel: isFrench ? "Cours" : "Class",
-            description: offerCopyBySlug.get(entry.offer.slug)?.excerpt ?? "",
-            facilitator: entry.facilitatorName || offerCopyBySlug.get(entry.offer.slug)?.facilitatorNames || "",
-            dateLabel: dt.toLocaleDateString(isFrench ? "fr-FR" : "en-GB", {
-              weekday: "short",
-              day: "numeric",
-              month: "short",
-            }),
-            timeLabel: dt.toLocaleTimeString(isFrench ? "fr-FR" : "en-GB", {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-            domainsLabel: entry.offer.domains.map((d) => d.name).join(" · "),
-            heroImageUrl: getForestImageOverride(entry.offer.title) || entry.offer.heroImageUrl,
-            color: calendarTypeColor(entry.offer.type),
-          } satisfies CalendarListEntry,
-        };
-      }),
-      ...[...workshops, ...trainings].map((entry) => {
-        const nextOcc = entry.nextOccurrences[0];
-        const offerPath = localizePath(
-          locale,
-          getCanonicalOfferPathByTypeAndSlug(entry.offer.type, entry.offer.slug) || `/offer/${entry.offer.slug}`,
-        );
-        let dateLabel = "";
-        let timeLabel = "";
-        if (nextOcc) {
-          const dt = new Date(nextOcc.startDateTime);
-          dateLabel = dt.toLocaleDateString(isFrench ? "fr-FR" : "en-GB", {
-            weekday: "short",
-            day: "numeric",
-            month: "short",
-          });
-          timeLabel = dt.toLocaleTimeString(isFrench ? "fr-FR" : "en-GB", {
-            hour: "2-digit",
-            minute: "2-digit",
-          });
-        }
-
-        return {
-          sortKey: nextOcc?.startDateTime ? toSortTimestamp(nextOcc.startDateTime) : Number.MAX_SAFE_INTEGER,
-          value: {
-            id: `${entry.offer.type.toLowerCase()}-${entry.offer.id}`,
-            title: entry.offer.title,
-            href: offerPath,
-            type: entry.offer.type,
-            typeLabel: ({ WORKSHOP: isFrench ? "Atelier" : "Workshop", TRAINING_INFO: isFrench ? "Formation" : "Training" } as Record<string, string>)[entry.offer.type] ?? entry.offer.type,
-            description: offerCopyBySlug.get(entry.offer.slug)?.excerpt ?? "",
-            facilitator: offerCopyBySlug.get(entry.offer.slug)?.facilitatorNames ?? "",
-            dateLabel,
-            timeLabel,
-            domainsLabel: entry.offer.domains.map((d) => d.name).join(" · "),
-            heroImageUrl: getForestImageOverride(entry.offer.title) || entry.offer.heroImageUrl,
-            color: calendarTypeColor(entry.offer.type),
-          } satisfies CalendarListEntry,
-        };
-      }),
-    ].sort((left, right) => left.sortKey - right.sortKey);
-    const listEntries: CalendarListEntry[] = datedEntries.map((entry) => entry.value);
+    const privateSessionEntries = buildPrivateSessionEntries(privateSessionOffers, locale);
 
     return (
       <ForestPageShell>
@@ -483,20 +422,63 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
             <h1 className="fc-intro__title">{isFrench ? "Calendrier" : "Calendar"}</h1>
             <p className="fc-intro__subtitle">
               {isFrench
-                ? "Les cours de la semaine, puis les prochains ateliers et formations."
-                : "This week’s classes, followed by the next workshops and training programmes."}
+                ? "Réservez un cours, puis découvrez les prochains ateliers, formations et séances individuelles."
+                : "Book a class, then explore upcoming workshops, trainings, and private sessions."}
             </p>
           </section>
 
-          <ForestCalendarList
-            entries={listEntries}
-            labels={{
-              all: isFrench ? "Tout" : "All",
-              classes: isFrench ? "Cours" : "Classes",
-              workshops: isFrench ? "Ateliers" : "Workshops",
-              trainings: isFrench ? "Formations" : "Trainings",
-            }}
-          />
+          <div className="fp-calendar-sections">
+            <section className="fc-grid-section forest-mindbody-section">
+              <div className="fc-grid-header">
+                <div>
+                  <p className="fc-grid-header__eyebrow">{isFrench ? "Réserver" : "Book"}</p>
+                  <h2 className="fc-grid-header__title">{isFrench ? "Cours" : "Classes"}</h2>
+                </div>
+              </div>
+              <MindbodyScheduleWidget
+                loadingLabel={isFrench ? "Chargement des cours..." : "Loading classes..."}
+                widgetId="db159594878"
+              />
+            </section>
+
+            {workshopEntries.length > 0 ? (
+              <section className="fc-grid-section fp-calendar-section">
+                <div className="fc-grid-header">
+                  <div>
+                    <p className="fc-grid-header__eyebrow">{isFrench ? "Explorer" : "Explore"}</p>
+                    <h2 className="fc-grid-header__title">{isFrench ? "Ateliers" : "Workshops"}</h2>
+                  </div>
+                </div>
+                <ForestCalendarList entries={workshopEntries} />
+              </section>
+            ) : null}
+
+            {trainingEntries.length > 0 ? (
+              <section className="fc-grid-section fp-calendar-section">
+                <div className="fc-grid-header">
+                  <div>
+                    <p className="fc-grid-header__eyebrow">{isFrench ? "Explorer" : "Explore"}</p>
+                    <h2 className="fc-grid-header__title">{isFrench ? "Formations" : "Trainings"}</h2>
+                  </div>
+                </div>
+                <ForestCalendarList entries={trainingEntries} />
+              </section>
+            ) : null}
+
+            {privateSessionEntries.length > 0 ? (
+              <section className="fc-grid-section fp-calendar-section">
+                <div className="fc-grid-header">
+                  <div>
+                    <p className="fc-grid-header__eyebrow">{isFrench ? "Explorer" : "Explore"}</p>
+                    <h2 className="fc-grid-header__title">
+                      {isFrench ? "Séances individuelles" : "Private Sessions"}
+                    </h2>
+                  </div>
+                </div>
+                <ForestCalendarList entries={privateSessionEntries} />
+              </section>
+            ) : null}
+          </div>
         </div>
       </ForestPageShell>
     );

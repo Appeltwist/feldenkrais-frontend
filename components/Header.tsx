@@ -283,7 +283,7 @@ function ForestHeader({
           })}
         </nav>
 
-        {/* Actions: lang + calendar */}
+        {/* Actions: lang + booking */}
         <div className="fl-actions">
           <div className={`fl-lang${langOpen ? " is-open" : ""}`} ref={langRef}>
             <button
@@ -310,11 +310,11 @@ function ForestHeader({
           </div>
 
           <Link
-            aria-label={isFr ? "Ouvrir le calendrier" : "Open calendar"}
+            aria-label={isFr ? "Réserver" : "Book"}
             className="fl-book"
             href={withLocalePrefix(locale, "/calendar")}
           >
-            <span className="fl-book__text">{isFr ? "Calendrier" : "Calendar"}</span>
+            <span className="fl-book__text">{isFr ? "Réserver" : "Book"}</span>
           </Link>
         </div>
 
@@ -386,7 +386,7 @@ function ForestHeader({
                 href={withLocalePrefix(locale, "/calendar")}
                 onClick={closeMenu}
               >
-                {isFr ? "Calendrier" : "Calendar"}
+                {isFr ? "Réserver" : "Book"}
               </Link>
               <div className="fl-nav-mobile__langs">
                 <a href={enPath} onClick={closeMenu}>EN</a>
