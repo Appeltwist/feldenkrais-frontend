@@ -10566,16 +10566,8 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   }
 
   .forest-discover-slider__track {
-    padding: 0 0 0.5rem;
+    padding: 0 0.75rem 0.5rem;
     scroll-padding-inline: 0.75rem;
-    mask-image: none;
-    -webkit-mask-image: none;
-  }
-
-  .forest-discover-slider__track::before,
-  .forest-discover-slider__track::after {
-    content: "";
-    flex: 0 0 0.75rem;
   }
 
   .site-forest-lighthouse .calendar-filter-form__select {

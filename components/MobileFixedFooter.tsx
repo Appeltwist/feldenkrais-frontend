@@ -1,5 +1,6 @@
 "use client";
 
+import type { MouseEvent } from "react";
 import { usePathname } from "next/navigation";
 
 import { useSiteContext } from "@/lib/site-context";
@@ -31,6 +32,29 @@ function isExternalHref(href: string) {
   return /^https?:\/\//i.test(href);
 }
 
+function scrollToHashTarget(event: MouseEvent<HTMLAnchorElement>, href: string) {
+  if (!href.startsWith("#")) {
+    return;
+  }
+
+  const targetId = href.slice(1);
+  if (!targetId) {
+    return;
+  }
+
+  const target = document.getElementById(targetId);
+  if (!target) {
+    return;
+  }
+
+  event.preventDefault();
+  target.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  if (window.location.hash !== href) {
+    window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}${href}`);
+  }
+}
+
 export default function MobileFixedFooter({ locale }: { locale: string }) {
   const { centerSlug, mobileBookingCta } = useSiteContext();
   const pathname = usePathname();
@@ -58,6 +82,7 @@ export default function MobileFixedFooter({ locale }: { locale: string }) {
           <a
             className="fl-mobile-footer__book fl-mobile-footer__book--offer"
             href={mobileBookingCta.href}
+            onClick={(event) => scrollToHashTarget(event, mobileBookingCta.href)}
             rel={external ? "noopener noreferrer" : undefined}
             target={external ? "_blank" : undefined}
           >

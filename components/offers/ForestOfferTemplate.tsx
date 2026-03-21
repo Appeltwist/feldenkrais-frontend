@@ -492,11 +492,15 @@ export default function ForestOfferTemplate({
     bookingOptions.length > 1 ||
     priceOptions.length > 1 ||
     (occurrences.length > 1 && (bookingOptions.length > 0 || priceOptions.length > 0));
-  const heroCta = primaryCta && hasMultipleChoicePricing
+  const shouldUsePricingAnchorCta =
+    Boolean(primaryCta) &&
+    hasMultipleChoicePricing &&
+    offerType !== "PRIVATE_SESSION";
+  const heroCta = shouldUsePricingAnchorCta
     ? {
         label: localeCode === "fr" ? "Voir les dates & tarifs" : "See dates & pricing",
         url: "#offer-pricing",
-        style: primaryCta.style ?? null,
+        style: primaryCta?.style ?? null,
       }
     : primaryCta;
   const mobileBookingCta = heroCta?.url

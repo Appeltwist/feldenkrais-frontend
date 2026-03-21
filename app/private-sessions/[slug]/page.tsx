@@ -96,6 +96,7 @@ export default async function PrivateSessionDetailPage({ params }: OfferPageProp
   }
 
   if (siteConfig.centerSlug === "forest-lighthouse") {
+    const isFrench = requestLocale.toLowerCase().startsWith("fr");
     const [siteFaqSections, allOffers, localeSwitchPaths] = await Promise.all([
       fetchSiteFaq(hostname, requestLocale).catch(() => []),
       fetchOffers({ hostname, center: siteConfig.centerSlug, locale: contentLocale }).catch(() => [] as OfferSummary[]),
@@ -125,7 +126,7 @@ export default async function PrivateSessionDetailPage({ params }: OfferPageProp
           offer={offer}
           offerType={offerType}
           primaryCtaOverride={{
-            label: requestLocale.toLowerCase().startsWith("fr") ? "Réserver une séance" : "Book a session",
+            label: isFrench ? "Commencer" : "Start",
             url: localizePath(requestLocale, `/private-sessions/${offer.slug ?? slug}/book`),
           }}
           relatedOffers={relatedOffers}
