@@ -956,6 +956,10 @@ a {
   gap: 0.55rem;
 }
 
+.lead-magnet__button {
+  align-self: flex-start;
+}
+
 .lead-magnet__input {
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -969,6 +973,41 @@ a {
 .lead-magnet__error {
   color: #9f2f2f;
   font-weight: 600;
+}
+
+.offer-lead-form {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.offer-lead-form__consent {
+  align-items: start;
+  column-gap: 0.7rem;
+  display: grid;
+  grid-template-columns: auto 1fr;
+}
+
+.offer-lead-form__checkbox {
+  accent-color: var(--color-primary);
+  height: 1rem;
+  margin-top: 0.15rem;
+  width: 1rem;
+}
+
+.offer-lead-form__consent-label {
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.offer-lead-form__hint {
+  color: #5b6b76;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  margin: -0.15rem 0 0;
+}
+
+.offer-lead-form__fallback {
+  width: fit-content;
 }
 
 .quick-facts-grid {
@@ -8942,6 +8981,15 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   flex-shrink: 0;
 }
 
+.forest-journey__pdf-title {
+  color: #f4f2eb;
+  font-family: var(--fl-display);
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
+  margin: 0;
+  text-align: center;
+}
+
 .forest-journey__pdf-text {
   color: rgba(244, 242, 235, 0.6);
   font-family: var(--fl-body);
@@ -9010,6 +9058,35 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
+}
+
+.offer-lead-form--forest {
+  justify-items: center;
+  max-width: 440px;
+  width: 100%;
+}
+
+.offer-lead-form--forest .offer-lead-form__consent {
+  color: rgba(244, 242, 235, 0.82);
+  width: 100%;
+}
+
+.offer-lead-form--forest .offer-lead-form__checkbox {
+  accent-color: #d4a64a;
+}
+
+.offer-lead-form--forest .offer-lead-form__consent-label {
+  font-family: var(--fl-body);
+  font-size: 0.82rem;
+}
+
+.offer-lead-form--forest .offer-lead-form__hint {
+  color: rgba(244, 242, 235, 0.56);
+  font-family: var(--fl-body);
+  font-size: 0.74rem;
+  margin: -0.1rem 0 0;
+  text-align: left;
+  width: 100%;
 }
 
 .forest-journey__pdf-error {
@@ -10646,6 +10723,10 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
 
   .forest-journey__pdf-form {
     max-width: 100%;
+  }
+
+  .lead-magnet__button {
+    width: 100%;
   }
 }
 

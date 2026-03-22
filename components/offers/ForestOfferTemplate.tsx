@@ -839,12 +839,18 @@ export default function ForestOfferTemplate({
                 <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
+              <h3 className="forest-journey__pdf-title">{placeholderCopy.pdfTitle}</h3>
               <p className="forest-journey__pdf-text">{placeholderCopy.pdfPrompt}</p>
               <ForestPdfForm
+                consentHint={placeholderCopy.pdfConsentHint}
+                consentLabel={placeholderCopy.pdfConsentLabel}
                 offerSlug={offerSlug}
                 locale={localeCode}
+                errorText={placeholderCopy.pdfError}
+                fallbackText={placeholderCopy.pdfFallback}
                 placeholderText={placeholderCopy.pdfPlaceholder}
                 ctaText={placeholderCopy.pdfCta}
+                submittingText={placeholderCopy.pdfSubmitting}
               />
             </div>
           </section>

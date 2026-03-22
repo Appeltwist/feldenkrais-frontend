@@ -31,9 +31,15 @@ export type ForestPlaceholderCopy = {
     question: string;
     answer: string;
   }>;
+  pdfTitle: string;
   pdfPrompt: string;
   pdfPlaceholder: string;
   pdfCta: string;
+  pdfSubmitting: string;
+  pdfFallback: string;
+  pdfConsentLabel: string;
+  pdfConsentHint: string;
+  pdfError: string;
 };
 
 const LABELS: Record<LocaleCode, OfferLabels> = {
@@ -97,9 +103,15 @@ const FOREST_PLACEHOLDER_COPY: Record<LocaleCode, ForestPlaceholderCopy> = {
           "Oui. Si vous hésitez entre plusieurs formats ou si vous avez une question pratique, l’équipe peut vous orienter avant l’inscription.",
       },
     ],
+    pdfTitle: "Recevoir la fiche PDF",
     pdfPrompt: "Recevez la présentation complète de cet événement par e-mail.",
     pdfPlaceholder: "Votre e-mail",
     pdfCta: "Recevoir le PDF",
+    pdfSubmitting: "Préparation du PDF...",
+    pdfFallback: "Le téléchargement ne démarre pas ? Ouvrez le PDF directement.",
+    pdfConsentLabel: "Je souhaite aussi recevoir les nouvelles et offres de Forest Lighthouse par e-mail.",
+    pdfConsentHint: "Optionnel. Votre demande de PDF fonctionne aussi sans inscription à la newsletter.",
+    pdfError: "Impossible de préparer le PDF pour le moment. Réessayez dans un instant.",
   },
   en: {
     newsletterTitle: "Stay in the loop",
@@ -124,9 +136,15 @@ const FOREST_PLACEHOLDER_COPY: Record<LocaleCode, ForestPlaceholderCopy> = {
           "Yes. If you are unsure which format fits best or have a practical question, the team can help you choose before you register.",
       },
     ],
+    pdfTitle: "Get the PDF guide",
     pdfPrompt: "Get the full event presentation sent to your inbox.",
     pdfPlaceholder: "Your email",
     pdfCta: "Get the PDF",
+    pdfSubmitting: "Preparing your PDF...",
+    pdfFallback: "If the download does not start, open the PDF directly.",
+    pdfConsentLabel: "I’d also like to receive Forest Lighthouse news and offers by email.",
+    pdfConsentHint: "Optional. You can request the PDF without joining the newsletter.",
+    pdfError: "We couldn’t prepare the PDF right now. Please try again in a moment.",
   },
 };
 
