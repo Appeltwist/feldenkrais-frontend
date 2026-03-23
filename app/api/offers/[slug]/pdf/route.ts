@@ -33,7 +33,6 @@ export async function GET(request: Request, context: RouteContext) {
 
   const backendResponse = await fetch(backendUrl.toString(), {
     method: "GET",
-    cache: "no-store",
   });
 
   if (!backendResponse.ok) {

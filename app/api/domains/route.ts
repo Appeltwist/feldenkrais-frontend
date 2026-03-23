@@ -39,7 +39,6 @@ export async function GET(request: Request) {
 
   const backendResponse = await fetch(backendUrl.toString(), {
     method: "GET",
-    cache: "no-store",
   });
 
   const contentType = backendResponse.headers.get("content-type") ?? "";

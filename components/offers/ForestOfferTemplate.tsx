@@ -10,7 +10,6 @@ import OfferMobileCtaSync from "@/components/offers/OfferMobileCtaSync";
 import ForestPdfForm from "@/components/offers/ForestPdfForm";
 import OfferActionBar from "@/components/offers/OfferActionBar";
 import { FOREST_DEFAULT_HERO_IMAGE } from "@/lib/brand-assets";
-import { getForestBookingUrl } from "@/lib/forest-booking";
 import { getForestHeroImageOverride, getForestImageOverride } from "@/lib/forest-excerpts";
 import { isFacilitatorOnlySubtitle } from "@/lib/content-cleanup";
 import { getForestFacilitatorNamesOverride } from "@/lib/forest-facilitator-overrides";
@@ -329,12 +328,7 @@ export default function ForestOfferTemplate({
 
   const title = getOfferTitle(offer);
   const subtitle = getOfferSubtitle(offer);
-  const rawPrimaryCta = getPrimaryCta(offer);
-  const bookingOverride = getForestBookingUrl(offer);
-  const resolvedPrimaryCta = bookingOverride
-    ? { url: bookingOverride, label: rawPrimaryCta?.label ?? "", style: rawPrimaryCta?.style ?? null }
-    : rawPrimaryCta;
-  const primaryCta = primaryCtaOverride ?? resolvedPrimaryCta;
+  const primaryCta = primaryCtaOverride ?? getPrimaryCta(offer);
   const heroVideoUrl = getOfferHeroVideoUrl(offer);
   const heroImageUrl = getOfferHeroImageUrl(offer);
   const offerSlug = getOfferSlug(offer) ?? "";
@@ -488,21 +482,7 @@ export default function ForestOfferTemplate({
 
   /* first occurrence → calendar event for "Add to Calendar" */
   const occurrences = getOccurrences(offer);
-  const hasMultipleChoicePricing =
-    bookingOptions.length > 1 ||
-    priceOptions.length > 1 ||
-    (occurrences.length > 1 && (bookingOptions.length > 0 || priceOptions.length > 0));
-  const shouldUsePricingAnchorCta =
-    Boolean(primaryCta) &&
-    hasMultipleChoicePricing &&
-    offerType !== "PRIVATE_SESSION";
-  const heroCta = shouldUsePricingAnchorCta
-    ? {
-        label: localeCode === "fr" ? "Voir les dates & tarifs" : "See dates & pricing",
-        url: "#offer-pricing",
-        style: primaryCta?.style ?? null,
-      }
-    : primaryCta;
+  const heroCta = primaryCta;
   const mobileBookingCta = heroCta?.url
     ? {
         href: heroCta.url,
@@ -817,15 +797,19 @@ export default function ForestOfferTemplate({
                 </li>
               ))}
             </ol>
-            {primaryCta ? (
+            {heroCta ? (
               <div className="forest-journey__cta">
-                {isExternalHref(primaryCta.url) ? (
-                  <a className="fl-btn fl-btn--primary" href={primaryCta.url} rel="noreferrer" target="_blank">
-                    {primaryCta.label || labels.book}
+                {isExternalHref(heroCta.url) ? (
+                  <a className="fl-btn fl-btn--primary" href={heroCta.url} rel="noreferrer" target="_blank">
+                    {heroCta.label || labels.book}
+                  </a>
+                ) : heroCta.url.startsWith("#") ? (
+                  <a className="fl-btn fl-btn--primary" href={heroCta.url}>
+                    {heroCta.label || labels.book}
                   </a>
                 ) : (
-                  <Link className="fl-btn fl-btn--primary" href={primaryCta.url}>
-                    {primaryCta.label || labels.book}
+                  <Link className="fl-btn fl-btn--primary" href={heroCta.url}>
+                    {heroCta.label || labels.book}
                   </Link>
                 )}
               </div>
@@ -937,7 +921,7 @@ export default function ForestOfferTemplate({
                   const supportingText = [summary, dateSummary].filter(Boolean).join(" · ");
                   const bookingUrl = offerType === "PRIVATE_SESSION"
                     ? primaryCta?.url || ""
-                    : pickString(optionRecord, ["booking_url", "bookingUrl"]) || primaryCta?.url || "";
+                    : pickString(optionRecord, ["booking_url", "bookingUrl"]);
                   return (
                     <div className="forest-pricing-compact__row" key={`booking-option-${label}-${index}`}>
                       <div className="forest-pricing-compact__copy">

@@ -34,7 +34,6 @@ export async function POST(request: Request) {
 
   const backendResponse = await fetch(backendUrl.toString(), {
     method: "POST",
-    cache: "no-store",
     headers: {
       "Content-Type": "application/json",
     },

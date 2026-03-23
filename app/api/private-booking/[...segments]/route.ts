@@ -34,7 +34,6 @@ async function proxy(request: Request, segments: string[]) {
 
   const init: RequestInit = {
     method: request.method,
-    cache: "no-store",
     headers: {},
   };
 

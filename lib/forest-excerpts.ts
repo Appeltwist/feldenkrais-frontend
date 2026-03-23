@@ -3,7 +3,7 @@
  *
  * Provides short descriptions for workshop cards when the API doesn't
  * return a usable excerpt. Matched by case-insensitive substring of
- * the offer title (same pattern as forest-booking.ts).
+ * the offer title.
  */
 
 const FOREST_EXCERPT_OVERRIDES: Array<{ titleMatch: string; excerpt: string }> = [
