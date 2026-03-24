@@ -350,7 +350,7 @@ export default async function ForestWeeklyScheduleSection({
     const hostname = await getHostname();
     const today = new Date();
     const horizon = new Date(today);
-    horizon.setDate(today.getDate() + 14);
+    horizon.setDate(today.getDate() + 120);
 
     const [calendarItems, classOffers] = await Promise.all([
       fetchCalendar({
