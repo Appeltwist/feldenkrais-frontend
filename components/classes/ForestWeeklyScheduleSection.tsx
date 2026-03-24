@@ -29,7 +29,6 @@ type LiveOccurrence = {
   offerTitle: string;
   offerExcerpt?: string;
   offerCanonicalUrl?: string;
-  offerPrimaryCtaUrl?: string;
 };
 
 type OfferMetadata = {
@@ -37,8 +36,9 @@ type OfferMetadata = {
   slug: string;
   excerpt?: string;
   canonicalUrl?: string;
-  primaryCtaUrl?: string;
 };
+
+type LiveScheduleState = "ready" | "empty" | "unavailable";
 
 const WEEKDAY_ORDER = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 
@@ -164,7 +164,6 @@ function parseOccurrence(value: unknown): LiveOccurrence | null {
     offerTitle,
     offerExcerpt: pickString(offer, ["excerpt", "summary", "description"]) || undefined,
     offerCanonicalUrl: pickString(offer, ["canonical_url", "canonicalUrl"]) || undefined,
-    offerPrimaryCtaUrl: pickString(offer, ["primary_cta_url", "primaryCtaUrl"]) || undefined,
   };
 }
 
@@ -183,7 +182,6 @@ function buildOfferMetadataMap(classOffers: unknown[]) {
       slug,
       excerpt: pickString(record, ["excerpt", "summary", "description"]) || undefined,
       canonicalUrl: pickString(record, ["canonical_url", "canonicalUrl"]) || undefined,
-      primaryCtaUrl: pickString(record, ["primary_cta_url", "primaryCtaUrl"]) || undefined,
     });
   }
 
@@ -288,11 +286,7 @@ function buildLiveScheduleDays(
         || offerMetadata?.excerpt
         || occurrence.offerExcerpt
         || undefined,
-      bookingUrl:
-        occurrence.bookingUrl
-        || offerMetadata?.primaryCtaUrl
-        || offerMetadata?.canonicalUrl
-        || fallbackMetadata.bookingUrl,
+      bookingUrl: occurrence.bookingUrl,
       color: fallbackMetadata.color,
       instructorImage: occurrence.facilitatorPhotoUrl,
     };
@@ -300,8 +294,8 @@ function buildLiveScheduleDays(
     const slotKey = [
       order,
       startTime,
+      endTime,
       normalizeClassKey(entry.className),
-      normalizeName(entry.instructor),
     ].join("|");
     if (uniqueSlots.has(slotKey)) {
       continue;
@@ -349,8 +343,8 @@ export default async function ForestWeeklyScheduleSection({
   const content = getPricingContent(locale);
   const resolvedHeading = heading ?? content.schedule.heading;
   const resolvedSubtitle = subtitle ?? content.schedule.subtitle ?? null;
-
-  let scheduleDays = content.schedule.days;
+  let scheduleDays: ScheduleDay[] = [];
+  let liveScheduleState: LiveScheduleState = "unavailable";
 
   try {
     const hostname = await getHostname();
@@ -386,18 +380,28 @@ export default async function ForestWeeklyScheduleSection({
         buildOfferMetadataMap(classOffers),
         locale,
       );
+      liveScheduleState = scheduleDays.length > 0 ? "ready" : "empty";
+    } else {
+      liveScheduleState = "empty";
     }
   } catch {
-    /* Keep the static schedule content as a safe fallback when the API is unavailable. */
+    liveScheduleState = "unavailable";
   }
 
   const labels = {
+    allClassesLabel: isFr ? "Tous" : "All",
     classDetailsLabel: isFr ? "Plus de détails" : "More details",
     classBookLabel: isFr ? "Réserver le cours" : "Book class",
     classTeacherPrefix: isFr ? "avec" : "w/",
     scheduleScrollHint: isFr
       ? "<- Glissez pour voir tous les jours ->"
       : "<- Scroll to see all days ->",
+    scheduleEmptyLabel: isFr
+      ? "Aucun cours n'est programmé pour le moment."
+      : "No classes are currently scheduled.",
+    scheduleUnavailableLabel: isFr
+      ? "Impossible de charger l'horaire en direct pour le moment."
+      : "Unable to load the live class schedule right now.",
   };
 
   return (
@@ -417,10 +421,18 @@ export default async function ForestWeeklyScheduleSection({
         </p>
       ) : null}
 
-      <ForestScheduleList
-        days={scheduleDays}
-        labels={labels}
-      />
+      {liveScheduleState === "ready" ? (
+        <ForestScheduleList
+          days={scheduleDays}
+          labels={labels}
+        />
+      ) : (
+        <p className="fp-section__subtitle fp-section__subtitle--left">
+          {liveScheduleState === "empty"
+            ? labels.scheduleEmptyLabel
+            : labels.scheduleUnavailableLabel}
+        </p>
+      )}
     </section>
   );
 }

@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import type { ScheduleDay } from "@/lib/pricing-content";
 
 type ForestScheduleListProps = {
   days: ScheduleDay[];
   labels: {
+    allClassesLabel: string;
     classDetailsLabel: string;
     classBookLabel: string;
     classTeacherPrefix: string;
@@ -20,14 +21,9 @@ export default function ForestScheduleList({
 }: ForestScheduleListProps) {
   const [openRowKey, setOpenRowKey] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
-  const contentRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const toggle = useCallback((key: string) => {
     setOpenRowKey((prev) => (prev === key ? null : key));
-  }, []);
-
-  const setRef = useCallback((key: string, el: HTMLDivElement | null) => {
-    contentRefs.current[key] = el;
   }, []);
 
   /* Group similar class names under one filter label */
@@ -71,7 +67,7 @@ export default function ForestScheduleList({
           onClick={() => setActiveFilter(null)}
           type="button"
         >
-          All
+          {labels.allClassesLabel}
         </button>
         {categories.map((cat) => (
           <button
@@ -112,9 +108,11 @@ export default function ForestScheduleList({
                   >
                     <span className="fp-schedule-list__time">{entry.time}</span>
                     <span className="fp-schedule-list__name">{entry.className}</span>
-                    <span className="fp-schedule-list__teacher">
-                      {labels.classTeacherPrefix} {entry.instructor}
-                    </span>
+                    {entry.instructor ? (
+                      <span className="fp-schedule-list__teacher">
+                        {labels.classTeacherPrefix} {entry.instructor}
+                      </span>
+                    ) : null}
                     <span className="fp-schedule-list__langs">
                       {entry.languages.map((lang) => (
                         <span className="fp-schedule-list__lang" key={lang}>
@@ -136,11 +134,8 @@ export default function ForestScheduleList({
                   {hasDetails && (
                     <div
                       className={`fp-class-expand${isOpen ? " is-open" : ""}`}
-                      ref={(el) => setRef(rowKey, el)}
                       style={{
-                        maxHeight: isOpen
-                          ? `${contentRefs.current[rowKey]?.scrollHeight ?? 200}px`
-                          : "0px",
+                        maxHeight: isOpen ? "24rem" : "0px",
                       }}
                     >
                       <div
@@ -154,11 +149,11 @@ export default function ForestScheduleList({
                               className="fp-schedule-list__avatar"
                               src={entry.instructorImage}
                             />
-                          ) : (
+                          ) : entry.instructor ? (
                             <span className="fp-schedule-list__avatar fp-schedule-list__avatar--initials" aria-hidden="true">
                               {entry.instructor.charAt(0)}
                             </span>
-                          )}
+                          ) : null}
                           <div className="fp-schedule-list__details-body">
                             {entry.description && (
                               <p className="fp-schedule-list__desc">{entry.description}</p>

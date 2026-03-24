@@ -242,7 +242,6 @@ function applyClassMeta(entries: ScheduleEntry[]): ScheduleEntry[] {
     ...e,
     level: withFallback(e.level, "All levels"),
     description: withFallback(e.description, EN_CLASS_DESCRIPTIONS[e.className] ?? EN_DEFAULT_CLASS_DESCRIPTION),
-    bookingUrl: withFallback(e.bookingUrl, BOOKING.book),
     color: withFallback(e.color, classColorFromName(e.className)),
     instructorImage: e.instructorImage ?? INSTRUCTOR_IMAGE[e.instructor],
   }));
@@ -253,7 +252,6 @@ function applyClassMetaFr(entries: ScheduleEntry[]): ScheduleEntry[] {
     ...e,
     level: withFallback(e.level, "Tous niveaux"),
     description: withFallback(e.description, FR_CLASS_DESCRIPTIONS[e.className] ?? FR_DEFAULT_CLASS_DESCRIPTION),
-    bookingUrl: withFallback(e.bookingUrl, BOOKING.book),
     color: withFallback(e.color, classColorFromName(e.className)),
     instructorImage: e.instructorImage ?? INSTRUCTOR_IMAGE[e.instructor],
   }));

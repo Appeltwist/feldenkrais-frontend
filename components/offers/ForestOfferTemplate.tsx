@@ -27,6 +27,8 @@ import {
   getFacilitatorQuote,
   getFacilitatorSlug,
   getFacilitators,
+  getFutureOccurrences,
+  getOccurrenceBookingUrl,
   getMediaUrl,
   getOccurrences,
   getOfferHeroImageUrl,
@@ -39,6 +41,7 @@ import {
   getPrimaryCta,
   getQuickFacts,
   getScheduleCards,
+  occurrenceToScheduleCard,
   getBenefits,
   getSections,
   getTags,
@@ -328,14 +331,32 @@ export default function ForestOfferTemplate({
 
   const title = getOfferTitle(offer);
   const subtitle = getOfferSubtitle(offer);
-  const primaryCta = primaryCtaOverride ?? getPrimaryCta(offer);
+  const rawPrimaryCta = getPrimaryCta(offer);
+  const upcomingClassOccurrences = offerType === "CLASS" ? getFutureOccurrences(offer) : [];
+  const classScheduleCards = offerType === "CLASS"
+    ? upcomingClassOccurrences
+        .map((occurrence) => occurrenceToScheduleCard(occurrence))
+        .filter((card): card is ScheduleCard => card !== null)
+        .slice(0, 4)
+    : [];
+  const classBookingUrl = offerType === "CLASS"
+    ? (upcomingClassOccurrences.map((occurrence) => getOccurrenceBookingUrl(occurrence)).find(Boolean) ?? "")
+    : "";
+  const resolvedPrimaryCta = offerType === "CLASS" && classBookingUrl
+    ? {
+        url: classBookingUrl,
+        label: rawPrimaryCta?.label ?? "",
+        style: rawPrimaryCta?.style ?? null,
+      }
+    : rawPrimaryCta;
+  const primaryCta = primaryCtaOverride ?? resolvedPrimaryCta;
   const heroVideoUrl = getOfferHeroVideoUrl(offer);
   const heroImageUrl = getOfferHeroImageUrl(offer);
   const offerSlug = getOfferSlug(offer) ?? "";
   const quickFacts = getQuickFacts(offer);
   const allScheduleCards = getScheduleCards(offer);
-  /* Classes: show only next week (≤ 4 occurrences) */
-  const scheduleCards = offerType === "CLASS" ? allScheduleCards.slice(0, 4) : allScheduleCards;
+  /* Classes: show only the next future occurrences from the live API feed. */
+  const scheduleCards = offerType === "CLASS" ? classScheduleCards : allScheduleCards;
   const themes = getThemes(offer);
   const domains = getDomains(offer);
   const sections = getSections(offer);
@@ -352,7 +373,8 @@ export default function ForestOfferTemplate({
     : [];
   const displayedScheduleCards = isTraining ? trainingScheduleCards : scheduleCards;
   const showScheduleCards =
-    offerType === "WORKSHOP" || offerType === "CLASS" || (isTraining && displayedScheduleCards.length > 0);
+    displayedScheduleCards.length > 0 &&
+    (offerType === "WORKSHOP" || offerType === "CLASS" || isTraining);
 
   /* split first rich_section (Aperçu) from remaining sections */
   const apercuSection =
@@ -481,8 +503,22 @@ export default function ForestOfferTemplate({
   const canonicalPath = getCanonicalOfferPath(offer);
 
   /* first occurrence → calendar event for "Add to Calendar" */
-  const occurrences = getOccurrences(offer);
-  const heroCta = primaryCta;
+  const occurrences = offerType === "CLASS" ? upcomingClassOccurrences : getOccurrences(offer);
+  const hasMultipleChoicePricing =
+    bookingOptions.length > 1 ||
+    priceOptions.length > 1 ||
+    (occurrences.length > 1 && (bookingOptions.length > 0 || priceOptions.length > 0));
+  const shouldUsePricingAnchorCta =
+    Boolean(primaryCta) &&
+    hasMultipleChoicePricing &&
+    offerType !== "PRIVATE_SESSION";
+  const heroCta = shouldUsePricingAnchorCta
+    ? {
+        label: localeCode === "fr" ? "Voir les dates & tarifs" : "See dates & pricing",
+        url: "#offer-pricing",
+        style: primaryCta?.style ?? null,
+      }
+    : primaryCta;
   const mobileBookingCta = heroCta?.url
     ? {
         href: heroCta.url,

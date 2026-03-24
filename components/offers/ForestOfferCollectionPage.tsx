@@ -70,6 +70,8 @@ type CollectionCopy = {
   facilitatedByLabel: string;
 };
 
+const CLASS_CALENDAR_HORIZON_DAYS = 120;
+
 const TYPE_LABELS: Record<OfferType, { fr: string; en: string }> = {
   WORKSHOP: { fr: "Atelier", en: "Workshop" },
   CLASS: { fr: "Cours", en: "Class" },
@@ -514,7 +516,7 @@ export default async function ForestOfferCollectionPage({
   const horizon = new Date(today);
   const fetchesClassesOnly =
     config.offerTypes.length === 1 && config.offerTypes[0] === "CLASS";
-  horizon.setDate(today.getDate() + (fetchesClassesOnly ? 14 : 365));
+  horizon.setDate(today.getDate() + (fetchesClassesOnly ? CLASS_CALENDAR_HORIZON_DAYS : 365));
   const from = toIsoDate(today);
   const to = toIsoDate(horizon);
   const calendarItems = await fetchCalendar({
@@ -669,10 +671,14 @@ export default async function ForestOfferCollectionPage({
                 const cardImage = getForestImageOverride(title) || heroImage || facilitatorImage;
                 const offerTypeVariant = getOfferTypeVariant(offerType);
                 const typeLabel = TYPE_LABELS[offerType]?.[localeCode] ?? TYPE_LABELS.WORKSHOP[localeCode];
-                const isDirectBookingCard = offerType === "PRIVATE_SESSION";
-                const bookingPath = offerType === "PRIVATE_SESSION" && slug
+                const isClassCard = offerType === "CLASS";
+                const isPrivateSessionCard = offerType === "PRIVATE_SESSION";
+                const isSplitActionCard = isClassCard || isPrivateSessionCard;
+                const bookingPath = isPrivateSessionCard && slug
                   ? localizePath(requestLocale, `/private-sessions/${slug}/book`)
-                  : detailsPath;
+                  : isClassCard && primaryOccurrence
+                    ? pickString(primaryOccurrence, ["booking_url", "bookingUrl"])
+                    : "";
                 const cardDateSource = offer;
 
                 /* Domains for tag pills */
@@ -687,7 +693,7 @@ export default async function ForestOfferCollectionPage({
                 const cardInner = (
                   <>
                     {/* Card image */}
-                    {isDirectBookingCard ? (
+                    {isSplitActionCard ? (
                       <Link className="fc-offer-card__media-link" href={detailsPath}>
                         <div className="fc-offer-card__media">
                           {cardImage ? (
@@ -735,7 +741,7 @@ export default async function ForestOfferCollectionPage({
 
                     {/* Card body */}
                     <div className="fc-offer-card__body">
-                      {isDirectBookingCard ? (
+                      {isSplitActionCard ? (
                         <h3 className="fc-offer-card__title">
                           <Link className="fc-offer-card__title-link" href={detailsPath}>
                             {title}
@@ -869,7 +875,7 @@ export default async function ForestOfferCollectionPage({
 
                     {/* Card footer */}
                     <div className="fc-offer-card__footer">
-                      {isDirectBookingCard ? (
+                      {isSplitActionCard ? (
                         <>
                           <Link className="fc-offer-card__cta" href={detailsPath}>
                             {copy.viewLabel}
@@ -877,7 +883,24 @@ export default async function ForestOfferCollectionPage({
                               <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
                             </svg>
                           </Link>
-                          <Link className="fc-offer-card__book" href={bookingPath}>{getOfferCTA(offerType, requestLocale)}</Link>
+                          {bookingPath ? (
+                            isClassCard ? (
+                              <a
+                                className="fc-offer-card__book"
+                                href={bookingPath}
+                                rel="noreferrer"
+                                target="_blank"
+                              >
+                                {getOfferCTA(offerType, requestLocale)}
+                              </a>
+                            ) : (
+                              <Link className="fc-offer-card__book" href={bookingPath}>
+                                {getOfferCTA(offerType, requestLocale)}
+                              </Link>
+                            )
+                          ) : (
+                            <span className="fc-offer-card__book">{getOfferCTA(offerType, requestLocale)}</span>
+                          )}
                         </>
                       ) : (
                         <>
@@ -894,7 +917,7 @@ export default async function ForestOfferCollectionPage({
                   </>
                 );
 
-                return isDirectBookingCard ? (
+                return isSplitActionCard ? (
                   <article
                     className={`fc-offer-card fc-offer-card--${offerTypeVariant}`}
                     key={slug || `offer-${index}`}

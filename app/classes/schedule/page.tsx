@@ -12,7 +12,6 @@ export default async function ClassesSchedulePage() {
   const siteConfig = await fetchSiteConfig(hostname).catch(() => null);
   const isFrench = locale.toLowerCase().startsWith("fr");
 
-  /* Allow rendering when API is down — Forest Lighthouse schedule uses static data */
   const isForest = siteConfig ? isForestCenter(siteConfig.centerSlug) : true;
 
   if (siteConfig && !isForest) {

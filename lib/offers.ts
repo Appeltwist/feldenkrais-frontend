@@ -292,6 +292,81 @@ export function getOccurrences(offer: OfferDetail) {
   return asRecords(record.occurrences ?? record.next_occurrences ?? record.sessions) as Occurrence[];
 }
 
+export function getOccurrenceStartValue(occurrence: unknown) {
+  const record = asRecord(occurrence);
+  return pickString(record, ["start_datetime", "start", "start_at", "datetime", "date"]);
+}
+
+export function getOccurrenceEndValue(occurrence: unknown) {
+  const record = asRecord(occurrence);
+  return pickString(record, ["end_datetime", "end", "end_at"]);
+}
+
+export function getOccurrenceBookingUrl(occurrence: unknown) {
+  const record = asRecord(occurrence);
+  return pickString(record, ["booking_url", "bookingUrl"]);
+}
+
+export function getOccurrenceIcsUrl(occurrence: unknown) {
+  const record = asRecord(occurrence);
+  return pickString(record, ["ics_url", "icsUrl"]);
+}
+
+export function compareOccurrenceStart(left: unknown, right: unknown) {
+  const leftStart = getOccurrenceStartValue(left);
+  const rightStart = getOccurrenceStartValue(right);
+
+  if (!leftStart && !rightStart) {
+    return 0;
+  }
+  if (!leftStart) {
+    return 1;
+  }
+  if (!rightStart) {
+    return -1;
+  }
+
+  const leftTime = Date.parse(leftStart);
+  const rightTime = Date.parse(rightStart);
+  const leftValid = Number.isFinite(leftTime);
+  const rightValid = Number.isFinite(rightTime);
+
+  if (leftValid && rightValid && leftTime !== rightTime) {
+    return leftTime - rightTime;
+  }
+
+  return leftStart.localeCompare(rightStart);
+}
+
+export function getSortedOccurrences(offer: OfferDetail) {
+  return [...getOccurrences(offer)].sort(compareOccurrenceStart);
+}
+
+export function getFutureOccurrences(offer: OfferDetail, now = new Date()) {
+  const nowTime = now.getTime();
+
+  return getSortedOccurrences(offer).filter((occurrence) => {
+    const start = getOccurrenceStartValue(occurrence);
+    if (!start) {
+      return false;
+    }
+
+    const startTime = Date.parse(start);
+    return Number.isFinite(startTime) && startTime >= nowTime;
+  });
+}
+
+export function getUpcomingOccurrenceBookingUrl(offer: OfferDetail, now = new Date()) {
+  for (const occurrence of getFutureOccurrences(offer, now)) {
+    const bookingUrl = getOccurrenceBookingUrl(occurrence);
+    if (bookingUrl) {
+      return bookingUrl;
+    }
+  }
+
+  return "";
+}
+
 export function getPriceOptions(offer: OfferDetail) {
   const record = asRecord(offer);
   if (!record) {
@@ -444,6 +519,30 @@ export function getScheduleCards(offer: OfferDetail) {
       return hasAny ? normalized : null;
     })
     .filter((card): card is ScheduleCard => card !== null);
+}
+
+export function occurrenceToScheduleCard(occurrence: unknown): ScheduleCard | null {
+  const record = asRecord(occurrence);
+  if (!record) {
+    return null;
+  }
+
+  const startDateTime = getOccurrenceStartValue(record);
+  const endDateTime = getOccurrenceEndValue(record);
+  const timezone = pickString(record, ["timezone", "tz", "time_zone"]);
+  const facilitator = getOccurrenceFacilitator(record);
+
+  if (!startDateTime && !endDateTime && !timezone && !facilitator) {
+    return null;
+  }
+
+  return {
+    date_label: pickString(record, ["date_label", "dateLabel", "label", "title"]),
+    start_datetime: startDateTime || null,
+    end_datetime: endDateTime || null,
+    timezone: timezone || null,
+    facilitator,
+  };
 }
 
 export function getOccurrenceFacilitator(occurrence: unknown): ScheduleCardFacilitator | null {
