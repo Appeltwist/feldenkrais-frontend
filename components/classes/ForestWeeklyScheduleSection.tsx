@@ -41,6 +41,7 @@ type OfferMetadata = {
 type LiveScheduleState = "ready" | "empty" | "unavailable";
 
 const WEEKDAY_ORDER = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
+const SCHEDULE_TIMEZONE = "Europe/Brussels";
 
 function asRecord(value: unknown): RawRecord | null {
   if (typeof value === "object" && value !== null && !Array.isArray(value)) {
@@ -114,6 +115,44 @@ function weekdayLabel(value: string, locale: string, timezone?: string) {
     weekday: "long",
     ...(timezone ? { timeZone: timezone } : {}),
   }).format(parsed);
+}
+
+function formatDateKey(value: Date, timezone = SCHEDULE_TIMEZONE) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(value);
+
+  const year = parts.find((part) => part.type === "year")?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
+  const day = parts.find((part) => part.type === "day")?.value;
+  if (!year || !month || !day) {
+    return "";
+  }
+  return `${year}-${month}-${day}`;
+}
+
+function startOfWeekDateKey(value: Date, timezone = SCHEDULE_TIMEZONE) {
+  const currentDateKey = formatDateKey(value, timezone);
+  if (!currentDateKey) {
+    return "";
+  }
+
+  const weekday = new Intl.DateTimeFormat("en-GB", {
+    weekday: "short",
+    timeZone: timezone,
+  }).format(value);
+  const weekdayIndex = WEEKDAY_ORDER.indexOf(weekday as (typeof WEEKDAY_ORDER)[number]);
+  if (weekdayIndex === -1) {
+    return currentDateKey;
+  }
+
+  const [year, month, day] = currentDateKey.split("-").map((part) => Number.parseInt(part, 10));
+  const currentUtc = new Date(Date.UTC(year, month - 1, day));
+  currentUtc.setUTCDate(currentUtc.getUTCDate() - weekdayIndex);
+  return formatDateKey(currentUtc, "UTC") || currentDateKey;
 }
 
 function profileFromUnknown(value: unknown) {
@@ -351,14 +390,16 @@ export default async function ForestWeeklyScheduleSection({
     const today = new Date();
     const horizon = new Date(today);
     horizon.setDate(today.getDate() + 120);
+    const rangeStart = startOfWeekDateKey(today);
+    const rangeEnd = formatDateKey(horizon);
 
     const [calendarItems, classOffers] = await Promise.all([
       fetchCalendar({
         hostname,
         center: "forest-lighthouse",
         locale,
-        from: today.toISOString().slice(0, 10),
-        to: horizon.toISOString().slice(0, 10),
+        from: rangeStart || today.toISOString().slice(0, 10),
+        to: rangeEnd || horizon.toISOString().slice(0, 10),
       }),
       fetchOffers({
         hostname,
