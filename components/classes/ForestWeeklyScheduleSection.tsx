@@ -284,13 +284,14 @@ function buildLiveScheduleDays(
   offerMetadataBySlug: Map<string, OfferMetadata>,
   locale: string,
 ) {
-  const uniqueSlots = new Map<
+  const upcomingTimestamp = Date.now();
+  const groupedSlots = new Map<
     string,
     {
       weekday: string;
       weekdayOrder: number;
       timeSort: string;
-      entry: ScheduleEntry;
+      occurrences: LiveOccurrence[];
     }
   >();
 
@@ -299,8 +300,6 @@ function buildLiveScheduleDays(
   );
 
   for (const occurrence of sortedOccurrences) {
-    const fallbackMetadata =
-      resolveStaticMetadata(occurrence.offerTitle, occurrence.offerSlug, metadataByTitle) ?? {};
     const offerMetadata = offerMetadataBySlug.get(occurrence.offerSlug);
     const weekday = weekdayLabel(occurrence.startDateTime, locale, occurrence.timezone);
     const order = weekdayOrder(occurrence.startDateTime, occurrence.timezone);
@@ -314,50 +313,84 @@ function buildLiveScheduleDays(
       continue;
     }
 
+    const slotKey = [
+      order,
+      startTime,
+      endTime,
+      normalizeClassKey(offerMetadata?.title || occurrence.offerTitle),
+    ].join("|");
+    const existing = groupedSlots.get(slotKey);
+    if (existing) {
+      existing.occurrences.push(occurrence);
+      continue;
+    }
+
+    groupedSlots.set(slotKey, {
+      weekday,
+      weekdayOrder: order,
+      timeSort: startTime,
+      occurrences: [occurrence],
+    });
+  }
+
+  const grouped = new Map<string, { weekdayOrder: number; entries: Array<{ timeSort: string; entry: ScheduleEntry }> }>();
+  for (const slot of groupedSlots.values()) {
+    const representativeOccurrence =
+      slot.occurrences.find((occurrence) => {
+        const parsed = new Date(occurrence.startDateTime);
+        return !Number.isNaN(parsed.getTime()) && parsed.getTime() >= upcomingTimestamp;
+      })
+      ?? slot.occurrences[0];
+
+    if (!representativeOccurrence) {
+      continue;
+    }
+
+    const fallbackMetadata =
+      resolveStaticMetadata(
+        representativeOccurrence.offerTitle,
+        representativeOccurrence.offerSlug,
+        metadataByTitle,
+      ) ?? {};
+    const offerMetadata = offerMetadataBySlug.get(representativeOccurrence.offerSlug);
+    const startTime = formatTimeLabel(
+      representativeOccurrence.startDateTime,
+      locale,
+      representativeOccurrence.timezone,
+    );
+    const endTime = formatTimeLabel(
+      representativeOccurrence.endDateTime,
+      locale,
+      representativeOccurrence.timezone,
+    );
+    if (!startTime) {
+      continue;
+    }
+
     const entry: ScheduleEntry = {
       time: endTime ? `${startTime} – ${endTime}` : startTime,
-      className: offerMetadata?.title || occurrence.offerTitle,
-      instructor: occurrence.facilitatorName || "",
+      className: offerMetadata?.title || representativeOccurrence.offerTitle,
+      instructor: representativeOccurrence.facilitatorName || "",
       languages: fallbackMetadata.languages ?? [],
       level: fallbackMetadata.level,
       description:
         fallbackMetadata.description
         || offerMetadata?.excerpt
-        || occurrence.offerExcerpt
+        || representativeOccurrence.offerExcerpt
         || undefined,
-      bookingUrl: occurrence.bookingUrl,
+      bookingUrl: representativeOccurrence.bookingUrl,
       color: fallbackMetadata.color,
-      instructorImage: occurrence.facilitatorPhotoUrl,
+      instructorImage: representativeOccurrence.facilitatorPhotoUrl,
     };
 
-    const slotKey = [
-      order,
-      startTime,
-      endTime,
-      normalizeClassKey(entry.className),
-    ].join("|");
-    if (uniqueSlots.has(slotKey)) {
-      continue;
-    }
-
-    uniqueSlots.set(slotKey, {
-      weekday,
-      weekdayOrder: order,
-      timeSort: startTime,
-      entry,
-    });
-  }
-
-  const grouped = new Map<string, { weekdayOrder: number; entries: Array<{ timeSort: string; entry: ScheduleEntry }> }>();
-  for (const slot of uniqueSlots.values()) {
     const existing = grouped.get(slot.weekday);
     if (existing) {
-      existing.entries.push({ timeSort: slot.timeSort, entry: slot.entry });
+      existing.entries.push({ timeSort: slot.timeSort, entry });
       continue;
     }
     grouped.set(slot.weekday, {
       weekdayOrder: slot.weekdayOrder,
-      entries: [{ timeSort: slot.timeSort, entry: slot.entry }],
+      entries: [{ timeSort: slot.timeSort, entry }],
     });
   }
 
