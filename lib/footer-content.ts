@@ -4,6 +4,7 @@ export type FooterContent = {
   newsletterPlaceholder: string;
   newsletterCta: string;
   contactHeading: string;
+  contactPageLabel: string;
   copyright: string;
   navLinks: Array<{ label: string; href: string }>;
 };
@@ -15,6 +16,7 @@ const FOOTER: Record<string, FooterContent> = {
     newsletterPlaceholder: "Your email",
     newsletterCta: "Subscribe",
     contactHeading: "Contact",
+    contactPageLabel: "Contact us",
     copyright: "\u00a9 2026 Forest Lighthouse. All Rights Reserved.",
     navLinks: [
       { label: "What's On", href: "/en/calendar" },
@@ -31,6 +33,7 @@ const FOOTER: Record<string, FooterContent> = {
     newsletterPlaceholder: "Votre email",
     newsletterCta: "S\u2019inscrire",
     contactHeading: "Contact",
+    contactPageLabel: "Nous contacter",
     copyright: "\u00a9 2026 Forest Lighthouse. Tous droits r\u00e9serv\u00e9s.",
     navLinks: [
       { label: "\u00c0 l'affiche", href: "/fr/calendar" },

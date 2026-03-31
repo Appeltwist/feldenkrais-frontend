@@ -345,17 +345,7 @@ export function getSortedOccurrences(offer: OfferDetail) {
 }
 
 export function getFutureOccurrences(offer: OfferDetail, now = new Date()) {
-  const nowTime = now.getTime();
-
-  return getSortedOccurrences(offer).filter((occurrence) => {
-    const start = getOccurrenceStartValue(occurrence);
-    if (!start) {
-      return false;
-    }
-
-    const startTime = Date.parse(start);
-    return Number.isFinite(startTime) && startTime >= nowTime;
-  });
+  return filterFutureEntries(getSortedOccurrences(offer), now);
 }
 
 export function getUpcomingOccurrenceBookingUrl(offer: OfferDetail, now = new Date()) {
@@ -541,6 +531,87 @@ export function getScheduleCards(offer: OfferDetail) {
     .filter((card): card is ScheduleCard => card !== null);
 }
 
+function filterFutureEntries<T>(entries: T[], now = new Date()) {
+  const nowTime = now.getTime();
+
+  return entries.filter((entry) => {
+    const start = getOccurrenceStartValue(entry);
+    if (!start) {
+      return false;
+    }
+
+    const startTime = Date.parse(start);
+    return Number.isFinite(startTime) && startTime >= nowTime;
+  });
+}
+
+export function getSortedScheduleCards(offer: OfferDetail) {
+  return [...getScheduleCards(offer)].sort(compareOccurrenceStart);
+}
+
+export function getFutureScheduleCards(offer: OfferDetail, now = new Date()) {
+  return filterFutureEntries(getSortedScheduleCards(offer), now);
+}
+
+export function hasExplicitScheduleCards(offer: OfferDetail | OfferSummary) {
+  const record = asRecord(offer);
+  return Boolean(record)
+    && (
+      Object.prototype.hasOwnProperty.call(record, "schedule_cards")
+      || Object.prototype.hasOwnProperty.call(record, "scheduleCards")
+    );
+}
+
+export function getDisplayScheduleEntries(offer: OfferDetail | OfferSummary) {
+  const record = asRecord(offer);
+  if (!record) {
+    return [] as RawRecord[];
+  }
+
+  const scheduleCards = asRecords(record.schedule_cards ?? record.scheduleCards);
+  const directOccurrences = getOccurrences(offer as OfferDetail) as RawRecord[];
+  const offerType = getOfferType(offer);
+
+  if ((offerType === "WORKSHOP" || offerType === "TRAINING_INFO") && hasExplicitScheduleCards(offer)) {
+    return [...scheduleCards].sort(compareOccurrenceStart);
+  }
+
+  if (directOccurrences.length > 0) {
+    return [...directOccurrences].sort(compareOccurrenceStart);
+  }
+
+  if (scheduleCards.length > 0) {
+    return [...scheduleCards].sort(compareOccurrenceStart);
+  }
+
+  const nextRaw = record.next_occurrence ?? record.nextOccurrence;
+  if (typeof nextRaw === "string") {
+    return [{ start_datetime: nextRaw }];
+  }
+
+  const nextOccurrence = asRecord(nextRaw);
+  if (nextOccurrence) {
+    return [nextOccurrence];
+  }
+
+  return [] as RawRecord[];
+}
+
+export function getFutureDisplayScheduleEntries(
+  offer: OfferDetail | OfferSummary,
+  now = new Date(),
+) {
+  return filterFutureEntries(getDisplayScheduleEntries(offer), now);
+}
+
+export function getNextUpcomingOccurrenceRecord(
+  offer: OfferDetail | OfferSummary,
+  now = new Date(),
+) {
+  const futureEntries = getFutureDisplayScheduleEntries(offer, now);
+  return futureEntries[0] ?? null;
+}
+
 export function occurrenceToScheduleCard(occurrence: unknown): ScheduleCard | null {
   const record = asRecord(occurrence);
   if (!record) {
@@ -690,28 +761,34 @@ export function getBenefits(
 }
 
 export function readNextOccurrence(offer: OfferSummary | OfferDetail) {
-  const record = asRecord(offer);
-  if (!record) {
-    return { start: "", timezone: "" };
-  }
-
-  const rawOccurrence = record.next_occurrence ?? record.nextOccurrence;
-
-  if (typeof rawOccurrence === "string") {
-    return { start: rawOccurrence, timezone: "" };
-  }
-
-  const occurrence = asRecord(rawOccurrence);
+  const occurrence = getNextUpcomingOccurrenceRecord(offer);
   if (!occurrence) {
-    const allOccurrences = asRecords(record.occurrences ?? record.next_occurrences ?? record.sessions);
-    if (allOccurrences.length === 0) {
+    const record = asRecord(offer);
+    if (!record) {
       return { start: "", timezone: "" };
     }
 
-    return {
-      start: pickString(allOccurrences[0], ["start_datetime", "start", "start_at", "datetime", "date"]),
-      timezone: pickString(allOccurrences[0], ["timezone", "tz", "time_zone"]),
-    };
+    const rawOccurrence = record.next_occurrence ?? record.nextOccurrence;
+    if (typeof rawOccurrence === "string") {
+      const startTime = Date.parse(rawOccurrence);
+      if (Number.isFinite(startTime) && startTime >= Date.now()) {
+        return { start: rawOccurrence, timezone: "" };
+      }
+    } else {
+      const fallbackOccurrence = asRecord(rawOccurrence);
+      const fallbackStart = getOccurrenceStartValue(fallbackOccurrence);
+      if (fallbackOccurrence && fallbackStart) {
+        const startTime = Date.parse(fallbackStart);
+        if (Number.isFinite(startTime) && startTime >= Date.now()) {
+          return {
+            start: fallbackStart,
+            timezone: pickString(fallbackOccurrence, ["timezone", "tz", "time_zone"]),
+          };
+        }
+      }
+    }
+
+    return { start: "", timezone: "" };
   }
 
   return {

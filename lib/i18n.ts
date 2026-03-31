@@ -13,6 +13,7 @@ export type OfferLabels = {
   noPricing: string;
   noFacilitators: string;
   noThemes: string;
+  contactUs: string;
   openDetails: string;
   benefits: string;
   eventFaq: string;
@@ -56,6 +57,7 @@ const LABELS: Record<LocaleCode, OfferLabels> = {
     noPricing: "Aucun tarif affich\u00e9.",
     noFacilitators: "Aucun\u00b7e intervenant\u00b7e indiqu\u00e9\u00b7e.",
     noThemes: "Aucun th\u00e8me.",
+    contactUs: "Nous contacter",
     openDetails: "Voir d\u00e9tails",
     benefits: "Pourquoi participer",
     eventFaq: "En savoir plus",
@@ -73,6 +75,7 @@ const LABELS: Record<LocaleCode, OfferLabels> = {
     noPricing: "No pricing listed.",
     noFacilitators: "No facilitators listed.",
     noThemes: "No themes.",
+    contactUs: "Contact us",
     openDetails: "Open details",
     benefits: "Why join",
     eventFaq: "More about this program",

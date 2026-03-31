@@ -20,12 +20,11 @@ import {
   getDomains,
   getFacilitatorName,
   getFacilitators,
-  getOccurrences,
   getOfferSlug,
   getOfferTitle,
   getOfferType,
   getOfferTypeVariant,
-  getScheduleCards,
+  getFutureDisplayScheduleEntries,
   pickString,
   readNextOccurrence,
 } from "@/lib/offers";
@@ -204,22 +203,11 @@ function getLocalizedDateParts(dateValue: string, locale: string, timezone?: str
 }
 
 function getOccurrenceEntries(offer: OfferSummary | OfferDetail) {
-  const scheduleCards = getScheduleCards(offer as OfferDetail);
-  const sortEntries = (entries: Array<Record<string, unknown>>) =>
-    [...entries].sort((a, b) => {
-      const aStart = pickString(asRecord(a), ["start_datetime", "start", "start_at", "datetime", "date"]);
-      const bStart = pickString(asRecord(b), ["start_datetime", "start", "start_at", "datetime", "date"]);
-      return aStart.localeCompare(bStart);
-    });
-
-  if (scheduleCards.length > 0) {
-    return sortEntries(scheduleCards as Array<Record<string, unknown>>);
-  }
-  return sortEntries(getOccurrences(offer as OfferDetail) as Array<Record<string, unknown>>);
+  return getFutureDisplayScheduleEntries(offer as OfferDetail);
 }
 
 function formatTrainingPeriodLabel(offer: OfferSummary | OfferDetail, locale: string) {
-  const entries = getScheduleCards(offer as OfferDetail);
+  const entries = getOccurrenceEntries(offer);
   const labels: string[] = [];
   const seen = new Set<string>();
 
@@ -385,7 +373,7 @@ function formatFacilitatorNames(names: readonly string[]) {
 }
 
 function formatGroupedTrainingLabels(offer: OfferSummary | OfferDetail, locale: string) {
-  const occurrences = getOccurrences(offer as OfferDetail)
+  const occurrences = getFutureDisplayScheduleEntries(offer as OfferDetail)
     .map((entry) => {
       const start = pickString(asRecord(entry), ["start_datetime", "start", "start_at", "datetime", "date"]);
       const timezone = pickString(asRecord(entry), ["timezone", "tz", "time_zone"]);
@@ -613,7 +601,6 @@ function buildExploreCard(
   const facilitators = getFacilitators(offer as OfferDetail);
   const slug = getOfferSlug(offer);
   const facilitatorOverride = getForestFacilitatorNamesOverride(slug);
-  const firstFacilitator = facilitators[0];
   const facilitatorNames = formatFacilitatorNames(
     facilitators.map((facilitator) => getFacilitatorName(facilitator, "")).filter(Boolean),
   );

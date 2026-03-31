@@ -4,12 +4,14 @@ import Link from "next/link";
 
 import { useSiteContext } from "@/lib/site-context";
 import { getFooterContent } from "@/lib/footer-content";
+import { localizePath } from "@/lib/locale-path";
 
 export default function ForestFooter({ locale }: { locale: string }) {
   const { centerSlug } = useSiteContext();
   if (centerSlug !== "forest-lighthouse") return null;
 
   const c = getFooterContent(locale);
+  const contactHref = localizePath(locale, "/contact");
 
   return (
     <footer className="fl-footer">
@@ -71,7 +73,8 @@ export default function ForestFooter({ locale }: { locale: string }) {
           <address className="fl-footer__address">
             274 Rue des Alliés<br />
             1190 Forest, Belgium<br />
-            <a href="tel:+32485726837">+32 485 72 68 37</a>
+            <a href="tel:+32485726837">+32 485 72 68 37</a><br />
+            <Link href={contactHref}>{c.contactPageLabel}</Link>
           </address>
         </div>
       </div>

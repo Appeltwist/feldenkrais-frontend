@@ -17,8 +17,10 @@ import { getForestFacilitatorNamesOverride } from "@/lib/forest-facilitator-over
 import { getForestPlaceholderCopy, getOfferLabels, resolveLocale } from "@/lib/i18n";
 import { isExternalHref, localizePath } from "@/lib/locale-path";
 import {
+  asRecord,
   getBookingOptions,
   getCanonicalOfferPath,
+  getDisplayScheduleEntries,
   getDomains,
   getOfferSlug,
   getFacilitatorBio,
@@ -43,7 +45,7 @@ import {
   getPricingPromos,
   getPrimaryCta,
   getQuickFacts,
-  getScheduleCards,
+  getFutureDisplayScheduleEntries,
   occurrenceToScheduleCard,
   getBenefits,
   getSections,
@@ -350,11 +352,15 @@ export default function ForestOfferTemplate({
   const placeholderCopy = getForestPlaceholderCopy(localeCode);
   const typeLabel = TYPE_LABELS[offerType]?.[localeCode] ?? TYPE_LABELS.WORKSHOP[localeCode];
   const isTraining = offerType === "TRAINING_INFO";
+  const contactPath = localizePath(localeCode, "/contact");
 
   const title = getOfferTitle(offer);
   const subtitle = getOfferSubtitle(offer);
   const rawPrimaryCta = getPrimaryCta(offer);
+  const allOccurrences = getOccurrences(offer);
   const upcomingClassOccurrences = offerType === "CLASS" ? getFutureOccurrences(offer) : [];
+  const allDisplayScheduleEntries = offerType === "CLASS" ? [] : getDisplayScheduleEntries(offer);
+  const futureDisplayScheduleEntries = offerType === "CLASS" ? [] : getFutureDisplayScheduleEntries(offer);
   const classScheduleCards = offerType === "CLASS"
     ? upcomingClassOccurrences
         .map((occurrence) => occurrenceToScheduleCard(occurrence))
@@ -376,9 +382,11 @@ export default function ForestOfferTemplate({
   const heroImageUrl = getOfferHeroImageUrl(offer);
   const offerSlug = getOfferSlug(offer) ?? "";
   const quickFacts = getQuickFacts(offer);
-  const allScheduleCards = getScheduleCards(offer);
-  /* Classes: show only the next future occurrences from the live API feed. */
-  const scheduleCards = offerType === "CLASS" ? classScheduleCards : allScheduleCards;
+  const scheduleCards = offerType === "CLASS"
+    ? classScheduleCards
+    : futureDisplayScheduleEntries
+        .map((entry) => occurrenceToScheduleCard(entry))
+        .filter((card): card is ScheduleCard => card !== null);
   const themes = getThemes(offer);
   const domains = getDomains(offer);
   const sections = getSections(offer);
@@ -395,8 +403,15 @@ export default function ForestOfferTemplate({
     ? scheduleCards.filter((card) => Boolean(formatSchedulePeriod(card, localeCode)))
     : [];
   const displayedScheduleCards = isTraining ? trainingScheduleCards : scheduleCards;
+  const hasAnyScheduleData = offerType === "CLASS"
+    ? allOccurrences.length > 0
+    : allDisplayScheduleEntries.length > 0;
   const showScheduleCards =
     displayedScheduleCards.length > 0 &&
+    (offerType === "WORKSHOP" || offerType === "CLASS" || isTraining);
+  const showNoUpcomingDatesFallback =
+    !showScheduleCards &&
+    hasAnyScheduleData &&
     (offerType === "WORKSHOP" || offerType === "CLASS" || isTraining);
 
   /* split first rich_section (Aperçu) from remaining sections */
@@ -492,11 +507,7 @@ export default function ForestOfferTemplate({
   const faqSections = siteFaqSections.filter((section) => section.items.length > 0);
   const activePricingPromos = pricingPromos.filter((promo) => isActivePromo(promo as Record<string, unknown>));
   const totalPricingTiers = pricingGroups.reduce((count, group) => count + getPricingGroupTiers(group).length, 0);
-  const shouldPreferBookingOptions =
-    bookingOptions.length > 0 &&
-    pricingGroups.length === 1 &&
-    totalPricingTiers <= 1;
-  const shouldRenderGroupedPricing = pricingGroups.length > 0 && !shouldPreferBookingOptions;
+  const shouldRenderGroupedPricing = pricingGroups.length > 0;
   const pricingActionLabel = getForestPricingActionLabel(offerType, localeCode);
   const waitlistActionLabel = getForestWaitlistActionLabel(localeCode);
   const scheduleEventLocation = quickFacts?.venue
@@ -555,13 +566,15 @@ export default function ForestOfferTemplate({
   const canonicalPath = getCanonicalOfferPath(offer);
 
   /* first occurrence → calendar event for "Add to Calendar" */
-  const occurrences = offerType === "CLASS" ? upcomingClassOccurrences : getOccurrences(offer);
+  const pricedOccurrenceCount = offerType === "CLASS"
+    ? upcomingClassOccurrences.length
+    : futureDisplayScheduleEntries.length;
   const hasMultipleChoicePricing =
     pricingGroups.length > 1 ||
     totalPricingTiers > 1 ||
     bookingOptions.length > 1 ||
     priceOptions.length > 1 ||
-    (occurrences.length > 1 && (bookingOptions.length > 0 || priceOptions.length > 0));
+    (pricedOccurrenceCount > 1 && (bookingOptions.length > 0 || priceOptions.length > 0));
   const shouldUsePricingAnchorCta =
     Boolean(primaryCta) &&
     hasMultipleChoicePricing &&
@@ -579,12 +592,18 @@ export default function ForestOfferTemplate({
         label: heroCta.label || labels.book,
       }
     : null;
-  const firstOcc = occurrences[0] as Record<string, unknown> | undefined;
+  const firstCalendarEntry = asRecord(
+    offerType === "CLASS"
+      ? upcomingClassOccurrences[0]
+      : futureDisplayScheduleEntries[0],
+  );
+  const firstCalendarStart = pickString(firstCalendarEntry, ["start_datetime", "start", "start_at", "datetime", "date"]);
+  const firstCalendarEnd = pickString(firstCalendarEntry, ["end_datetime", "end", "end_at"]);
   const calendarEvent =
-    !isTraining && firstOcc && typeof firstOcc.start_datetime === "string" && typeof firstOcc.end_datetime === "string"
+    !isTraining && firstCalendarStart && firstCalendarEnd
       ? {
-          start: firstOcc.start_datetime,
-          end: firstOcc.end_datetime,
+          start: firstCalendarStart,
+          end: firstCalendarEnd,
           location: scheduleEventLocation,
         }
       : undefined;
@@ -770,6 +789,13 @@ export default function ForestOfferTemplate({
                   );
                 });
               })()}
+            </div>
+          ) : showNoUpcomingDatesFallback ? (
+            <div className="forest-hero__schedule forest-hero__schedule--empty">
+              <p className="forest-hero__schedule-empty">{labels.noOccurrences}</p>
+              <Link className="forest-hero__schedule-contact" href={contactPath}>
+                {labels.contactUs}
+              </Link>
             </div>
           ) : null}
 

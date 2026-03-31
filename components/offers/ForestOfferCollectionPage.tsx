@@ -13,17 +13,18 @@ import { getForestExcerptOverride, getForestImageOverride } from "@/lib/forest-e
 import { getForestFacilitatorNamesOverride } from "@/lib/forest-facilitator-overrides";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
-import { resolveLocale } from "@/lib/i18n";
+import { getOfferLabels as getLocalizedOfferLabels, resolveLocale } from "@/lib/i18n";
 import { localizePath } from "@/lib/locale-path";
 import {
   asRecord,
-  asRecords,
   getCanonicalOfferPath,
+  getDisplayScheduleEntries,
   getFacilitatorImageUrl,
   getFacilitatorName,
   getFacilitators,
+  getFutureDisplayScheduleEntries,
+  getNextUpcomingOccurrenceRecord,
   getOccurrenceFacilitator,
-  getOccurrences,
   getOfferSlug,
   getOfferTitle,
   getOfferType,
@@ -217,44 +218,10 @@ function toIsoDate(value: Date) {
   return value.toISOString().slice(0, 10);
 }
 
-function compareOccurrenceStart(a: RawRecord, b: RawRecord) {
-  const aStart = pickString(a, ["start_datetime", "start", "start_at", "datetime", "date"]);
-  const bStart = pickString(b, ["start_datetime", "start", "start_at", "datetime", "date"]);
-  if (!aStart && !bStart) return 0;
-  if (!aStart) return 1;
-  if (!bStart) return -1;
-  return aStart.localeCompare(bStart);
-}
-
-function getOccurrenceEntries(offer: unknown): RawRecord[] {
-  const record = asRecord(offer);
-  const scheduleCards = asRecords(record?.schedule_cards ?? record?.scheduleCards);
-  const offerType = getOfferType(offer as OfferDetail);
-  const hasExplicitScheduleCards =
-    Boolean(record) &&
-    (
-      Object.prototype.hasOwnProperty.call(record, "schedule_cards") ||
-      Object.prototype.hasOwnProperty.call(record, "scheduleCards")
-    );
-
-  // Workshops and trainings have curated schedule cards. Some detail payloads
-  // also include unrelated center-wide occurrences, so prefer the schedule cards.
-  if (offerType === "WORKSHOP" || offerType === "TRAINING_INFO") {
-    if (hasExplicitScheduleCards) {
-      return [...scheduleCards].sort(compareOccurrenceStart);
-    }
-  }
-
-  const directOccurrences = getOccurrences(offer as OfferDetail);
-  if (directOccurrences.length > 0) {
-    return [...directOccurrences].sort(compareOccurrenceStart);
-  }
-
-  if (scheduleCards.length > 0) {
-    return [...scheduleCards].sort(compareOccurrenceStart);
-  }
-
-  return [];
+function getOccurrenceEntries(offer: unknown, mode: "all" | "future" = "future"): RawRecord[] {
+  return mode === "future"
+    ? getFutureDisplayScheduleEntries(offer as OfferDetail)
+    : getDisplayScheduleEntries(offer as OfferDetail);
 }
 
 /** Format a single occurrence into { date, timeRange } */
@@ -294,20 +261,7 @@ function formatOccurrence(
 
 /** Resolve a single occurrence from the offer (next_occurrence fallback) */
 function resolveOneOccurrenceEntry(offer: unknown): RawRecord | null {
-  const record = asRecord(offer);
-  if (!record) return null;
-
-  const allOccs = getOccurrenceEntries(offer);
-  if (allOccs.length > 0) {
-    return allOccs[0];
-  }
-
-  const nextRaw = record.next_occurrence ?? record.nextOccurrence;
-  if (!nextRaw) return null;
-  if (typeof nextRaw === "string") {
-    return { start_datetime: nextRaw };
-  }
-  return asRecord(nextRaw);
+  return getNextUpcomingOccurrenceRecord(offer as OfferDetail);
 }
 
 function resolveOneOccurrence(offer: unknown, locale: string): FormattedOccurrence | null {
@@ -319,23 +273,20 @@ function resolveOneOccurrence(offer: unknown, locale: string): FormattedOccurren
 
 /** Resolve all occurrences from the offer */
 function resolveAllOccurrences(offer: unknown, locale: string): FormattedOccurrence[] {
-  const record = asRecord(offer);
-  if (!record) return [];
-
-  const allOccs = getOccurrenceEntries(offer);
-  if (allOccs.length > 0) {
-    const tz = pickString(allOccs[0], ["timezone", "tz", "time_zone"]);
-    const formatted: FormattedOccurrence[] = [];
-    for (const occ of allOccs) {
-      const result = formatOccurrence(occ, locale, tz);
-      if (result) formatted.push(result);
-    }
-    return formatted;
+  const futureOccs = getOccurrenceEntries(offer, "future");
+  if (futureOccs.length === 0) {
+    return [];
   }
 
-  /* If only a single next_occurrence is available, use it */
-  const single = resolveOneOccurrence(offer, locale);
-  return single ? [single] : [];
+  const tz = pickString(futureOccs[0], ["timezone", "tz", "time_zone"]);
+  const formatted: FormattedOccurrence[] = [];
+  for (const occ of futureOccs) {
+    const result = formatOccurrence(occ, locale, tz);
+    if (result) {
+      formatted.push(result);
+    }
+  }
+  return formatted;
 }
 
 function getLocalizedDateParts(dateStr: string, locale: string, timezone?: string) {
@@ -404,39 +355,20 @@ function formatTrainingPeriodLabel(occ: RawRecord, locale: string) {
 
 /** For TRAINING_INFO: list each training period with its year */
 function resolveTrainingPeriodLabels(offer: unknown, locale: string): string[] {
-  const allOccs = getOccurrenceEntries(offer);
-  if (allOccs.length > 0) {
-    const labels: string[] = [];
-    const seen = new Set<string>();
-    for (const occ of allOccs) {
-      const label = formatTrainingPeriodLabel(occ, locale);
-      if (!label || seen.has(label)) {
-        continue;
-      }
-      seen.add(label);
-      labels.push(label);
+  const futureOccs = getOccurrenceEntries(offer, "future");
+  const labels: string[] = [];
+  const seen = new Set<string>();
+
+  for (const occ of futureOccs) {
+    const label = formatTrainingPeriodLabel(occ, locale);
+    if (!label || seen.has(label)) {
+      continue;
     }
-    return labels;
+    seen.add(label);
+    labels.push(label);
   }
 
-  const record = asRecord(offer);
-  const nextRaw = record?.next_occurrence ?? record?.nextOccurrence;
-  if (!nextRaw) {
-    return [];
-  }
-
-  if (typeof nextRaw === "string") {
-    const parts = getLocalizedDateParts(nextRaw, locale);
-    return parts ? [`${parts.day} ${parts.month} ${parts.year}`] : [];
-  }
-
-  const nextOcc = asRecord(nextRaw);
-  if (!nextOcc) {
-    return [];
-  }
-
-  const label = formatTrainingPeriodLabel(nextOcc, locale);
-  return label ? [label] : [];
+  return labels;
 }
 
 function resolveWorkshopDateLabels(offer: unknown, locale: string): string[] {
@@ -464,10 +396,32 @@ function renderComingSoonDates(label: string) {
       <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
         <path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10zM5 8V6h14v2H5z" />
       </svg>
-      <div className="fc-offer-card__date-pills">
-        <span className="fc-offer-card__date-pill fc-offer-card__date-pill--pending">
-          {label}
-        </span>
+      <div className="fc-offer-card__date-status">
+        <div className="fc-offer-card__date-pills">
+          <span className="fc-offer-card__date-pill fc-offer-card__date-pill--pending">
+            {label}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function renderNoUpcomingDates(label: string, contactHref: string, contactLabel: string) {
+  return (
+    <div className="fc-offer-card__date-cluster">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
+        <path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10zM5 8V6h14v2H5z" />
+      </svg>
+      <div className="fc-offer-card__date-status">
+        <div className="fc-offer-card__date-pills">
+          <span className="fc-offer-card__date-pill fc-offer-card__date-pill--expired">
+            {label}
+          </span>
+        </div>
+        <Link className="fc-offer-card__date-link" href={contactHref}>
+          {contactLabel}
+        </Link>
       </div>
     </div>
   );
@@ -493,6 +447,8 @@ export default async function ForestOfferCollectionPage({
   const requestLocale = await getRequestLocale(siteConfig.defaultLocale);
   const localeCode = resolveLocale(requestLocale);
   const copy = getCopy(config.offerTypes, requestLocale);
+  const offerLabels = getLocalizedOfferLabels(requestLocale);
+  const contactHref = localizePath(requestLocale, "/contact");
 
   /* Fetch all offer types in parallel */
   const offerResults = await Promise.allSettled(
@@ -680,6 +636,12 @@ export default async function ForestOfferCollectionPage({
                     ? pickString(primaryOccurrence, ["booking_url", "bookingUrl"])
                     : "";
                 const cardDateSource = offer;
+                const allDateEntries = getOccurrenceEntries(cardDateSource, "all");
+                const futureDateEntries = getOccurrenceEntries(cardDateSource, "future");
+                const hasPastOnlyDates =
+                  (offerType === "WORKSHOP" || offerType === "TRAINING_INFO") &&
+                  allDateEntries.length > 0 &&
+                  futureDateEntries.length === 0;
 
                 /* Domains for tag pills */
                 const rawDomains = Array.isArray(offerRecord?.domains)
@@ -822,6 +784,13 @@ export default async function ForestOfferCollectionPage({
                           if (offerType === "TRAINING_INFO") {
                             const trainingPeriods = resolveTrainingPeriodLabels(cardDateSource, requestLocale);
                             if (trainingPeriods.length === 0) {
+                              if (hasPastOnlyDates) {
+                                return renderNoUpcomingDates(
+                                  offerLabels.noOccurrences,
+                                  contactHref,
+                                  copy.contactLabel,
+                                );
+                              }
                               return renderComingSoonDates(copy.datesComingSoonLabel);
                             }
                             return (
@@ -844,6 +813,13 @@ export default async function ForestOfferCollectionPage({
                           if (offerType === "PRIVATE_SESSION") return null;
                           const workshopDates = resolveWorkshopDateLabels(cardDateSource, requestLocale);
                           if (workshopDates.length === 0) {
+                            if (hasPastOnlyDates) {
+                              return renderNoUpcomingDates(
+                                offerLabels.noOccurrences,
+                                contactHref,
+                                copy.contactLabel,
+                              );
+                            }
                             return renderComingSoonDates(copy.datesComingSoonLabel);
                           }
                           return (
