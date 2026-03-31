@@ -1,33 +1,9 @@
 "use client";
 
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import type { SiteConfig } from "@/lib/site-config";
 
-export type Brand = {
-  colorPrimary: string;
-  colorSecondary: string;
-  colorAccent: string;
-  fontFamily: string;
-  logoUrl?: string;
-};
-
-export type SocialLink = {
-  label: string;
-  url: string;
-};
-
-export type Center = {
-  slug: string;
-  name: string;
-  socials: SocialLink[];
-};
-
-export type SiteConfig = {
-  siteName: string;
-  centerSlug: string;
-  defaultLocale: string;
-  brand: Brand;
-  center: Center;
-};
+export type { Brand, Center, SiteAnnouncement, SiteConfig, SiteFooter, SiteFooterContact, SiteFooterGroup, SiteNavItem, SocialLink } from "@/lib/site-config";
 
 export type MobileBookingCta = {
   href: string;
@@ -53,8 +29,10 @@ export type SiteContextValue = SiteConfig & {
 const defaultSiteContext: SiteContextValue = {
   hostname: "localhost",
   siteName: "Feldenkrais",
+  siteSlug: "forest-lighthouse",
   centerSlug: "forest-lighthouse",
   defaultLocale: "en",
+  locales: ["en", "fr"],
   brand: {
     colorPrimary: "#14524d",
     colorSecondary: "#2f6e79",
@@ -66,6 +44,13 @@ const defaultSiteContext: SiteContextValue = {
     name: "Forest Lighthouse",
     socials: [],
   },
+  nav: [],
+  footer: {
+    groups: [],
+    contact: null,
+    socials: [],
+  },
+  announcement: null,
   mobileBookingCta: null,
   setMobileBookingCta: () => undefined,
   localeSwitchPaths: null,

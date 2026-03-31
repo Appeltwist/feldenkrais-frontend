@@ -1,16 +1,20 @@
 import Link from "next/link";
 
 import AboutPeopleTrack, { type AboutPerson } from "@/components/about/AboutPeopleTrack";
+import EducationAboutPage from "@/components/education/EducationAboutPage";
 import ForestImageGallery from "@/components/forest/ForestImageGallery";
 import RevealObserver from "@/components/motion/RevealObserver";
 import { ForestPageSection, ForestPageShell } from "@/components/forest/ForestPageShell";
 import { fetchSiteConfig, fetchTeachersList, type TeacherListItem } from "@/lib/api";
+import { resolveEducationNarrativePage } from "@/lib/education-page";
+import { getEducationCenters } from "@/lib/education-content";
 import {
   FOREST_ABOUT_GALLERY_IMAGES,
   getForestAboutContent,
   getForestAboutPeople,
   type ForestAboutPersonSeed,
 } from "@/lib/forest-about-content";
+import { getEducationTeacherProfiles } from "@/lib/education-teachers";
 import { cleanDisplayText } from "@/lib/content-cleanup";
 import { isForestCenter } from "@/lib/forest-theme";
 import { getHostname } from "@/lib/get-hostname";
@@ -60,11 +64,24 @@ export default async function AboutPage() {
   const siteConfig = await fetchSiteConfig(hostname).catch(() => null);
 
   if (!siteConfig || !isForestCenter(siteConfig.centerSlug)) {
+    const page = await resolveEducationNarrativePage(hostname, "about", localeCode);
+
+    if (!page) {
+      return (
+        <div className="page-section">
+          <h1>About</h1>
+          <p>Coming soon.</p>
+        </div>
+      );
+    }
+
     return (
-      <div className="page-section">
-        <h1>About</h1>
-        <p>Coming soon.</p>
-      </div>
+      <EducationAboutPage
+        centers={getEducationCenters(localeCode)}
+        featuredTeachers={getEducationTeacherProfiles(localeCode)}
+        locale={localeCode}
+        page={page}
+      />
     );
   }
 

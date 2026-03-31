@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import BlockRenderer from "@/components/blocks/BlockRenderer";
+import EducationNewsletterSignupRow from "@/components/education/EducationNewsletterSignupRow";
+import EducationPlatformPromoRow from "@/components/education/EducationPlatformPromoRow";
 import ForestHomePage from "@/components/home/ForestHomePage";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
@@ -7,6 +10,7 @@ import { resolveApiHostname } from "@/lib/hostname-routing";
 import { getCanonicalOfferPathByTypeAndSlug } from "@/lib/offers";
 import { localizePath } from "@/lib/locale-path";
 import { getRequiredApiBase } from "@/lib/server-env";
+import type { SectionBlock } from "@/lib/types";
 
 type HomeDomain = {
   slug: string;
@@ -52,6 +56,7 @@ type HomePayload = {
     image_url?: string | null;
   };
   pillars: HomePillar[];
+  sections?: SectionBlock[];
   whats_on_preview: {
     cards: HomeOfferCard[];
   };
@@ -61,20 +66,27 @@ type HomePayload = {
   };
 };
 
-type EngageTile = {
+type HomeEntryOption = {
   key: string;
   title: string;
   description: string;
   ctaLabel: string;
   href: string;
+  imageUrl: string;
+  imageAlt: string;
 };
 
-type HomeDetailImage = {
-  src: string;
-  alt: string;
-};
-
-const MAX_WHATS_ON_CARDS = 9;
+const MAX_WORKSHOP_PREVIEW_CARDS = 4;
+const HOME_METHOD_CARD_IMAGE_URL = "/brands/forest-lighthouse/feldenkrais-session.jpg";
+const HOME_METHOD_VIDEO_POSTER_URL =
+  "https://feldenkrais-education.com/wp-content/uploads/sites/15/2025/01/what-is-feldenkrais-scaled.jpg";
+const HOME_PLATFORM_VISUAL_URL =
+  "https://feldenkrais-education.com/wp-content/uploads/sites/15/2024/10/Group-23809-1.png";
+const HOME_TRAINING_VISUAL_URL =
+  "https://feldenkrais-education.com/wp-content/uploads/sites/15/2024/10/DSC02199-Large.jpeg";
+const HOME_WORKSHOP_VISUAL_URL =
+  "https://feldenkrais-education.com/wp-content/uploads/sites/15/2024/10/1085_11201349_S321.jpg";
+const HOME_WORKSHOP_FALLBACK_IMAGES = [HOME_WORKSHOP_VISUAL_URL, HOME_TRAINING_VISUAL_URL];
 const API_BASE = getRequiredApiBase();
 
 async function fetchHomePayload(hostname: string, locale: string) {
@@ -116,189 +128,113 @@ function formatOccurrence(value: string, locale: string, timezone?: string) {
   return timezone ? `${formatted} (${timezone})` : formatted;
 }
 
-function compactText(value: string | null | undefined, limit = 190): string {
-  const text = (value || "").replace(/\s+/g, " ").trim();
-  if (!text) {
-    return "";
-  }
-  if (text.length <= limit) {
-    return text;
-  }
-  return `${text.slice(0, limit).trimEnd()}...`;
-}
-
-function normalizeHeadlineLine(value: string): string {
-  return value.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/\s+/g, " ").trim();
-}
-
-function buildEngageTiles(locale: string, pillars: HomePillar[]): EngageTile[] {
+function buildHomeEntryOptions(locale: string): HomeEntryOption[] {
   const isFr = locale.toLowerCase().startsWith("fr");
-  const practice = pillars.find((pillar) => pillar.key === "practice") ?? pillars[0];
-  const training =
-    pillars.find((pillar) => pillar.key === "training") ??
-    pillars.find((pillar) => pillar.cta_href.includes("training")) ??
-    pillars[1];
-  const rentFromPayload = pillars.find(
-    (pillar) => pillar.key === "rent" || pillar.cta_href.includes("/rent")
-  );
 
-  const baseTiles: EngageTile[] = [
+  return [
     {
-      key: "classes",
-      title: practice?.title || (isFr ? "Cours" : "Classes"),
+      key: "method",
+      title: isFr ? "Découvrir la méthode" : "Discover the method",
       description:
-        compactText(practice?.description, 130) ||
-        (isFr ? "Pratique hebdomadaire en groupe." : "Weekly group practice sessions."),
-      ctaLabel: practice?.cta_label || (isFr ? "Voir les cours" : "See classes"),
-      href: "/classes",
+        isFr
+          ? "Comprendre les bases de la méthode Feldenkrais, ses principes, et les différentes façons d’y entrer."
+          : "Understand the foundations of the Feldenkrais Method, its principles, and the different ways to begin.",
+      ctaLabel: isFr ? "Aller à la méthode" : "Go to the method",
+      href: "/what-is-feldenkrais",
+      imageUrl: HOME_METHOD_CARD_IMAGE_URL,
+      imageAlt: isFr ? "Personne en séance Feldenkrais" : "Person in a Feldenkrais session",
     },
     {
-      key: "private",
-      title: isFr ? "Individuel" : "Individual",
-      description: isFr
-        ? "Accompagnement individuel pour besoins spécifiques et progression ciblée."
-        : "One-to-one guidance for specific needs and focused progress.",
-      ctaLabel: isFr ? "Découvrir" : "Explore",
-      href: "/private-sessions",
+      key: "lesson",
+      title: isFr ? "Faire une leçon" : "Try a lesson",
+      description:
+        isFr
+          ? "Commencer en ligne avec des leçons guidées, des masterclasses et des ressources pratiques sur la plateforme."
+          : "Start online with guided lessons, masterclasses, and practical resources on the platform.",
+      ctaLabel: isFr ? "Essayer la plateforme" : "Try the platform",
+      href: "/platform",
+      imageUrl: HOME_PLATFORM_VISUAL_URL,
+      imageAlt: isFr ? "Aperçu de la plateforme Neuro Somatic" : "Preview of the Neuro Somatic platform",
     },
     {
       key: "training",
-      title: training?.title || (isFr ? "Formation" : "Training"),
+      title: isFr ? "Devenir praticien·ne" : "Become a practitioner",
       description:
-        compactText(training?.description, 130) ||
-        (isFr ? "Parcours de formation sur la durée." : "Longer-form professional learning pathways."),
-      ctaLabel: training?.cta_label || (isFr ? "Voir les formations" : "See trainings"),
+        isFr
+          ? "Explorer le parcours de formation professionnelle, les centres, et les prochaines cohortes."
+          : "Explore the professional training pathway, the centers, and the upcoming cohorts.",
+      ctaLabel: isFr ? "Voir la formation" : "View the training",
       href: "/trainings",
+      imageUrl: HOME_TRAINING_VISUAL_URL,
+      imageAlt: isFr ? "Formation professionnelle Feldenkrais" : "Feldenkrais professional training",
     },
   ];
-
-  if (rentFromPayload) {
-    baseTiles.push({
-      key: "rent",
-      title: rentFromPayload.title || (isFr ? "Location" : "Rent"),
-      description:
-        compactText(rentFromPayload.description, 130) ||
-        (isFr
-          ? "Accueillez ateliers et événements dans notre espace principal."
-          : "Host workshops and events in our main hall."),
-      ctaLabel: rentFromPayload.cta_label || (isFr ? "Demander un devis" : "Request a quote"),
-      href: "/rent",
-    });
-  }
-
-  return baseTiles;
 }
 
-function HomeHero({
-  hero,
-  heroMediaUrl,
-  locale,
-}: {
-  hero: HomePayload["hero"];
-  heroMediaUrl: string;
-  locale: string;
-}) {
+function HomeEntryOptions({ locale }: { locale: string }) {
   const isFr = locale.toLowerCase().startsWith("fr");
-  return (
-    <section
-      className="home-hero"
-      style={
-        heroMediaUrl
-          ? {
-              backgroundImage: `linear-gradient(120deg, rgba(7, 33, 33, 0.78), rgba(7, 33, 33, 0.36)), url(${heroMediaUrl})`,
-            }
-          : {
-              backgroundImage:
-                "linear-gradient(120deg, rgba(7, 33, 33, 0.9), rgba(20, 82, 77, 0.86))",
-            }
-      }
-    >
-      <div className="home-hero__content">
-        <h1>
-          {hero.headline_lines.map((line, index) => (
-            <span className="home-hero__line" key={`${line}-${index}`}>
-              {normalizeHeadlineLine(line)}
-            </span>
-          ))}
-        </h1>
-        <p className="home-hero__subhead">{hero.subhead}</p>
-        <div className="link-row home-hero__actions">
-          <Link className="button-link home-hero__primary-cta" href={localizePath(locale, "/calendar")}>
-            {isFr ? "Découvrir ce qui se passe" : "Discover What's On"}
-          </Link>
-          <Link className="home-hero__about-link" href={localizePath(locale, "/about")}>
-            {isFr ? "À propos" : "About"}
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function HomeMainHall({
-  mainHall,
-  imageUrl,
-  detailImages,
-  locale,
-}: {
-  mainHall: HomePayload["main_hall"];
-  imageUrl?: string | null;
-  detailImages?: HomeDetailImage[];
-  locale: string;
-}) {
-  const isFr = locale.toLowerCase().startsWith("fr");
-  const title = mainHall.title || "Main Hall";
-  const body = compactText(mainHall.body, 220);
-
-  return (
-    <section className="home-main-hall">
-      <div className="home-main-hall__content">
-        <p className="home-section-kicker">{isFr ? "Salle principale" : "Main Hall"}</p>
-        <h2>{title}</h2>
-        {body ? <p>{body}</p> : null}
-      </div>
-      {imageUrl ? (
-        <div className="home-main-hall__media">
-          <img alt={title} className="home-main-hall__image" loading="lazy" src={imageUrl} />
-          {detailImages?.length ? (
-            <ul className="home-main-hall__thumbs">
-              {detailImages.slice(0, 3).map((image) => (
-                <li key={image.src}>
-                  <img alt={image.alt} loading="lazy" src={image.src} />
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </div>
-      ) : null}
-    </section>
-  );
-}
-
-function HomePillars({
-  locale,
-  pillars,
-}: {
-  locale: string;
-  pillars: HomePillar[];
-}) {
-  const isFr = locale.toLowerCase().startsWith("fr");
-  const tiles = buildEngageTiles(locale, pillars);
+  const options = buildHomeEntryOptions(locale);
 
   return (
     <section className="home-section">
-      <h2>{isFr ? "Façons d’entrer dans la pratique" : "Ways to Engage"}</h2>
-      <div className="home-engage-grid">
-        {tiles.map((tile) => (
-          <article className="home-engage-tile" key={tile.key}>
-            <h3>{tile.title}</h3>
-            <p>{tile.description}</p>
-            <Link className="text-link" href={localizePath(locale, tile.href)}>
-              {tile.ctaLabel}
-            </Link>
-          </article>
+      <div className="home-section-head">
+        <div>
+          <p className="home-section-kicker">{isFr ? "Choisir une porte d’entrée" : "Choose an entry point"}</p>
+          <h2>{isFr ? "Trois façons simples de commencer" : "Three simple ways to begin"}</h2>
+        </div>
+      </div>
+      <div className="education-card-grid education-card-grid--home-entry">
+        {options.map((option) => (
+          <Link
+            className={`education-card education-home-entry-card education-home-entry-card--${option.key}`}
+            href={localizePath(locale, option.href)}
+            key={option.key}
+          >
+            <div className="education-home-entry-card__media">
+              <img alt={option.imageAlt} loading="lazy" src={option.imageUrl} />
+            </div>
+            <div className="education-home-entry-card__body">
+              <h3>{option.title}</h3>
+              <p>{option.description}</p>
+              <span className="education-button education-home-entry-card__link">
+                {option.ctaLabel}
+              </span>
+            </div>
+          </Link>
         ))}
       </div>
+    </section>
+  );
+}
+
+function HomeIntroVideo({ locale }: { locale: string }) {
+  const isFr = locale.toLowerCase().startsWith("fr");
+
+  return (
+    <section className="home-video-section">
+      <div className="home-video-section__header">
+        <p className="home-section-kicker">{isFr ? "Vidéo d’introduction" : "Intro video"}</p>
+        <h2>{isFr ? "What is Feldenkrais ?" : "What is Feldenkrais?"}</h2>
+      </div>
+      <a
+        className="home-video-card"
+        href="https://www.youtube.com/watch?v=voC0aWkl3f8&t=1s"
+        rel="noreferrer"
+        target="_blank"
+      >
+        <img
+          alt={isFr ? "Vidéo d’introduction à la méthode Feldenkrais" : "Introduction video to the Feldenkrais Method"}
+          className="home-video-card__image"
+          loading="lazy"
+          src={HOME_METHOD_VIDEO_POSTER_URL}
+        />
+        <span className="home-video-card__play" aria-hidden="true">
+          <svg fill="none" height="56" viewBox="0 0 56 56" width="56">
+            <circle cx="28" cy="28" fill="currentColor" r="28" />
+            <path d="M23 19.5 38 28l-15 8.5v-17Z" fill="#ffffff" />
+          </svg>
+        </span>
+      </a>
     </section>
   );
 }
@@ -311,42 +247,112 @@ function HomeWhatsOnPreview({
   cards: HomeOfferCard[];
 }) {
   const isFr = locale.toLowerCase().startsWith("fr");
-  const previewCards = cards.slice(0, MAX_WHATS_ON_CARDS);
+  const workshopCards = cards.filter((card) => card.offer.type.trim().toUpperCase() === "WORKSHOP");
+  const previewCards = (workshopCards.length > 0
+    ? [...workshopCards, ...cards.filter((card) => card.offer.type.trim().toUpperCase() !== "WORKSHOP")]
+    : cards
+  ).slice(0, MAX_WORKSHOP_PREVIEW_CARDS);
+
+  if (previewCards.length === 0) {
+    return (
+      <section className="home-section home-workshops-section home-section--empty-state">
+        <div className="home-workshops-section__head">
+          <div>
+            <h2>{isFr ? "Formations et ateliers" : "Trainings and workshops"}</h2>
+            <div className="home-workshops-section__rule" />
+            <p className="home-section__intro">
+              {isFr
+                ? "Développez vos compétences, en personne ou en ligne. Vous trouverez ici un aperçu des formations et ateliers proposés actuellement."
+                : "Improve your skills, in person or online. Here, you will find an overview of the trainings and workshops we offer at the moment."}
+            </p>
+            <h3>{isFr ? "Événements en direct" : "Live events"}</h3>
+          </div>
+          <Link className="text-link" href={localizePath(locale, "/workshops")}>
+            {isFr ? "Voir tous les ateliers" : "View all workshops"}
+          </Link>
+        </div>
+        <div className="education-card-grid education-card-grid--home-links">
+          <article className="education-card education-home-link-card home-workshops-fallback-card">
+            <div
+              className="education-offer-card__media home-workshops-fallback-card__media"
+              style={{
+                backgroundImage: `linear-gradient(180deg, rgba(19, 23, 32, 0.06), rgba(19, 23, 32, 0.72)), url(${HOME_TRAINING_VISUAL_URL})`,
+              }}
+            />
+            <div className="education-offer-card__body home-workshops-fallback-card__body">
+              <h3>{isFr ? "Formations professionnelles" : "Professional trainings"}</h3>
+              <p>
+                {isFr
+                  ? "Explorer les cohortes, les centres et le parcours long pour devenir praticien·ne."
+                  : "Explore the cohorts, centers, and long-form pathway for becoming a practitioner."}
+              </p>
+              <Link className="education-button home-workshops-fallback-card__link" href={localizePath(locale, "/trainings")}>
+                {isFr ? "Voir la formation" : "View training"}
+              </Link>
+            </div>
+          </article>
+          <article className="education-card education-home-link-card home-workshops-fallback-card">
+            <div
+              className="education-offer-card__media home-workshops-fallback-card__media"
+              style={{
+                backgroundImage: `linear-gradient(180deg, rgba(19, 23, 32, 0.06), rgba(19, 23, 32, 0.72)), url(${HOME_WORKSHOP_VISUAL_URL})`,
+              }}
+            />
+            <div className="education-offer-card__body home-workshops-fallback-card__body">
+              <h3>{isFr ? "Ateliers & masterclasses" : "Workshops & masterclasses"}</h3>
+              <p>
+                {isFr
+                  ? "Explorer les formats courts, intensifs et thématiques déjà disponibles dans le nouveau site."
+                  : "Explore the short, intensive, and thematic formats already available in the new site."}
+              </p>
+              <Link className="education-button home-workshops-fallback-card__link" href={localizePath(locale, "/workshops")}>
+                {isFr ? "Voir les ateliers" : "View workshops"}
+              </Link>
+            </div>
+          </article>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <section className="home-section">
-      <div className="link-row home-section-head">
-        <h2>{isFr ? "À l’affiche" : "What's On"}</h2>
-        <Link className="text-link" href={localizePath(locale, "/calendar")}>
-          {isFr ? "Voir le calendrier complet" : "View full calendar"}
+    <section className="home-section home-workshops-section">
+      <div className="home-workshops-section__head">
+        <div>
+          <h2>{isFr ? "Formations et ateliers" : "Trainings and workshops"}</h2>
+          <div className="home-workshops-section__rule" />
+          <p className="home-section__intro">
+            {isFr
+              ? "Développez vos compétences, en personne ou en ligne. Vous trouverez ici un aperçu des formations et ateliers proposés actuellement."
+              : "Improve your skills, in person or online. Here, you will find an overview of the trainings and workshops we offer at the moment."}
+          </p>
+          <h3>{isFr ? "Événements en direct" : "Live events"}</h3>
+        </div>
+        <Link className="text-link" href={localizePath(locale, "/workshops")}>
+          {isFr ? "Voir tous les ateliers" : "View all workshops"}
         </Link>
       </div>
       <ul className="calendar-group-grid">
-        {previewCards.map((card) => {
+        {previewCards.map((card, index) => {
           const rawOfferPath =
             getCanonicalOfferPathByTypeAndSlug(card.offer.type, card.offer.slug) || `/offer/${card.offer.slug}`;
           const offerPath = localizePath(locale, rawOfferPath);
           const primary = card.next_occurrences[0];
           const domains = (card.offer.domains ?? []).map((domain) => domain.name).join(" · ");
+          const cardImageUrl =
+            card.offer.hero_image_url || HOME_WORKSHOP_FALLBACK_IMAGES[index % HOME_WORKSHOP_FALLBACK_IMAGES.length];
 
           return (
             <li className="card calendar-group-card" key={`${card.offer.type}-${card.offer.slug}`}>
-              {card.offer.hero_image_url ? (
-                <div
-                  className="calendar-group-card__hero"
-                  style={{
-                    backgroundImage: `linear-gradient(120deg, rgba(7, 33, 33, 0.62), rgba(7, 33, 33, 0.25)), url(${card.offer.hero_image_url})`,
-                  }}
-                >
-                  <p className="offer-type-label">{card.offer.type.replaceAll("_", " ")}</p>
-                  <h2>{card.offer.title}</h2>
-                </div>
-              ) : (
-                <>
-                  <p className="offer-type-label">{card.offer.type.replaceAll("_", " ")}</p>
-                  <h2>{card.offer.title}</h2>
-                </>
-              )}
+              <div
+                className="calendar-group-card__hero"
+                style={{
+                  backgroundImage: `linear-gradient(180deg, rgba(19, 23, 32, 0.08), rgba(19, 23, 32, 0.78)), url(${cardImageUrl})`,
+                }}
+              >
+                <p className="offer-type-label">{card.offer.type.replaceAll("_", " ")}</p>
+                <h2>{card.offer.title}</h2>
+              </div>
 
               {domains ? <p className="calendar-group-card__domains">{domains}</p> : null}
               {primary ? (
@@ -372,27 +378,31 @@ function HomeWhatsOnPreview({
   );
 }
 
-function HomeDomainsTeaser({
+function hasMeaningfulHomeEditorialSections(blocks: SectionBlock[] | undefined) {
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return false;
+  }
+
+  return blocks.some((block) => {
+    const record = typeof block === "object" && block !== null ? (block as Record<string, unknown>) : null;
+    return record?.type !== "legacy_html";
+  });
+}
+
+function HomeEditorialSections({
+  blocks,
   locale,
-  domains,
 }: {
+  blocks: SectionBlock[];
   locale: string;
-  domains: HomeDomain[];
 }) {
-  const isFr = locale.toLowerCase().startsWith("fr");
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return null;
+  }
+
   return (
-    <section className="home-section home-domains-teaser">
-      <div className="link-row home-section-head">
-        <h2>{isFr ? "Domaines / champs de recherche" : "Domains / Areas of Inquiry"}</h2>
-        <Link className="text-link" href={localizePath(locale, "/domains")}>
-          {isFr ? "Explorer tous les domaines" : "Explore all domains"}
-        </Link>
-      </div>
-      <ul className="home-domains-teaser__list">
-        {domains.slice(0, 3).map((domain) => (
-          <li key={domain.slug}>{domain.name}</li>
-        ))}
-      </ul>
+    <section className="home-section home-editorial">
+      <BlockRenderer blocks={blocks} locale={locale.toLowerCase().startsWith("fr") ? "fr" : "en"} />
     </section>
   );
 }
@@ -416,21 +426,15 @@ export default async function HomePage() {
   }
 
   const locale = home.meta.locale || requestedLocale || "en";
+  const hasEditorialSections = hasMeaningfulHomeEditorialSections(home.sections);
   const homeContent = (
     <section className="page-section home-page">
-      <HomeHero
-        hero={home.hero}
-        heroMediaUrl={home.hero.media_url || home.main_hall.image_url || ""}
-        locale={locale}
-      />
-      <HomeMainHall
-        imageUrl={home.main_hall.image_url || ""}
-        locale={locale}
-        mainHall={home.main_hall}
-      />
-      <HomePillars locale={locale} pillars={home.pillars} />
+      <HomeEntryOptions locale={locale} />
+      <HomeIntroVideo locale={locale} />
+      <EducationNewsletterSignupRow locale={locale} />
       <HomeWhatsOnPreview cards={home.whats_on_preview.cards} locale={locale} />
-      <HomeDomainsTeaser domains={home.domains_teaser} locale={locale} />
+      <EducationPlatformPromoRow locale={locale} />
+      {hasEditorialSections ? <HomeEditorialSections blocks={home.sections || []} locale={locale} /> : null}
     </section>
   );
 

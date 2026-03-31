@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 
 import LocaleSwitchSync from "@/components/LocaleSwitchSync";
+import EducationTrainingCohortPage from "@/components/education/EducationTrainingCohortPage";
 import ForestOfferTemplate from "@/components/offers/ForestOfferTemplate";
 import TrainingInfoTemplate from "@/components/offers/TrainingInfoTemplate";
 import { ApiError, fetchOfferDetail, fetchOffers, fetchSiteConfig, fetchSiteFaq, type OfferDetail, type OfferSummary } from "@/lib/api";
+import { isForestCenter } from "@/lib/forest-theme";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
+import { getEducationTrainingCohort } from "@/lib/education-training";
 import { buildOfferMetadata, loadOfferRouteData } from "@/lib/offer-page";
 import { buildOfferLocaleSwitchPaths } from "@/lib/offer-locale-paths";
 import { getCanonicalOfferPath, getDomains, getOfferType } from "@/lib/offers";
@@ -17,6 +20,21 @@ type OfferPageProps = {
 
 export async function generateMetadata({ params }: OfferPageProps): Promise<Metadata> {
   const { slug } = await params;
+  const hostname = await getHostname();
+  const currentSiteConfig = await fetchSiteConfig(hostname).catch(() => null);
+
+  if (currentSiteConfig && !isForestCenter(currentSiteConfig.centerSlug)) {
+    const locale = await getRequestLocale(currentSiteConfig.defaultLocale);
+    const cohort = getEducationTrainingCohort(locale, slug);
+
+    if (cohort) {
+      return {
+        title: cohort.page.seo?.title ?? cohort.page.title,
+        description: cohort.page.seo?.description ?? cohort.page.subtitle ?? undefined,
+      };
+    }
+  }
+
   const { offer, origin, siteConfig } = await loadOfferRouteData(slug, "request");
 
   if (!offer) {
@@ -45,6 +63,15 @@ export default async function TrainingDetailPage({ params }: OfferPageProps) {
   }
 
   const requestLocale = await getRequestLocale(siteConfig.defaultLocale);
+  const isForest = isForestCenter(siteConfig.centerSlug);
+
+  if (!isForest) {
+    const cohort = getEducationTrainingCohort(requestLocale, slug);
+
+    if (cohort) {
+      return <EducationTrainingCohortPage cohort={cohort} locale={requestLocale} />;
+    }
+  }
 
   let offer: OfferDetail | null = null;
   let contentLocale = requestLocale;
@@ -94,7 +121,7 @@ export default async function TrainingDetailPage({ params }: OfferPageProps) {
     permanentRedirect(canonicalPath);
   }
 
-  if (siteConfig.centerSlug === "forest-lighthouse") {
+  if (isForest) {
     const [siteFaqSections, allOffers, localeSwitchPaths] = await Promise.all([
       fetchSiteFaq(hostname, requestLocale).catch(() => []),
       fetchOffers({ hostname, center: siteConfig.centerSlug, locale: contentLocale }).catch(() => [] as OfferSummary[]),

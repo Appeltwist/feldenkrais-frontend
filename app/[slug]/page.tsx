@@ -1,6 +1,9 @@
 import { notFound, permanentRedirect } from "next/navigation";
 
 import { ApiError, fetchSiteConfig, fetchTeacherDetail, type TeacherDetail } from "@/lib/api";
+import { resolveEducationLegacyPath } from "@/lib/education-legacy-paths";
+import { resolveEducationTeacherSlugAlias } from "@/lib/education-teachers";
+import { isForestCenter } from "@/lib/forest-theme";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
 import { localizePath } from "@/lib/locale-path";
@@ -24,6 +27,21 @@ export default async function LegacyProfileRedirectPage({ params }: LegacyProfil
   }
 
   const requestLocale = await getRequestLocale(siteConfig.defaultLocale);
+  const educationLegacyPath = !isForestCenter(siteConfig.centerSlug)
+    ? resolveEducationLegacyPath(`/${slug}`)
+    : null;
+
+  if (educationLegacyPath) {
+    permanentRedirect(localizePath(requestLocale, educationLegacyPath));
+  }
+
+  if (siteConfig.siteSlug === "feldenkrais-education") {
+    const teacherSlug = resolveEducationTeacherSlugAlias(requestLocale, slug);
+
+    if (teacherSlug) {
+      permanentRedirect(localizePath(requestLocale, `/teachers/${teacherSlug}`));
+    }
+  }
 
   let teacher: TeacherDetail | null = null;
 

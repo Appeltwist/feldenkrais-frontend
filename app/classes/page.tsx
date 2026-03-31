@@ -1,5 +1,6 @@
 import ClassesSchedule from "@/components/calendar/ClassesSchedule";
-import { ForestPageShell } from "@/components/forest/ForestPageShell";
+import EducationClassesPage from "@/components/education/EducationClassesPage";
+import EducationContentPage from "@/components/education/EducationContentPage";
 import ForestOfferCollectionPage from "@/components/offers/ForestOfferCollectionPage";
 import {
   type CalendarDomainLabel,
@@ -7,8 +8,12 @@ import {
   type GroupedCalendarEntry,
 } from "@/components/calendar/GroupedCalendar";
 import { fetchCalendar, fetchSiteConfig, type CalendarItem } from "@/lib/api";
+import { getEducationCenters } from "@/lib/education-content";
+import { resolveEducationNarrativePage } from "@/lib/education-page";
+import { getEducationTeacherProfiles } from "@/lib/education-teachers";
 import { isForestCenter } from "@/lib/forest-theme";
 import { getHostname } from "@/lib/get-hostname";
+import { getRequestLocale } from "@/lib/get-locale";
 
 type RawRecord = Record<string, unknown>;
 
@@ -153,6 +158,39 @@ export default async function ClassesPage() {
     );
   }
 
+  const requestLocale = await getRequestLocale(siteConfig.defaultLocale);
+
+  if (siteConfig.siteSlug === "feldenkrais-education") {
+    const page = await resolveEducationNarrativePage(hostname, "classes", requestLocale);
+    const centers = getEducationCenters(requestLocale);
+    const featuredTeachers = getEducationTeacherProfiles(requestLocale)
+      .filter((teacher) => teacher.section === "ecosystem" || teacher.section === "faculty")
+      .slice(0, 4);
+
+    return (
+      <EducationClassesPage
+        centers={centers}
+        featuredTeachers={featuredTeachers}
+        locale={requestLocale}
+        page={
+          page ?? {
+            routeKey: "classes",
+            locale: requestLocale,
+            title: "Weekly classes",
+            subtitle: "Practice across the partner network.",
+            hero: {
+              title: "Weekly classes",
+              body: "Practice across the partner network.",
+              imageUrl: null,
+            },
+            sections: [],
+            primaryCta: null,
+          }
+        }
+      />
+    );
+  }
+
   /* Non-Forest: keep the original calendar-based schedule */
   const today = new Date();
   const fourteenDaysLater = new Date(today);
@@ -163,7 +201,7 @@ export default async function ClassesPage() {
   const payload = await fetchCalendar({
     hostname,
     center: siteConfig.centerSlug,
-    locale: siteConfig.defaultLocale,
+    locale: requestLocale,
     from,
     to,
     groupBy: "offer",
@@ -179,21 +217,40 @@ export default async function ClassesPage() {
   }
 
   const entries = parseGroupedEntries(payload);
+  const page = await resolveEducationNarrativePage(hostname, "classes", requestLocale);
 
   return (
-    <section className="page-section">
-      <h1>Weekly classes</h1>
-      <p>
-        {from} to {to}
-      </p>
-      <ClassesSchedule
-        center={siteConfig.centerSlug}
-        entries={entries}
-        from={from}
-        hostname={hostname}
-        locale={siteConfig.defaultLocale}
-        to={to}
-      />
-    </section>
+    <EducationContentPage
+      eyebrow={requestLocale.toLowerCase().startsWith("fr") ? "Pratique" : "Practice"}
+      page={
+        page ?? {
+          routeKey: "classes",
+          locale: requestLocale,
+          title: "Weekly classes",
+          subtitle: `${from} to ${to}`,
+          hero: {
+            title: "Weekly classes",
+            body: `${from} to ${to}`,
+            imageUrl: null,
+          },
+          sections: [],
+          primaryCta: null,
+        }
+      }
+    >
+      <section className="education-listing">
+        <p className="education-page__date-range">
+          {from} to {to}
+        </p>
+        <ClassesSchedule
+          center={siteConfig.centerSlug}
+          entries={entries}
+          from={from}
+          hostname={hostname}
+          locale={requestLocale}
+          to={to}
+        />
+      </section>
+    </EducationContentPage>
   );
 }

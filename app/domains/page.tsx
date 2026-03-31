@@ -1,8 +1,12 @@
 import Link from "next/link";
 
+import EducationContentPage from "@/components/education/EducationContentPage";
+import EducationDomainsArchivePage from "@/components/education/EducationDomainsArchivePage";
 import { ForestPageShell } from "@/components/forest/ForestPageShell";
 import RevealObserver from "@/components/motion/RevealObserver";
 import { fetchSiteConfig } from "@/lib/api";
+import { getEducationDomainArchive } from "@/lib/education-domains";
+import { resolveEducationNarrativePage } from "@/lib/education-page";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
 import { resolveApiHostname } from "@/lib/hostname-routing";
@@ -80,8 +84,42 @@ function formatOccurrence(value: string, locale: string, timezone?: string) {
 export default async function DomainsPage() {
   const hostname = await getHostname();
   const locale = await getRequestLocale("en");
-  const siteConfig = await fetchSiteConfig(hostname).catch(() => null);
+  const siteConfig = await fetchSiteConfig(hostname, locale).catch(() => null);
   const payload = await fetchDomainsPayload(hostname, locale);
+
+  const isForest = Boolean(siteConfig && isForestCenter(siteConfig.centerSlug));
+
+  if (!isForest && siteConfig?.siteSlug === "feldenkrais-education") {
+    const archiveEntries = getEducationDomainArchive(locale);
+    if (archiveEntries.length > 0) {
+      const page = await resolveEducationNarrativePage(hostname, "domains", locale);
+      return (
+        <EducationDomainsArchivePage
+          entries={archiveEntries}
+          locale={locale}
+          page={
+            page ?? {
+              routeKey: "domains",
+              locale,
+              title: payload?.page.title || "Domains of inquiry",
+              subtitle:
+                payload?.page.intro ||
+                "Thematic entry points to explore how the Feldenkrais Method meets different needs, practices, and contexts.",
+              hero: {
+                title: payload?.page.title || "Domains of inquiry",
+                body:
+                  payload?.page.intro ||
+                  "Thematic entry points to explore how the Feldenkrais Method meets different needs, practices, and contexts.",
+                imageUrl: null,
+              },
+              sections: [],
+              primaryCta: null,
+            }
+          }
+        />
+      );
+    }
+  }
 
   if (!payload) {
     return (
@@ -92,7 +130,7 @@ export default async function DomainsPage() {
     );
   }
 
-  if (siteConfig && isForestCenter(siteConfig.centerSlug)) {
+  if (isForest) {
     const isFr = locale.toLowerCase().startsWith("fr");
     const activeDomains = payload.domains.filter((d) => d.name && d.name.trim());
 
@@ -173,60 +211,86 @@ export default async function DomainsPage() {
     );
   }
 
+  const page = await resolveEducationNarrativePage(hostname, "domains", locale);
+
   return (
-    <section className="page-section domains-page">
-      <header className="domains-page__header">
-        <h1>{payload.page.title}</h1>
-        <p>{payload.page.intro}</p>
-      </header>
+    <EducationContentPage
+      eyebrow={locale.toLowerCase().startsWith("fr") ? "Domaines" : "Domains"}
+      page={
+        page ?? {
+          routeKey: "domains",
+          locale,
+          title: payload.page.title,
+          subtitle: payload.page.intro,
+          hero: {
+            title: payload.page.title,
+            body: payload.page.intro,
+            imageUrl: null,
+          },
+          sections: [],
+          primaryCta: null,
+        }
+      }
+    >
+      <section className="domains-page">
+        {payload.domains.map((domain, index) => (
+          <section className="education-card domains-room" key={domain.slug}>
+            <p className="domains-room__eyebrow">Area {index + 1}</p>
+            <h2>{domain.name}</h2>
+            {domain.intro ? <p className="domains-room__intro">{domain.intro}</p> : null}
+            {domain.body ? <p>{domain.body}</p> : null}
 
-      {payload.domains.map((domain, index) => (
-        <section className="card domains-room" key={domain.slug}>
-          <p className="domains-room__eyebrow">Area {index + 1}</p>
-          <h2>{domain.name}</h2>
-          {domain.intro ? <p className="domains-room__intro">{domain.intro}</p> : null}
-          {domain.body ? <p>{domain.body}</p> : null}
+            {Array.isArray(domain.preview) && domain.preview.length > 0 ? (
+              <div className="domains-room__preview">
+                {domain.preview.map((card) => {
+                  const rawDetailsPath =
+                    getCanonicalOfferPathByTypeAndSlug(card.offer.type, card.offer.slug) || `/offer/${card.offer.slug}`;
+                  const detailsPath = localizePath(locale, rawDetailsPath);
+                  const primaryOccurrence = card.next_occurrences?.[0];
 
-          {Array.isArray(domain.preview) && domain.preview.length > 0 ? (
-            <div className="domains-room__preview">
-              {domain.preview.map((card) => {
-                const detailsPath =
-                  getCanonicalOfferPathByTypeAndSlug(card.offer.type, card.offer.slug) || `/offer/${card.offer.slug}`;
-                const primaryOccurrence = card.next_occurrences?.[0];
+                  return (
+                    <article
+                      className="education-card education-offer-card education-offer-card--compact domains-room__preview-card"
+                      key={`${domain.slug}-${card.offer.slug}`}
+                    >
+                      <div className="education-offer-card__body">
+                        <p className="education-offer-card__type">{card.offer.type.replaceAll("_", " ")}</p>
+                        <h3>{card.offer.title}</h3>
+                        {primaryOccurrence ? (
+                          <p className="domains-room__preview-time">
+                            {formatOccurrence(
+                              primaryOccurrence.start_datetime,
+                              locale,
+                              primaryOccurrence.timezone,
+                            )}
+                          </p>
+                        ) : null}
+                        <div className="link-row">
+                          <Link className="education-text-link" href={detailsPath}>
+                            Offer details
+                          </Link>
+                          <Link className="education-button education-button--secondary" href={detailsPath}>
+                            {card.cta_label || "Book"}
+                          </Link>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : null}
 
-                return (
-                  <article className="card domains-room__preview-card" key={`${domain.slug}-${card.offer.slug}`}>
-                    <p className="offer-type-label">{card.offer.type.replaceAll("_", " ")}</p>
-                    <h3>{card.offer.title}</h3>
-                    {primaryOccurrence ? (
-                      <p className="domains-room__preview-time">
-                        {formatOccurrence(primaryOccurrence.start_datetime, locale, primaryOccurrence.timezone)}
-                      </p>
-                    ) : null}
-                    <div className="link-row">
-                      <Link className="text-link" href={detailsPath}>
-                        Offer details
-                      </Link>
-                      <Link className="button-link button-link--secondary" href={detailsPath}>
-                        {card.cta_label || "Book"}
-                      </Link>
-                    </div>
-                  </article>
-                );
-              })}
+            <div className="link-row domains-room__links">
+              <Link className="education-text-link" href={localizePath(locale, domain.links.calendar)}>
+                See what&apos;s on
+              </Link>
+              <Link className="education-text-link" href={localizePath(locale, domain.links.programs)}>
+                Explore programs
+              </Link>
             </div>
-          ) : null}
-
-          <div className="link-row domains-room__links">
-            <Link className="text-link" href={domain.links.calendar}>
-              See what&apos;s on
-            </Link>
-            <Link className="text-link" href={domain.links.programs}>
-              Explore programs
-            </Link>
-          </div>
-        </section>
-      ))}
-    </section>
+          </section>
+        ))}
+      </section>
+    </EducationContentPage>
   );
 }

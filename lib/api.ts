@@ -5,6 +5,16 @@ import { getForestExcerptOverride } from "@/lib/forest-excerpts";
 import { getForestFacilitatorNamesOverride } from "@/lib/forest-facilitator-overrides";
 import { rewriteForestMediaPayload } from "@/lib/forest-media";
 import { resolveApiHostname } from "@/lib/hostname-routing";
+import type {
+  NarrativePage,
+  SiteAnnouncement,
+  SiteConfig,
+  SiteFooter,
+  SiteFooterContact,
+  SiteFooterGroup,
+  SiteNavItem,
+  SocialLink,
+} from "@/lib/site-config";
 import { getRequiredApiBase } from "@/lib/server-env";
 import { resolveHostname } from "@/lib/server-hostname";
 import type { CalendarItem, OfferDetail, OfferSummary, PrivateBookingConfig, SiteFaqSection } from "@/lib/types";
@@ -13,33 +23,6 @@ export type QueryValue = string | number | boolean | null | undefined;
 
 type QueryParams = Record<string, QueryValue>;
 type RawRecord = Record<string, unknown>;
-
-export type SocialLink = {
-  label: string;
-  url: string;
-};
-
-export type Brand = {
-  colorPrimary: string;
-  colorSecondary: string;
-  colorAccent: string;
-  fontFamily: string;
-  logoUrl?: string;
-};
-
-export type Center = {
-  slug: string;
-  name: string;
-  socials: SocialLink[];
-};
-
-export type SiteConfig = {
-  siteName: string;
-  centerSlug: string;
-  defaultLocale: string;
-  brand: Brand;
-  center: Center;
-};
 
 export type FetchOffersParams = {
   hostname: string;
@@ -100,6 +83,8 @@ export type FetchTeacherDetailParams = {
   locale?: string;
 };
 
+export type { Brand, Center, NarrativePage, SiteAnnouncement, SiteConfig, SiteFooter, SiteFooterContact, SiteFooterGroup, SiteNavItem, SocialLink } from "@/lib/site-config";
+
 export type FetchTeachersListParams = {
   hostname: string;
   center?: string;
@@ -119,9 +104,19 @@ export class ApiError extends Error {
 }
 
 const API_BASE = getRequiredApiBase();
+const GENERIC_FONT_FAMILY = "system-ui, -apple-system, Segoe UI, sans-serif";
 
 function normalizeHostname(hostname: string) {
   return resolveApiHostname(resolveHostname(hostname));
+}
+
+function inferSiteSlug(hostname: string) {
+  const normalized = normalizeHostname(hostname);
+  if (!normalized || normalized === "localhost" || normalized === "127.0.0.1") {
+    return "";
+  }
+
+  return normalized.split(".")[0] ?? "";
 }
 
 function isForestRequest(hostname: string, center?: string) {
@@ -365,6 +360,16 @@ async function requestJson<T>(path: string, params: QueryParams) {
 }
 
 function toSocialLinks(value: unknown) {
+  if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+    return Object.entries(value as Record<string, unknown>)
+      .map(([label, url]) =>
+        typeof url === "string" && url.trim()
+          ? { label: cleanDisplayText(label) || "Social", url: url.trim() }
+          : null,
+      )
+      .filter((item): item is SocialLink => item !== null);
+  }
+
   if (!Array.isArray(value)) {
     return [];
   }
@@ -394,18 +399,172 @@ function toSocialLinks(value: unknown) {
   return links;
 }
 
+function normalizeNavItems(value: unknown): SiteNavItem[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const items: SiteNavItem[] = [];
+
+  for (const item of value) {
+    const record = asRecord(item);
+    if (!record) {
+      continue;
+    }
+
+    const label = pickString(record, ["label", "title", "name"]);
+    const href = pickString(record, ["href", "url", "link"]);
+    const children = normalizeNavItems(record.children ?? record.items ?? record.links);
+
+    if (!label || (!href && children.length === 0)) {
+      continue;
+    }
+
+    items.push({
+      label,
+      href: href || "#",
+      openInNewTab: Boolean(record.open_in_new_tab ?? record.openInNewTab),
+      children: children.length > 0 ? children : undefined,
+    });
+  }
+
+  return items;
+}
+
+function normalizeFooterGroups(value: unknown): SiteFooterGroup[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const groups: SiteFooterGroup[] = [];
+
+  for (const item of value) {
+    const record = asRecord(item);
+    const title = pickString(record, ["title", "heading", "name"]);
+    const links = normalizeNavItems(record?.links).map((link) => ({
+      label: link.label,
+      href: link.href,
+      openInNewTab: link.openInNewTab,
+    }));
+
+    if (!title || links.length === 0) {
+      continue;
+    }
+
+    groups.push({ title, links });
+  }
+
+  return groups;
+}
+
+function normalizeFooterContact(value: unknown): SiteFooterContact | null {
+  const record = asRecord(value);
+  if (!record) {
+    return null;
+  }
+
+  const heading = pickString(record, ["heading", "title"]);
+  const body = pickString(record, ["body", "text", "description"]);
+  const phone = pickString(record, ["phone"]);
+  const email = pickString(record, ["email"]);
+  const mapUrl = pickString(record, ["map_url", "mapUrl", "url"]);
+
+  if (!heading && !body && !phone && !email && !mapUrl) {
+    return null;
+  }
+
+  return {
+    heading: heading || null,
+    body: body || null,
+    phone: phone || null,
+    email: email || null,
+    mapUrl: mapUrl || null,
+  };
+}
+
+function normalizeAnnouncement(value: unknown): SiteAnnouncement | null {
+  const record = asRecord(value);
+  if (!record) {
+    return null;
+  }
+
+  const enabled = Boolean(record.enabled);
+  const text = pickString(record, ["text", "label", "body"]);
+  const linkLabel = pickString(record, ["link_label", "linkLabel", "cta_label"]);
+  const url = pickString(record, ["url", "href", "link"]);
+
+  if (!enabled && !text && !linkLabel && !url) {
+    return null;
+  }
+
+  return {
+    enabled,
+    text: text || null,
+    linkLabel: linkLabel || null,
+    url: url || null,
+  };
+}
+
+function resolveFontFamilies(token: string, explicitFontFamily: string) {
+  const normalizedToken = token.trim().toLowerCase();
+
+  if (explicitFontFamily) {
+    return {
+      fontFamily: explicitFontFamily,
+      headingFontFamily: normalizedToken.includes("playfair")
+        ? "\"Playfair Display\", serif"
+        : explicitFontFamily,
+    };
+  }
+
+  if (normalizedToken.includes("playfair")) {
+    return {
+      fontFamily: "\"Open Sans\", sans-serif",
+      headingFontFamily: "\"Playfair Display\", serif",
+    };
+  }
+
+  if (normalizedToken.includes("open-sans") || normalizedToken.includes("open_sans")) {
+    return {
+      fontFamily: "\"Open Sans\", sans-serif",
+      headingFontFamily: "\"Playfair Display\", serif",
+    };
+  }
+
+  if (normalizedToken.includes("manrope")) {
+    return {
+      fontFamily: "Manrope, system-ui, sans-serif",
+      headingFontFamily: "Manrope, system-ui, sans-serif",
+    };
+  }
+
+  return {
+    fontFamily: explicitFontFamily || GENERIC_FONT_FAMILY,
+    headingFontFamily: explicitFontFamily || GENERIC_FONT_FAMILY,
+  };
+}
+
 function normalizeSiteConfig(payload: unknown, hostname: string): SiteConfig {
   const record = asRecord(payload) ?? {};
   const siteRecord = asRecord(record.site);
   const centerRecord = asRecord(record.center);
   const brandRecord = asRecord(record.brand) ?? asRecord(record.theme);
+  const footerRecord = asRecord(record.footer);
   const brandColors = asRecord(brandRecord?.colors);
   const locales = toArray<unknown>(record.locales).filter(
     (locale): locale is string => typeof locale === "string" && locale.trim().length > 0,
   );
+  const inferredSiteSlug =
+    inferSiteSlug(pickString(siteRecord, ["hostname"])) || inferSiteSlug(hostname);
+  const siteSlug =
+    pickString(record, ["siteSlug", "site_slug", "slug"]) ||
+    pickString(siteRecord, ["slug"]) ||
+    inferredSiteSlug ||
+    "forest-lighthouse";
   const centerSlug =
     pickString(record, ["centerSlug", "center_slug"]) ||
     pickString(centerRecord, ["slug", "center_slug"]) ||
+    inferredSiteSlug ||
     "forest-lighthouse";
   const centerName =
     pickString(record, ["centerName", "center_name"]) ||
@@ -422,12 +581,28 @@ function normalizeSiteConfig(payload: unknown, hostname: string): SiteConfig {
     pickString(brandRecord, ["defaultLanguage", "default_language", "language", "locale"]) ||
     locales[0] ||
     "en";
-  const socials = toSocialLinks(record.socials ?? centerRecord?.socials);
+  const nav = normalizeNavItems(record.nav);
+  const footer: SiteFooter = {
+    groups: normalizeFooterGroups(footerRecord?.groups),
+    contact: normalizeFooterContact(footerRecord?.contact),
+    socials: toSocialLinks(footerRecord?.socials),
+  };
+  const announcement = normalizeAnnouncement(record.announcement);
+  const socials = toSocialLinks(record.socials ?? centerRecord?.socials ?? brandRecord?.socials);
+  const fontFamilyToken = pickString(brandRecord, ["fontFamilyToken", "font_family_token"]);
+  const explicitFontFamily = pickString(
+    brandRecord,
+    ["fontFamily", "font_family", "font", "fontStack"],
+    "",
+  );
+  const { fontFamily, headingFontFamily } = resolveFontFamilies(fontFamilyToken, explicitFontFamily);
 
   return {
     siteName,
+    siteSlug,
     centerSlug,
     defaultLocale,
+    locales: locales.length > 0 ? locales : [defaultLocale],
     brand: {
       colorPrimary: pickString(
         brandColors ?? brandRecord,
@@ -444,11 +619,14 @@ function normalizeSiteConfig(payload: unknown, hostname: string): SiteConfig {
         ["accent", "accentColor", "accent_color", "colorAccent", "color_accent"],
         "#d4a64a",
       ),
-      fontFamily: pickString(
-        brandRecord,
-        ["fontFamily", "font_family", "font", "fontStack"],
-        "system-ui, -apple-system, Segoe UI, sans-serif",
-      ),
+      fontFamily,
+      fontFamilyToken: fontFamilyToken || undefined,
+      headingFontFamily,
+      backgroundColor: pickString(brandRecord, ["backgroundColor", "background_color"]) || undefined,
+      ctaPrimaryColor: pickString(brandRecord, ["ctaPrimaryColor", "cta_primary_color"]) || undefined,
+      ctaHoverColor: pickString(brandRecord, ["ctaHoverColor", "cta_hover_color"]) || undefined,
+      textColor: pickString(brandRecord, ["textColor", "text_color"]) || undefined,
+      headingColor: pickString(brandRecord, ["headingColor", "heading_color"]) || undefined,
       logoUrl: pickString(brandRecord, ["logoUrl", "logo_url", "logo"]),
     },
     center: {
@@ -456,6 +634,9 @@ function normalizeSiteConfig(payload: unknown, hostname: string): SiteConfig {
       name: centerName,
       socials,
     },
+    nav,
+    footer,
+    announcement,
   };
 }
 
@@ -492,14 +673,76 @@ function normalizeSiteFaq(payload: unknown) {
   return sections;
 }
 
-export async function fetchSiteConfig(hostname: string) {
+function normalizeNarrativePage(payload: unknown): NarrativePage | null {
+  const record = asRecord(payload);
+  if (!record) {
+    return null;
+  }
+
+  const heroRecord = asRecord(record.hero);
+  const seoRecord = asRecord(record.seo);
+  const primaryCtaRecord = asRecord(record.primary_cta ?? record.primaryCta);
+  const title = pickString(record, ["title"]);
+  const routeKey = pickString(record, ["route_key", "routeKey"]);
+  const locale = pickString(record, ["locale"], "en");
+
+  if (!title || !routeKey) {
+    return null;
+  }
+
+  return {
+    routeKey,
+    locale,
+    title,
+    subtitle: pickString(record, ["subtitle"]) || null,
+    hero: {
+      title: pickString(heroRecord, ["title"]) || null,
+      body: pickString(heroRecord, ["body", "text"]) || null,
+      imageUrl: pickString(heroRecord, ["image_url", "imageUrl", "url"]) || null,
+    },
+    sections: toArray(record.sections) as NarrativePage["sections"],
+    primaryCta:
+      primaryCtaRecord && pickString(primaryCtaRecord, ["label"]) && pickString(primaryCtaRecord, ["url", "href"])
+        ? {
+            label: pickString(primaryCtaRecord, ["label"]),
+            url: pickString(primaryCtaRecord, ["url", "href"]),
+          }
+        : null,
+    seo: {
+      title: pickString(seoRecord, ["title"]) || null,
+      description: pickString(seoRecord, ["description"]) || null,
+    },
+  };
+}
+
+export async function fetchSiteConfig(hostname: string, locale?: string) {
   const normalizedHostname = normalizeHostname(hostname);
   const payload = await requestJson<unknown>("/site-config", {
     domain: normalizedHostname,
+    locale,
   });
   const normalizedPayload = isForestRequest(normalizedHostname) ? rewriteForestMediaPayload(payload) : payload;
 
   return normalizeSiteConfig(normalizedPayload, normalizedHostname);
+}
+
+export async function fetchNarrativePage(hostname: string, routeKey: string, locale?: string) {
+  const normalizedHostname = normalizeHostname(hostname);
+
+  try {
+    const payload = await requestJson<unknown>(`/pages/${encodeURIComponent(routeKey)}`, {
+      domain: normalizedHostname,
+      locale,
+    });
+
+    return normalizeNarrativePage(payload);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return null;
+    }
+
+    throw error;
+  }
 }
 
 export async function fetchSiteFaq(hostname: string, locale?: string) {

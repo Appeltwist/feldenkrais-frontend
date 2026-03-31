@@ -3,6 +3,8 @@ import GroupedCalendar, {
   type CalendarOccurrenceOption,
   type GroupedCalendarEntry,
 } from "@/components/calendar/GroupedCalendar";
+import EducationContentPage from "@/components/education/EducationContentPage";
+import EducationEventArchivePage from "@/components/education/EducationEventArchivePage";
 import ForestCalendarList, { type CalendarListEntry } from "@/components/calendar/ForestCalendarList";
 import MindbodyScheduleWidget from "@/components/classes/MindbodyScheduleWidget";
 import { ForestPageShell } from "@/components/forest/ForestPageShell";
@@ -13,6 +15,8 @@ import {
   type CalendarDomainOption,
   type CalendarItem,
 } from "@/lib/api";
+import { getEducationEventArchive } from "@/lib/education-events";
+import { resolveEducationNarrativePage } from "@/lib/education-page";
 import { isForestCenter } from "@/lib/forest-theme";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
@@ -484,49 +488,98 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
     );
   }
 
-  return (
-    <section className="page-section">
-      <h1>Calendar</h1>
-      <p>
-        {from} to {to}
-      </p>
-      <form className="calendar-filter-form" method="get">
-        <label className="calendar-filter-form__label" htmlFor="calendar-domain-theme">
-          Domain
-        </label>
-        <div className="calendar-filter-form__controls">
-          <select
-            className="calendar-filter-form__select"
-            defaultValue={selectedDomainTheme}
-            id="calendar-domain-theme"
-            name="domain_theme"
-          >
-            <option value="">All domains</option>
-            {domains.map((domain) => (
-              <option key={domain.slug} value={domain.slug}>
-                {domain.name}
-              </option>
-            ))}
-          </select>
-          <button className="button-link button-link--secondary" type="submit">
-            Apply
-          </button>
-          {selectedDomainTheme ? (
-            <a className="text-link" href="?">
-              Clear
-            </a>
-          ) : null}
-        </div>
-      </form>
-      {entries.length === 0 ? <p>No events in this date range.</p> : null}
-      <GroupedCalendar
-        center={siteConfig.centerSlug}
-        entries={entries}
-        from={from}
-        hostname={hostname}
-        locale={siteConfig.defaultLocale}
-        to={to}
+  const page = await resolveEducationNarrativePage(hostname, "calendar", requestLocale);
+  const educationArchiveEvents =
+    siteConfig.siteSlug === "feldenkrais-education" && entries.length === 0
+      ? getEducationEventArchive(requestLocale)
+      : [];
+
+  if (siteConfig.siteSlug === "feldenkrais-education" && educationArchiveEvents.length > 0) {
+    return (
+      <EducationEventArchivePage
+        entries={educationArchiveEvents}
+        locale={requestLocale}
+        page={
+          page ?? {
+            routeKey: "calendar",
+            locale: requestLocale,
+            title: "Calendar",
+            subtitle: "",
+            hero: {
+              title: "Calendar",
+              body: "",
+              imageUrl: null,
+            },
+            sections: [],
+            primaryCta: null,
+          }
+        }
       />
-    </section>
+    );
+  }
+
+  return (
+    <EducationContentPage
+      eyebrow={requestLocale.toLowerCase().startsWith("fr") ? "À venir" : "Upcoming"}
+      page={
+        page ?? {
+          routeKey: "calendar",
+          locale: requestLocale,
+          title: "Calendar",
+          subtitle: `${from} to ${to}`,
+          hero: {
+            title: "Calendar",
+            body: `${from} to ${to}`,
+            imageUrl: null,
+          },
+          sections: [],
+          primaryCta: null,
+          seo: undefined,
+        }
+      }
+    >
+      <section className="education-listing">
+        <p className="education-page__date-range">
+          {from} to {to}
+        </p>
+        <form className="calendar-filter-form" method="get">
+          <label className="calendar-filter-form__label" htmlFor="calendar-domain-theme">
+            Domain
+          </label>
+          <div className="calendar-filter-form__controls">
+            <select
+              className="calendar-filter-form__select"
+              defaultValue={selectedDomainTheme}
+              id="calendar-domain-theme"
+              name="domain_theme"
+            >
+              <option value="">All domains</option>
+              {domains.map((domain) => (
+                <option key={domain.slug} value={domain.slug}>
+                  {domain.name}
+                </option>
+              ))}
+            </select>
+            <button className="education-button education-button--secondary" type="submit">
+              Apply
+            </button>
+            {selectedDomainTheme ? (
+              <a className="education-text-link" href="?">
+                Clear
+              </a>
+            ) : null}
+          </div>
+        </form>
+        {entries.length === 0 ? <p>No events in this date range.</p> : null}
+        <GroupedCalendar
+          center={siteConfig.centerSlug}
+          entries={entries}
+          from={from}
+          hostname={hostname}
+          locale={requestLocale}
+          to={to}
+        />
+      </section>
+    </EducationContentPage>
   );
 }

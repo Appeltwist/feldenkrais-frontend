@@ -1,3 +1,4 @@
+import { rewriteEducationLegacyHtml } from "@/lib/education-legacy-paths";
 import { getOfferLabels } from "@/lib/i18n";
 import type { LocaleCode, SectionBlock } from "@/lib/types";
 
@@ -64,6 +65,7 @@ export default function BlockRenderer({ blocks, locale }: BlockRendererProps) {
         const type = pickString(blockRecord, ["type"]);
         const value = asRecord(blockRecord?.value);
         const heading = pickString(value, ["heading"]);
+        const anchorId = pickString(value, ["anchor_id", "anchorId"]);
         const key = `${type || "block"}-${index}`;
 
         if (type === "rich_section") {
@@ -73,9 +75,30 @@ export default function BlockRenderer({ blocks, locale }: BlockRendererProps) {
           }
 
           return (
-            <section className="content-block" key={key}>
+            <section className="content-block" id={anchorId || undefined} key={key}>
               {heading ? <h2>{heading}</h2> : null}
               {body ? <div className="rich-text" dangerouslySetInnerHTML={{ __html: body }} /> : null}
+            </section>
+          );
+        }
+
+        if (type === "legacy_html") {
+          const html = pickString(value, ["html", "body", "content"]);
+          if (!heading && !html) {
+            return null;
+          }
+
+          const rewrittenHtml = html ? rewriteEducationLegacyHtml(html, locale) : "";
+
+          return (
+            <section className="content-block content-block--legacy" id={anchorId || undefined} key={key}>
+              {heading ? <h2>{heading}</h2> : null}
+              {rewrittenHtml ? (
+                <div
+                  className="legacy-html-block rich-text"
+                  dangerouslySetInnerHTML={{ __html: rewrittenHtml }}
+                />
+              ) : null}
             </section>
           );
         }
@@ -87,7 +110,7 @@ export default function BlockRenderer({ blocks, locale }: BlockRendererProps) {
           }
 
           return (
-            <section className="content-block" key={key}>
+            <section className="content-block" id={anchorId || undefined} key={key}>
               {heading ? <h2>{heading}</h2> : null}
               <div className="feature-stack">
                 {items.map((item, itemIndex) => {
@@ -116,7 +139,7 @@ export default function BlockRenderer({ blocks, locale }: BlockRendererProps) {
           }
 
           return (
-            <section className="content-block" key={key}>
+            <section className="content-block" id={anchorId || undefined} key={key}>
               {heading ? <h2>{heading}</h2> : null}
               <div className="faq-list">
                 {items.map((item, itemIndex) => {
@@ -145,7 +168,7 @@ export default function BlockRenderer({ blocks, locale }: BlockRendererProps) {
           }
 
           return (
-            <section className="content-block" key={key}>
+            <section className="content-block" id={anchorId || undefined} key={key}>
               {heading ? <h2>{heading}</h2> : null}
               <div className="program-highlights">
                 {items.map((item, itemIndex) => {
@@ -179,7 +202,7 @@ export default function BlockRenderer({ blocks, locale }: BlockRendererProps) {
           }
 
           return (
-            <section className="content-block" key={key}>
+            <section className="content-block" id={anchorId || undefined} key={key}>
               {heading ? <h2>{heading}</h2> : null}
               <div className="gallery-grid">
                 {imageRecords.map((image, itemIndex) => {
@@ -225,7 +248,7 @@ export default function BlockRenderer({ blocks, locale }: BlockRendererProps) {
           }
 
           return (
-            <section className="content-block" key={key}>
+            <section className="content-block" id={anchorId || undefined} key={key}>
               {heading ? <h2>{heading}</h2> : null}
               <div
                 className="fl-steps"
@@ -264,7 +287,7 @@ export default function BlockRenderer({ blocks, locale }: BlockRendererProps) {
           }
 
           return (
-            <section className="content-block cta-section" key={key}>
+            <section className="content-block cta-section" id={anchorId || undefined} key={key}>
               {heading ? <h2>{heading}</h2> : null}
               {body ? <div className="rich-text" dangerouslySetInnerHTML={{ __html: body }} /> : null}
               {buttonUrl ? (

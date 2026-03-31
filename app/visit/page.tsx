@@ -3,9 +3,17 @@ import type { CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
+import EducationVisitPage from "@/components/education/EducationVisitPage";
 import ForestVisitTravelTabs from "@/components/visit/ForestVisitTravelTabs";
 import { ForestPageShell } from "@/components/forest/ForestPageShell";
 import { fetchSiteConfig } from "@/lib/api";
+import {
+  getEducationCenters,
+  getEducationFallbackNarrativePage,
+  getEducationFallbackSiteConfig,
+  mergeEducationSiteConfig,
+} from "@/lib/education-content";
+import { resolveEducationNarrativePage } from "@/lib/education-page";
 import {
   getForestVisitContent,
   type ForestVisitFaqItem,
@@ -15,6 +23,7 @@ import {
 import { isForestCenter } from "@/lib/forest-theme";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
+import { getEducationTrainingCohorts } from "@/lib/education-training";
 import { isExternalHref, localizePath } from "@/lib/locale-path";
 import type { LocaleCode } from "@/lib/types";
 
@@ -215,25 +224,6 @@ function VisitFaq({ items }: { items: ForestVisitFaqItem[] }) {
   );
 }
 
-function VisitMediaFigure({
-  image,
-  className,
-  sizes,
-  priority = false,
-}: {
-  image: { src: string; alt: string; caption?: string };
-  className: string;
-  sizes: string;
-  priority?: boolean;
-}) {
-  return (
-    <figure className={className}>
-      <Image alt={image.alt} className={`${className}__image`} fill priority={priority} sizes={sizes} src={image.src} />
-      {image.caption ? <figcaption>{image.caption}</figcaption> : null}
-    </figure>
-  );
-}
-
 export default async function VisitPage() {
   const hostname = await getHostname();
   const locale = await getRequestLocale();
@@ -241,11 +231,31 @@ export default async function VisitPage() {
   const localeCode: LocaleCode = locale.toLowerCase().startsWith("fr") ? "fr" : "en";
 
   if (!siteConfig || !isForestCenter(siteConfig.centerSlug)) {
+    const page =
+      (await resolveEducationNarrativePage(hostname, "visit", localeCode)) ??
+      getEducationFallbackNarrativePage("visit", localeCode);
+    const resolvedSiteConfig = mergeEducationSiteConfig(
+      getEducationFallbackSiteConfig(hostname, localeCode),
+      siteConfig,
+    );
+
+    if (!page) {
+      return (
+        <section className="page-section">
+          <h1>Visit</h1>
+          <p>Visit information is being prepared and will be available soon.</p>
+        </section>
+      );
+    }
+
     return (
-      <section className="page-section">
-        <h1>Visit</h1>
-        <p>Visit information is being prepared and will be available soon.</p>
-      </section>
+      <EducationVisitPage
+        centers={getEducationCenters(localeCode)}
+        cohorts={getEducationTrainingCohorts(localeCode)}
+        contact={resolvedSiteConfig.footer.contact}
+        locale={localeCode}
+        page={page}
+      />
     );
   }
 

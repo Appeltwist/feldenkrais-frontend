@@ -1,9 +1,12 @@
 import Link from "next/link";
 
+import EducationContentPage from "@/components/education/EducationContentPage";
 import { ForestPageHero, ForestPageSection, ForestPageShell } from "@/components/forest/ForestPageShell";
 import { fetchOffers, fetchSiteConfig, type OfferSummary } from "@/lib/api";
+import { resolveEducationNarrativePage } from "@/lib/education-page";
 import { FOREST_PAGE_MEDIA, isForestCenter } from "@/lib/forest-theme";
 import { getHostname } from "@/lib/get-hostname";
+import { getRequestLocale } from "@/lib/get-locale";
 import { getOfferLabels } from "@/lib/i18n";
 import { localizePath } from "@/lib/locale-path";
 import {
@@ -20,6 +23,7 @@ import {
 type OfferListPageProps = {
   heading: string;
   offerType: OfferType;
+  routeKey?: "trainings" | "workshops" | "private-sessions";
 };
 
 function getForestCollectionCopy(offerType: OfferType, locale: string) {
@@ -63,18 +67,33 @@ function getForestCollectionCopy(offerType: OfferType, locale: string) {
   };
 }
 
-export default async function OfferListPage({ heading, offerType }: OfferListPageProps) {
+function getEducationCollectionLabel(offerType: OfferType, locale: string) {
+  const isFrench = locale.toLowerCase().startsWith("fr");
+
+  if (offerType === "TRAINING_INFO") {
+    return isFrench ? "Formation Feldenkrais" : "Feldenkrais Training";
+  }
+
+  if (offerType === "PRIVATE_SESSION") {
+    return isFrench ? "Séances individuelles" : "Individual Sessions";
+  }
+
+  return isFrench ? "Stages & Formations" : "All Workshops";
+}
+
+export default async function OfferListPage({ heading, offerType, routeKey }: OfferListPageProps) {
   const hostname = await getHostname();
   let siteConfig: Awaited<ReturnType<typeof fetchSiteConfig>> | null = null;
   let offers: OfferSummary[] = [];
 
   try {
     siteConfig = await fetchSiteConfig(hostname);
+    const requestLocale = await getRequestLocale(siteConfig.defaultLocale);
     offers = await fetchOffers({
       hostname,
       center: siteConfig.centerSlug,
       type: offerType,
-      locale: siteConfig.defaultLocale,
+      locale: requestLocale,
     });
   } catch {
     return (
@@ -85,9 +104,11 @@ export default async function OfferListPage({ heading, offerType }: OfferListPag
     );
   }
 
-  const labels = getOfferLabels(siteConfig.defaultLocale);
+  const requestLocale = await getRequestLocale(siteConfig.defaultLocale);
+  const labels = getOfferLabels(requestLocale);
   const detailsLabel = labels.openDetails;
   const isForest = isForestCenter(siteConfig.centerSlug);
+  const educationCollectionLabel = getEducationCollectionLabel(offerType, requestLocale);
 
   if (isForest) {
     const forestCopy = getForestCollectionCopy(offerType, siteConfig.defaultLocale);
@@ -178,42 +199,79 @@ export default async function OfferListPage({ heading, offerType }: OfferListPag
     );
   }
 
-  return (
-    <section className="page-section">
-      <h1>{heading}</h1>
-      <p>{siteConfig.center.name}</p>
-      {offers.length === 0 ? <p>No offers found.</p> : null}
-      <div className="cards">
-        {offers.map((offer, index) => {
-          const offerRecord = asRecord(offer);
-          const slug = getOfferSlug(offer);
-          const title = getOfferTitle(offer, "Untitled offer");
-          const canonicalPath = getCanonicalOfferPath(offer);
-          const detailsPath = localizePath(siteConfig.defaultLocale, canonicalPath || `/offer/${slug}`);
-          const excerpt = pickString(offerRecord, ["excerpt", "summary", "short_description"]);
-          const nextOccurrence = readNextOccurrence(offer);
-          const nextOccurrenceLabel = formatDateTime(
-            nextOccurrence.start,
-            siteConfig.defaultLocale,
-            nextOccurrence.timezone,
-          );
+  const page = routeKey ? await resolveEducationNarrativePage(hostname, routeKey, requestLocale) : null;
 
-          return (
-            <article className="card" key={slug || `offer-${index}`}>
-              <h2>{title}</h2>
-              {excerpt ? <p>{excerpt}</p> : null}
-              <p>
-                <strong>{labels.nextOccurrence}:</strong> {nextOccurrenceLabel || "-"}
-              </p>
-              {slug ? (
-                <Link className="text-link" href={detailsPath}>
-                  {detailsLabel}
-                </Link>
-              ) : null}
-            </article>
-          );
-        })}
-      </div>
-    </section>
+  return (
+    <EducationContentPage
+      eyebrow={siteConfig.center.name}
+      page={
+        page ?? {
+          routeKey: routeKey || offerType.toLowerCase(),
+          locale: requestLocale,
+          title: heading,
+          subtitle: siteConfig.center.name,
+          hero: {
+            title: heading,
+            body: siteConfig.center.name,
+            imageUrl: null,
+          },
+          sections: [],
+          primaryCta: null,
+          seo: undefined,
+        }
+      }
+    >
+      <section className="education-listing">
+        {offers.length === 0 ? <p>No offers found.</p> : null}
+        <div className="education-card-grid">
+          {offers.map((offer, index) => {
+            const offerRecord = asRecord(offer);
+            const slug = getOfferSlug(offer);
+            const title = getOfferTitle(offer, "Untitled offer");
+            const canonicalPath = getCanonicalOfferPath(offer);
+            const detailsPath = localizePath(requestLocale, canonicalPath || `/offer/${slug}`);
+            const excerpt = pickString(offerRecord, ["excerpt", "summary", "short_description"]);
+            const nextOccurrence = readNextOccurrence(offer);
+            const nextOccurrenceLabel = formatDateTime(
+              nextOccurrence.start,
+              requestLocale,
+              nextOccurrence.timezone,
+            );
+            const heroImageUrl = pickString(offerRecord, ["hero_image_url", "heroImageUrl"]);
+
+            return (
+              <article className="education-card education-offer-card" key={slug || `offer-${index}`}>
+                {heroImageUrl ? (
+                  <div
+                    className="education-offer-card__media"
+                    style={{
+                      backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.1), rgba(255,255,255,0.92)), url(${heroImageUrl})`,
+                    }}
+                  />
+                ) : null}
+                <div className="education-offer-card__body">
+                  <p className="education-offer-card__type">{educationCollectionLabel}</p>
+                  <h2>{title}</h2>
+                  {excerpt ? <p>{excerpt}</p> : null}
+                  <p className="education-offer-card__meta">
+                    <strong>{labels.nextOccurrence}:</strong> {nextOccurrenceLabel || "-"}
+                  </p>
+                  {slug ? (
+                    <div className="education-offer-card__actions">
+                      <Link className="education-text-link" href={detailsPath}>
+                        {detailsLabel}
+                      </Link>
+                      <Link className="education-button education-button--secondary" href={detailsPath}>
+                        {requestLocale.toLowerCase().startsWith("fr") ? "Voir la page" : "View page"}
+                      </Link>
+                    </div>
+                  ) : null}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+    </EducationContentPage>
   );
 }

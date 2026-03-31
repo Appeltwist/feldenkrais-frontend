@@ -4,21 +4,26 @@ import type { CSSProperties, ReactNode } from "react";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import AboutSubNav from "@/components/about/AboutSubNav";
 import CoursSubNav from "@/components/classes/CoursSubNav";
-import Footer from "@/components/Footer";
+import EducationAnnouncement from "@/components/education/EducationAnnouncement";
+import EducationFooter from "@/components/education/EducationFooter";
+import EducationHeader from "@/components/education/EducationHeader";
 import ForestFooter from "@/components/ForestFooter";
 import Header from "@/components/Header";
 import MobileFixedFooter from "@/components/MobileFixedFooter";
 import { fetchSiteConfig } from "@/lib/api";
+import { getEducationFallbackSiteConfig, mergeEducationSiteConfig } from "@/lib/education-content";
 import { resolveApiHostname } from "@/lib/hostname-routing";
-import type { SiteConfig } from "@/lib/site-context";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
+import type { SiteConfig } from "@/lib/site-config";
 import { SiteProvider } from "@/lib/site-context";
 
 const FL_CONFIG: SiteConfig = {
   siteName: "Forest Lighthouse",
+  siteSlug: "forest-lighthouse",
   centerSlug: "forest-lighthouse",
   defaultLocale: "en",
+  locales: ["en", "fr"],
   brand: {
     colorPrimary: "#14524d",
     colorSecondary: "#2f6e79",
@@ -32,6 +37,13 @@ const FL_CONFIG: SiteConfig = {
       { label: "Instagram", url: "https://www.instagram.com/forest_lighthouse/" },
     ],
   },
+  nav: [],
+  footer: {
+    groups: [],
+    contact: null,
+    socials: [{ label: "Instagram", url: "https://www.instagram.com/forest_lighthouse/" }],
+  },
+  announcement: null,
 };
 
 const FALLBACK_CONFIGS: Record<string, SiteConfig> = {
@@ -46,14 +58,22 @@ import "./globals.css";
 
 export async function generateMetadata(): Promise<Metadata> {
   const hostname = await getHostname();
+  const requestLocale = await getRequestLocale("en");
   const apiHostname = resolveApiHostname(hostname);
 
   let siteConfig: Awaited<ReturnType<typeof fetchSiteConfig>> | null = null;
 
   try {
-    siteConfig = await fetchSiteConfig(hostname);
+    siteConfig = await fetchSiteConfig(hostname, requestLocale);
   } catch {
     siteConfig = FALLBACK_CONFIGS[apiHostname] ?? null;
+  }
+
+  if (!siteConfig || siteConfig.centerSlug !== "forest-lighthouse") {
+    siteConfig = mergeEducationSiteConfig(
+      getEducationFallbackSiteConfig(apiHostname, requestLocale),
+      siteConfig,
+    );
   }
 
   if (siteConfig?.centerSlug === "forest-lighthouse") {
@@ -73,8 +93,8 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 
   return {
-    title: "Feldenkrais Frontend",
-    description: "Multi-site frontend for Feldenkrais Education",
+    title: siteConfig?.siteName || "Feldenkrais Education",
+    description: "Feldenkrais Education",
   };
 }
 
@@ -84,16 +104,24 @@ export default async function RootLayout({
   children: ReactNode;
 }>) {
   const hostname = await getHostname();
+  const requestLocale = await getRequestLocale("en");
   const apiHostname = resolveApiHostname(hostname);
   let siteConfig: Awaited<ReturnType<typeof fetchSiteConfig>> | null = null;
 
   try {
-    siteConfig = await fetchSiteConfig(hostname);
+    siteConfig = await fetchSiteConfig(hostname, requestLocale);
   } catch (error) {
     if (process.env.NODE_ENV !== "production") {
       console.error("Failed to resolve site config, trying fallback", error);
     }
     siteConfig = FALLBACK_CONFIGS[apiHostname] ?? null;
+  }
+
+  if (!siteConfig || siteConfig.centerSlug !== "forest-lighthouse") {
+    siteConfig = mergeEducationSiteConfig(
+      getEducationFallbackSiteConfig(apiHostname, requestLocale),
+      siteConfig,
+    );
   }
 
   const locale = await getRequestLocale(siteConfig?.defaultLocale ?? "en");
@@ -128,18 +156,31 @@ export default async function RootLayout({
     "--color-secondary": siteConfig.brand.colorSecondary,
     "--color-accent": siteConfig.brand.colorAccent,
     "--font-family": siteConfig.brand.fontFamily,
+    "--heading-font-family": siteConfig.brand.headingFontFamily || siteConfig.brand.fontFamily,
+    "--background": siteConfig.brand.backgroundColor || (isForestLighthouse ? "#f6f8fa" : "#f2f2f2"),
+    "--foreground": siteConfig.brand.textColor || (isForestLighthouse ? "#15202b" : "#44464c"),
+    "--heading-color": siteConfig.brand.headingColor || (isForestLighthouse ? "#15202b" : "#333333"),
+    "--cta-primary": siteConfig.brand.ctaPrimaryColor || siteConfig.brand.colorPrimary,
+    "--cta-hover": siteConfig.brand.ctaHoverColor || siteConfig.brand.colorSecondary,
   } as CSSProperties;
 
-  const bodyClass = isForestLighthouse ? "site-forest-lighthouse" : "";
+  const bodyClass = isForestLighthouse ? "site-forest-lighthouse" : "site-education";
   const showDebugBar =
     process.env.NODE_ENV === "development" && process.env.NEXT_PUBLIC_SHOW_DEBUG_BAR === "1";
 
   return (
     <html lang={locale}>
-      {isForestLighthouse && (
+      {isForestLighthouse ? (
         <head>
           <link
             href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+          />
+        </head>
+      ) : (
+        <head>
+          <link
+            href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap"
             rel="stylesheet"
           />
         </head>
@@ -147,18 +188,18 @@ export default async function RootLayout({
       <body className={bodyClass} data-center={siteConfig.centerSlug} style={themeStyle}>
         <div className="page-wrapper">
           <SiteProvider hostname={hostname} initialSiteConfig={siteConfig}>
-            {isForestLighthouse && <AnnouncementBar locale={locale} />}
+            {isForestLighthouse ? <AnnouncementBar locale={locale} /> : <EducationAnnouncement />}
             {showDebugBar ? (
               <div className="dev-debug-bar">
                 hostname: {hostname} | centerSlug: {siteConfig.centerSlug} | defaultLocale:{" "}
                 {siteConfig.defaultLocale} | locale: {locale}
               </div>
             ) : null}
-            <Header />
-            <AboutSubNav />
-            <CoursSubNav />
-            <main className={isForestLighthouse ? "" : "main-shell"}>{children}</main>
-            {isForestLighthouse ? <ForestFooter locale={locale} /> : <Footer />}
+            {isForestLighthouse ? <Header /> : <EducationHeader />}
+            {isForestLighthouse ? <AboutSubNav /> : null}
+            {isForestLighthouse ? <CoursSubNav /> : null}
+            <main className={isForestLighthouse ? "" : "education-main-shell"}>{children}</main>
+            {isForestLighthouse ? <ForestFooter locale={locale} /> : <EducationFooter locale={locale} />}
             {isForestLighthouse && <MobileFixedFooter locale={locale} />}
           </SiteProvider>
         </div>

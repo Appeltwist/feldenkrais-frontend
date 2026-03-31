@@ -1,8 +1,9 @@
-export default function YourVisitPage() {
-  return (
-    <div className="page-section">
-      <h1>Your Visit</h1>
-      <p>Coming soon.</p>
-    </div>
-  );
+import { redirect } from "next/navigation";
+
+import { getRequestLocale } from "@/lib/get-locale";
+import { localizePath } from "@/lib/locale-path";
+
+export default async function YourVisitPage() {
+  const locale = await getRequestLocale("en");
+  redirect(localizePath(locale, "/visit"));
 }

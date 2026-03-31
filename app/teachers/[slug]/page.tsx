@@ -1,8 +1,10 @@
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 
 import ForestNewsletterForm from "@/components/ForestNewsletterForm";
+import EducationContentPage from "@/components/education/EducationContentPage";
+import EducationTeacherProfilePage from "@/components/education/EducationTeacherProfilePage";
 import ForestImageGallery from "@/components/forest/ForestImageGallery";
 import { ForestPageShell, ForestPageSection } from "@/components/forest/ForestPageShell";
 import RevealObserver from "@/components/motion/RevealObserver";
@@ -15,6 +17,7 @@ import {
   type TeacherDetail,
 } from "@/lib/api";
 import { cleanDisplayText, cleanRichTextHtml } from "@/lib/content-cleanup";
+import { getEducationTeacherProfile } from "@/lib/education-teachers";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
 import { resolveLocale, getTeacherLabels, getForestPlaceholderCopy } from "@/lib/i18n";
@@ -25,7 +28,6 @@ import {
   getFacilitatorSlug,
   getFacilitators,
   getOfferHeroImageUrl,
-  getOfferType,
 } from "@/lib/offers";
 import type { OfferType } from "@/lib/types";
 
@@ -64,6 +66,30 @@ export async function generateMetadata({ params }: TeacherPageProps): Promise<Me
   if (!siteConfig) return {};
 
   const requestLocale = await getRequestLocale(siteConfig.defaultLocale);
+  if (siteConfig.siteSlug === "feldenkrais-education") {
+    const educationTeacher = getEducationTeacherProfile(requestLocale, slug);
+
+    if (educationTeacher) {
+      return {
+        title: educationTeacher.page.seo?.title ?? educationTeacher.page.title,
+        description:
+          educationTeacher.page.seo?.description ??
+          educationTeacher.page.subtitle ??
+          educationTeacher.shortBio,
+        openGraph: educationTeacher.photoUrl
+          ? {
+              title: educationTeacher.page.seo?.title ?? educationTeacher.page.title,
+              description:
+                educationTeacher.page.seo?.description ??
+                educationTeacher.page.subtitle ??
+                educationTeacher.shortBio,
+              images: [{ url: educationTeacher.photoUrl }],
+            }
+          : undefined,
+      };
+    }
+  }
+
   const teacher = await fetchTeacherDetail({
     hostname,
     slug,
@@ -106,6 +132,19 @@ export default async function TeacherProfilePage({ params }: TeacherPageProps) {
 
   const requestLocale = await getRequestLocale(siteConfig.defaultLocale);
   const localeCode = resolveLocale(requestLocale);
+  const isFeldenkraisEducation = siteConfig.siteSlug === "feldenkrais-education";
+
+  if (isFeldenkraisEducation) {
+    const educationTeacher = getEducationTeacherProfile(requestLocale, slug);
+
+    if (educationTeacher) {
+      if (educationTeacher.slug !== slug) {
+        permanentRedirect(localizePath(localeCode, `/teachers/${educationTeacher.slug}`));
+      }
+
+      return <EducationTeacherProfilePage locale={requestLocale} teacher={educationTeacher} />;
+    }
+  }
 
   let teacher: TeacherDetail | null = null;
   let contentLocale = requestLocale;
@@ -299,10 +338,61 @@ export default async function TeacherProfilePage({ params }: TeacherPageProps) {
 
   /* ── generic fallback ── */
   return (
-    <section className="page-section">
-      <h1>{displayName}</h1>
-      {title ? <p>{title}</p> : null}
-      {bio ? <div className="rich-text" dangerouslySetInnerHTML={{ __html: bio }} /> : null}
-    </section>
+    <EducationContentPage
+      eyebrow={localeCode === "fr" ? "Intervenant·e" : "Facilitator"}
+      page={{
+        routeKey: "teacher-profile",
+        locale: localeCode,
+        title: displayName,
+        subtitle: title || (localeCode === "fr" ? "Intervenant·e" : "Facilitator"),
+        hero: {
+          title: displayName,
+          body: title || "",
+          imageUrl: photoUrl || null,
+        },
+        sections: [],
+        primaryCta: null,
+      }}
+    >
+      {bio ? (
+        <section className="education-teacher-bio">
+          <div className="rich-text" dangerouslySetInnerHTML={{ __html: bio }} />
+        </section>
+      ) : null}
+
+      {teacherOffers.length > 0 ? (
+        <section className="education-related-offers">
+          <h2>{localeCode === "fr" ? "Offres associées" : "Related offers"}</h2>
+          <div className="education-card-grid">
+            {teacherOffers.slice(0, 6).map((offer) => {
+              const offerTitle = offer.title || "Offer";
+              const canonicalPath = getCanonicalOfferPath(offer) || `/offer/${offer.slug}`;
+              const offerPath = localizePath(localeCode, canonicalPath);
+              const offerImage = getOfferHeroImageUrl(offer as Record<string, unknown>);
+
+              return (
+                <Link className="education-card education-offer-card education-offer-card--compact" href={offerPath} key={String(offer.slug)}>
+                  {offerImage ? (
+                    <div
+                      className="education-offer-card__media"
+                      style={{
+                        backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.9)), url(${offerImage})`,
+                      }}
+                    />
+                  ) : null}
+                  <div className="education-offer-card__body">
+                    <p className="education-offer-card__type">
+                      {TYPE_LABELS[(offer.type as OfferType) || "WORKSHOP"]?.[localeCode] ?? TYPE_LABELS.WORKSHOP[localeCode]}
+                    </p>
+                    <h3>{offerTitle}</h3>
+                    {typeof offer.excerpt === "string" && offer.excerpt ? <p>{offer.excerpt}</p> : null}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+    </EducationContentPage>
   );
 }

@@ -1,6 +1,9 @@
+import EducationContactPage from "@/components/education/EducationContactPage";
 import { ForestPageShell } from "@/components/forest/ForestPageShell";
 import ForestContactForm from "@/components/contact/ForestContactForm";
 import { fetchSiteConfig } from "@/lib/api";
+import { getEducationFallbackSiteConfig, mergeEducationSiteConfig } from "@/lib/education-content";
+import { resolveEducationNarrativePage } from "@/lib/education-page";
 import { isForestCenter } from "@/lib/forest-theme";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
@@ -12,11 +15,28 @@ export default async function ContactPage() {
   const isFr = locale.toLowerCase().startsWith("fr");
 
   if (!siteConfig || !isForestCenter(siteConfig.centerSlug)) {
+    const resolvedSiteConfig = mergeEducationSiteConfig(
+      getEducationFallbackSiteConfig(hostname, locale),
+      siteConfig,
+    );
+    const page = await resolveEducationNarrativePage(hostname, "contact", locale);
+
+    if (!page) {
+      return (
+        <div className="page-section">
+          <h1>Contact</h1>
+          <p>Coming soon.</p>
+        </div>
+      );
+    }
+
     return (
-      <div className="page-section">
-        <h1>Contact</h1>
-        <p>Coming soon.</p>
-      </div>
+      <EducationContactPage
+        contact={resolvedSiteConfig.footer.contact}
+        locale={locale}
+        page={page}
+        socials={resolvedSiteConfig.footer.socials}
+      />
     );
   }
 
