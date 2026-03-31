@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import ForestNewsletterForm from "@/components/ForestNewsletterForm";
 import { ForestPageShell } from "@/components/forest/ForestPageShell";
 import {
   fetchCalendar,
@@ -925,14 +926,12 @@ export default async function ForestOfferCollectionPage({
           <p className="forest-newsletter-cta__body">
             {copy.newsletterBody}
           </p>
-          <div className="forest-newsletter-cta__form">
-            <input
-              aria-label={copy.newsletterPlaceholder}
-              placeholder={copy.newsletterPlaceholder}
-              type="email"
-            />
-            <button type="button">{copy.newsletterCta}</button>
-          </div>
+          <ForestNewsletterForm
+            ctaText={copy.newsletterCta}
+            locale={localeCode}
+            placeholder={copy.newsletterPlaceholder}
+            source="newsletter-offer-collection"
+          />
         </section>
       </div>
     </ForestPageShell>

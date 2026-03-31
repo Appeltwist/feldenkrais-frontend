@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import ForestNewsletterForm from "@/components/ForestNewsletterForm";
 import { useSiteContext } from "@/lib/site-context";
 import { getFooterContent } from "@/lib/footer-content";
 import { localizePath } from "@/lib/locale-path";
@@ -31,19 +32,13 @@ export default function ForestFooter({ locale }: { locale: string }) {
         {/* Newsletter column */}
         <div className="fl-footer__col">
           <h4 className="fl-footer__heading">{c.newsletterHeading}</h4>
-          <form
-            className="fl-footer__form"
-            onSubmit={(e) => e.preventDefault()}
-          >
-            <input
-              className="fl-footer__input"
-              placeholder={c.newsletterPlaceholder}
-              type="email"
-            />
-            <button className="fl-footer__submit" type="submit">
-              {c.newsletterCta}
-            </button>
-          </form>
+          <ForestNewsletterForm
+            ctaText={c.newsletterCta}
+            locale={locale}
+            placeholder={c.newsletterPlaceholder}
+            source="newsletter-footer"
+            variant="footer"
+          />
 
           <div className="fl-footer__socials">
             <a

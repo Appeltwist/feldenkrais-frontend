@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import BlockRenderer from "@/components/blocks/BlockRenderer";
+import ForestNewsletterForm from "@/components/ForestNewsletterForm";
 import { ForestPageShell } from "@/components/forest/ForestPageShell";
 import RevealObserver from "@/components/motion/RevealObserver";
 import ForestFacilitatorShowcase from "@/components/offers/ForestFacilitatorShowcase";
@@ -1145,13 +1146,12 @@ export default function ForestOfferTemplate({
         <p className="forest-newsletter-cta__body">
           {placeholderCopy.newsletterBody}
         </p>
-        <div className="forest-newsletter-cta__form">
-          <input
-            aria-label={placeholderCopy.newsletterPlaceholder}
-            placeholder={placeholderCopy.newsletterPlaceholder}
-          />
-          <button type="button">{placeholderCopy.newsletterCta}</button>
-        </div>
+        <ForestNewsletterForm
+          ctaText={placeholderCopy.newsletterCta}
+          locale={localeCode}
+          placeholder={placeholderCopy.newsletterPlaceholder}
+          source="newsletter-offer-detail"
+        />
       </section>
 
       {/* ── DISCOVER / RELATED OFFERS ── */}

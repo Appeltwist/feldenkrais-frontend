@@ -7109,6 +7109,10 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
 }
 
 /* ── newsletter CTA — unified pill form ── */
+.forest-newsletter-form {
+  width: 100%;
+}
+
 .forest-newsletter-cta {
   width: 100%;
   max-width: 560px;
@@ -7204,6 +7208,36 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   background: #fff;
   transform: scale(1.03);
   box-shadow: 0 0 12px rgba(244, 242, 235, 0.15);
+}
+
+.forest-newsletter-cta__form button:disabled,
+.site-forest-lighthouse .fl-footer__submit:disabled {
+  cursor: wait;
+  opacity: 0.82;
+  transform: none;
+  box-shadow: none;
+}
+
+.forest-newsletter-cta__status,
+.site-forest-lighthouse .fl-footer__status {
+  margin: 0.75rem 0 0;
+  font-family: var(--fl-body);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.forest-newsletter-cta__status {
+  text-align: center;
+}
+
+.forest-newsletter-cta__status--success,
+.site-forest-lighthouse .fl-footer__status--success {
+  color: rgba(244, 242, 235, 0.8);
+}
+
+.forest-newsletter-cta__status--error,
+.site-forest-lighthouse .fl-footer__status--error {
+  color: #efb1b1;
 }
 
 /* ── discover slider edge fades + card hover ── */
@@ -9707,6 +9741,11 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
 .site-forest-lighthouse .fl-footer__submit:hover {
   background: #fff;
   transform: scale(1.03);
+}
+
+.site-forest-lighthouse .fl-footer__status {
+  color: rgba(244, 242, 235, 0.72);
+  text-align: left;
 }
 
 /* ══════════════════════════════════════════════════════════════

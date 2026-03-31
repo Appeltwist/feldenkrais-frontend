@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import ForestNewsletterForm from "@/components/ForestNewsletterForm";
 import ForestImageGallery from "@/components/forest/ForestImageGallery";
 import { ForestPageShell, ForestPageSection } from "@/components/forest/ForestPageShell";
 import RevealObserver from "@/components/motion/RevealObserver";
@@ -284,13 +285,12 @@ export default async function TeacherProfilePage({ params }: TeacherPageProps) {
             </p>
             <h2 className="forest-newsletter-cta__heading">{placeholderCopy.newsletterTitle}</h2>
             <p className="forest-newsletter-cta__body">{placeholderCopy.newsletterBody}</p>
-            <div className="forest-newsletter-cta__form">
-              <input
-                aria-label={placeholderCopy.newsletterPlaceholder}
-                placeholder={placeholderCopy.newsletterPlaceholder}
-              />
-              <button type="button">{placeholderCopy.newsletterCta}</button>
-            </div>
+            <ForestNewsletterForm
+              ctaText={placeholderCopy.newsletterCta}
+              locale={localeCode}
+              placeholder={placeholderCopy.newsletterPlaceholder}
+              source="newsletter-teacher-profile"
+            />
           </section>
         </section>
       </ForestPageShell>
