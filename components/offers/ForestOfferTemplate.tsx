@@ -36,6 +36,8 @@ import {
   getOfferSubtitle,
   getOfferTitle,
   getOfferTypeVariant,
+  getPricingGroups,
+  getPricingGroupTiers,
   getPriceOptions,
   getPricingPromos,
   getPrimaryCta,
@@ -249,6 +251,26 @@ function formatPromoSupportingText(promo: Record<string, unknown>, locale: strin
   return locale === "fr" ? `Jusqu'au ${dateLabel}` : `Until ${dateLabel}`;
 }
 
+function getPricingGroupActionUrl(group: Record<string, unknown>) {
+  return pickString(group, [
+    "waitlist_endpoint",
+    "waitlistEndpoint",
+    "booking_url",
+    "bookingUrl",
+    "waitlist_url",
+    "waitlistUrl",
+  ]);
+}
+
+function getPricingGroupActionLabel(group: Record<string, unknown>, locale: string, fallback: string) {
+  const actionType = pickString(group, ["action_type", "actionType"]);
+  if (group.is_sold_out === true || actionType === "WAITLIST_FORM") {
+    return locale === "fr" ? "Liste d'attente" : "Join waitlist";
+  }
+
+  return fallback;
+}
+
 function getGalleryImagesFromSection(section: SectionBlock | null) {
   if (!section || section.type !== "gallery") {
     return [] as Array<{ url: string; alt?: string }>;
@@ -362,6 +384,7 @@ export default function ForestOfferTemplate({
   const sections = getSections(offer);
   const mediaUrl = getMediaUrl(offer);
   const bookingOptions = getBookingOptions(offer);
+  const pricingGroups = getPricingGroups(offer);
   const pricingPromos = getPricingPromos(offer);
   const priceOptions = getPriceOptions(offer);
   const benefits = getBenefits(offer);
@@ -468,9 +491,15 @@ export default function ForestOfferTemplate({
   const groupedSections = groupSectionsForLayout(remainingSections);
   const faqSections = siteFaqSections.filter((section) => section.items.length > 0);
   const activePricingPromos = pricingPromos.filter((promo) => isActivePromo(promo as Record<string, unknown>));
+  const totalPricingTiers = pricingGroups.reduce((count, group) => count + getPricingGroupTiers(group).length, 0);
   const scheduleEventLocation = quickFacts?.venue
     ? `${quickFacts.venue}${quickFacts.location ? `, ${quickFacts.location}` : ""}`
     : undefined;
+  const hasStructuredPricing =
+    pricingGroups.length > 0 ||
+    bookingOptions.length > 0 ||
+    activePricingPromos.length > 0 ||
+    priceOptions.length > 0;
 
   /* price hint for cinematic hero */
   const priceHint = offerType === "PRIVATE_SESSION"
@@ -482,6 +511,22 @@ export default function ForestOfferTemplate({
         const amount = formatOfferMoney(first.amount ?? first.price ?? first.value ?? first.formatted, first.currency ?? first.currency_code);
         const supportingText = formatPromoSupportingText(first, localeCode);
         return [label, amount, supportingText].filter(Boolean).join(" ");
+      })()
+    : pricingGroups.length > 0
+    ? (() => {
+        const firstGroup = pricingGroups[0] as Record<string, unknown>;
+        const firstTier = getPricingGroupTiers(pricingGroups[0])[0] as Record<string, unknown> | undefined;
+        const dateSummary = pickString(firstGroup, ["date_summary", "dateSummary"]);
+        if (!firstTier) {
+          return dateSummary;
+        }
+
+        const label = pickString(firstTier, ["label", "name", "title"]);
+        const amount = formatOfferMoney(
+          firstTier.amount ?? firstTier.price ?? firstTier.value ?? firstTier.formatted,
+          firstTier.currency ?? firstTier.currency_code,
+        );
+        return [dateSummary, label, amount].filter(Boolean).join(" · ");
       })()
     : bookingOptions.length > 0
     ? (() => {
@@ -505,6 +550,8 @@ export default function ForestOfferTemplate({
   /* first occurrence → calendar event for "Add to Calendar" */
   const occurrences = offerType === "CLASS" ? upcomingClassOccurrences : getOccurrences(offer);
   const hasMultipleChoicePricing =
+    pricingGroups.length > 1 ||
+    totalPricingTiers > 1 ||
     bookingOptions.length > 1 ||
     priceOptions.length > 1 ||
     (occurrences.length > 1 && (bookingOptions.length > 0 || priceOptions.length > 0));
@@ -912,10 +959,10 @@ export default function ForestOfferTemplate({
       ) : null}
 
       {/* ── PRICING & BENEFITS ── */}
-      {(bookingOptions.length > 0 || activePricingPromos.length > 0 || priceOptions.length > 0 || (benefits && benefits.items.length > 0)) ? (
-        <section className={`forest-pricing-benefits${benefits && (bookingOptions.length > 0 || activePricingPromos.length > 0 || priceOptions.length > 0) ? " forest-pricing-benefits--two-col" : ""}`} data-reveal="section" id="offer-pricing">
+      {(hasStructuredPricing || (benefits && benefits.items.length > 0)) ? (
+        <section className={`forest-pricing-benefits${benefits && hasStructuredPricing ? " forest-pricing-benefits--two-col" : ""}`} data-reveal="section" id="offer-pricing">
           {/* compact pricing box */}
-          {(bookingOptions.length > 0 || activePricingPromos.length > 0 || priceOptions.length > 0) ? (
+          {hasStructuredPricing ? (
             <div className="forest-panel forest-pricing-compact forest-pricing-compact--glow" data-hover-lift>
               <p className="fp-chapter__eyebrow">{localeCode === "fr" ? "Tarifs" : "Pricing"}</p>
               <h2>{labels.pricing}</h2>
@@ -945,7 +992,95 @@ export default function ForestOfferTemplate({
                 </div>
               ) : null}
               <div className="forest-pricing-compact__list">
-                {bookingOptions.length > 0 ? bookingOptions.map((option, index) => {
+                {pricingGroups.length > 0 ? pricingGroups.map((group, groupIndex) => {
+                  const groupRecord = group as Record<string, unknown>;
+                  const groupHeading = pickString(groupRecord, ["label", "name", "title"])
+                    || pickString(groupRecord, ["date_summary", "dateSummary"], `${localeCode === "fr" ? "Dates" : "Dates"} ${groupIndex + 1}`);
+                  const groupDateSummary = pickString(groupRecord, ["date_summary", "dateSummary"]);
+                  const groupActionUrl = getPricingGroupActionUrl(groupRecord);
+                  const groupActionLabel = getPricingGroupActionLabel(
+                    groupRecord,
+                    localeCode,
+                    primaryCta?.label || labels.book,
+                  );
+                  const groupIsSoldOut = groupRecord.is_sold_out === true;
+                  const tiers = getPricingGroupTiers(group);
+
+                  return (
+                    <div className="forest-pricing-compact__group" key={`pricing-group-${groupHeading}-${groupIndex}`}>
+                      <div className="forest-pricing-compact__group-head">
+                        <span className="forest-pricing-compact__group-label">{groupHeading}</span>
+                        {groupIsSoldOut ? (
+                          <span className="forest-pricing-compact__group-status">
+                            {localeCode === "fr" ? "Complet" : "Sold out"}
+                          </span>
+                        ) : null}
+                      </div>
+                      {tiers.map((tier, tierIndex) => {
+                        const tierRecord = tier as Record<string, unknown>;
+                        const label = pickString(tierRecord, ["label", "name", "title"], "Tier");
+                        const detail = formatOfferMoney(
+                          tierRecord.amount ?? tierRecord.price ?? tierRecord.value ?? tierRecord.formatted,
+                          tierRecord.currency ?? tierRecord.currency_code,
+                        );
+                        const tierSummary = pickString(tierRecord, ["summary"]);
+                        const supportingText = [
+                          groupDateSummary && groupDateSummary !== groupHeading ? groupDateSummary : "",
+                          tierSummary,
+                        ].filter(Boolean).join(" · ");
+                        const bookingUrl = pickString(tierRecord, ["booking_url", "bookingUrl"]);
+
+                        return (
+                          <div className="forest-pricing-compact__row" key={`group-${groupIndex}-tier-${label}-${tierIndex}`}>
+                            <div className="forest-pricing-compact__copy">
+                              <span className="forest-pricing-compact__label">{label}</span>
+                              {supportingText ? (
+                                <span className="forest-pricing-compact__summary">{supportingText}</span>
+                              ) : null}
+                            </div>
+                            <div className="forest-pricing-compact__meta">
+                              {detail ? <span className="forest-pricing-compact__amount">{detail}</span> : null}
+                              {bookingUrl ? (
+                                isExternalHref(bookingUrl) ? (
+                                  <a
+                                    className="forest-pricing-compact__row-cta"
+                                    href={bookingUrl}
+                                    rel="noreferrer"
+                                    target="_blank"
+                                  >
+                                    {primaryCta?.label || labels.book}
+                                  </a>
+                                ) : (
+                                  <Link className="forest-pricing-compact__row-cta" href={bookingUrl}>
+                                    {primaryCta?.label || labels.book}
+                                  </Link>
+                                )
+                              ) : null}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {groupIsSoldOut && groupActionUrl ? (
+                        <div className="forest-pricing-compact__group-action">
+                          {isExternalHref(groupActionUrl) ? (
+                            <a
+                              className="forest-pricing-compact__row-cta"
+                              href={groupActionUrl}
+                              rel="noreferrer"
+                              target="_blank"
+                            >
+                              {groupActionLabel}
+                            </a>
+                          ) : (
+                            <Link className="forest-pricing-compact__row-cta" href={groupActionUrl}>
+                              {groupActionLabel}
+                            </Link>
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                }) : bookingOptions.length > 0 ? bookingOptions.map((option, index) => {
                   const optionRecord = option as Record<string, unknown>;
                   const label = pickString(optionRecord, ["label", "name", "title"], "Option");
                   const detail = formatOfferMoney(
@@ -1001,7 +1136,7 @@ export default function ForestOfferTemplate({
                   );
                 })}
               </div>
-              {primaryCta && bookingOptions.length === 0 ? (
+              {primaryCta && bookingOptions.length === 0 && pricingGroups.length === 0 ? (
                 isExternalHref(primaryCta.url) ? (
                   <a className="fl-btn fl-btn--primary forest-pricing-compact__cta" href={primaryCta.url} rel="noreferrer" target="_blank">
                     {primaryCta.label || labels.book}

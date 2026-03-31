@@ -15,6 +15,8 @@ import {
   getOfferType,
   getOfferSubtitle,
   getOfferTitle,
+  getPricingGroups,
+  getPricingGroupTiers,
   getPriceOptions,
   getPrimaryCta,
   getQuickFacts,
@@ -86,6 +88,7 @@ export default function OfferTemplateBase({
   const sections = getSections(offer);
   const occurrences = getOccurrences(offer);
   const bookingOptions = getBookingOptions(offer);
+  const pricingGroups = getPricingGroups(offer);
   const priceOptions = getPriceOptions(offer);
   const facilitators = getFacilitators(offer);
   const tags = getTags(offer);
@@ -201,11 +204,66 @@ export default function OfferTemplateBase({
         </section>
       ) : null}
 
-      {(bookingOptions.length > 0 || priceOptions.length > 0) ? (
+      {(pricingGroups.length > 0 || bookingOptions.length > 0 || priceOptions.length > 0) ? (
         <section id="offer-pricing">
           <h2>{labels.pricing}</h2>
           <ul className="stack-list">
-            {bookingOptions.length > 0 ? bookingOptions.map((option, index) => {
+            {pricingGroups.length > 0 ? pricingGroups.map((group, groupIndex) => {
+              const groupRecord = group as Record<string, unknown>;
+              const groupHeading = pickString(groupRecord, ["label", "name", "title", "date_summary", "dateSummary"], `Option ${groupIndex + 1}`);
+              const groupDateSummary = pickString(groupRecord, ["date_summary", "dateSummary"]);
+              const groupActionUrl = pickString(groupRecord, [
+                "waitlist_endpoint",
+                "waitlistEndpoint",
+                "booking_url",
+                "bookingUrl",
+                "waitlist_url",
+                "waitlistUrl",
+              ]);
+              const isSoldOut = groupRecord.is_sold_out === true;
+              const tiers = getPricingGroupTiers(group);
+
+              return (
+                <li key={`${groupHeading}-${groupIndex}`}>
+                  <p>
+                    <strong>{groupHeading}</strong>
+                  </p>
+                  {groupDateSummary && groupDateSummary !== groupHeading ? <p>{groupDateSummary}</p> : null}
+                  {tiers.length > 0 ? (
+                    <ul className="stack-list">
+                      {tiers.map((tier, tierIndex) => {
+                        const tierLabel = pickString(tier as Record<string, unknown>, ["label", "name", "title"], "Tier");
+                        const amount = normalizeText(tier.amount ?? tier.price ?? tier.value ?? tier.formatted);
+                        const currency = normalizeText(tier.currency ?? tier.currency_code);
+                        const detail = [amount, currency].filter(Boolean).join(" ");
+                        const summary = pickString(tier as Record<string, unknown>, ["summary"]);
+                        const bookingUrl = pickString(tier as Record<string, unknown>, ["booking_url", "bookingUrl"]);
+
+                        return (
+                          <li key={`${tierLabel}-${tierIndex}`}>
+                            <p>
+                              <strong>{tierLabel}</strong>
+                              {detail ? `: ${detail}` : ""}
+                            </p>
+                            {summary ? <p>{summary}</p> : null}
+                            {bookingUrl ? (
+                              <div className="link-row">
+                                {renderOfferLink(bookingUrl, labels.book)}
+                              </div>
+                            ) : null}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : null}
+                  {isSoldOut && groupActionUrl ? (
+                    <div className="link-row">
+                      {renderOfferLink(groupActionUrl, localeCode === "fr" ? "Liste d'attente" : "Join waitlist")}
+                    </div>
+                  ) : null}
+                </li>
+              );
+            }) : bookingOptions.length > 0 ? bookingOptions.map((option, index) => {
               const label = pickString(option, ["label", "name", "title"], "Option");
               const amount = normalizeText(option.amount ?? option.price ?? option.value ?? option.formatted);
               const currency = normalizeText(option.currency ?? option.currency_code);

@@ -8,6 +8,8 @@ import type {
   OfferSummary,
   OfferType,
   PriceOption,
+  PricingGroup,
+  PricingGroupTier,
   PricingPromo,
   PrimaryCTA,
   QuickFacts,
@@ -374,6 +376,24 @@ export function getPriceOptions(offer: OfferDetail) {
   }
 
   return asRecords(record.price_options ?? record.priceOptions ?? record.pricing) as PriceOption[];
+}
+
+export function getPricingGroups(offer: OfferDetail) {
+  const record = asRecord(offer);
+  if (!record) {
+    return [] as PricingGroup[];
+  }
+
+  return asRecords(record.pricing_groups ?? record.pricingGroups) as PricingGroup[];
+}
+
+export function getPricingGroupTiers(group: PricingGroup) {
+  const record = asRecord(group);
+  if (!record) {
+    return [] as PricingGroupTier[];
+  }
+
+  return asRecords(record.tiers ?? record.price_options ?? record.priceOptions) as PricingGroupTier[];
 }
 
 export function getBookingOptions(offer: OfferDetail) {

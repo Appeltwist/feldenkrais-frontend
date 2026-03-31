@@ -89,6 +89,47 @@ export type BookingOption = {
   [key: string]: unknown;
 };
 
+export type PricingGroupTier = {
+  tier_id?: number | string | null;
+  pricing_group_id?: number | string | null;
+  tier_type?: string | null;
+  label?: string | null;
+  name?: string | null;
+  title?: string | null;
+  amount?: string | number | null;
+  price?: string | number | null;
+  value?: string | number | null;
+  formatted?: string | null;
+  currency?: string | null;
+  currency_code?: string | null;
+  summary?: string | null;
+  booking_url?: string | null;
+  checkout_provider?: string | null;
+  [key: string]: unknown;
+};
+
+export type PricingGroup = {
+  group_id?: number | string | null;
+  pricing_group_id?: number | string | null;
+  label?: string | null;
+  name?: string | null;
+  title?: string | null;
+  date_summary?: string | null;
+  summary?: string | null;
+  occurrence_ids?: Array<number | string> | null;
+  tiers?: PricingGroupTier[] | null;
+  booking_url?: string | null;
+  waitlist_url?: string | null;
+  waitlist_endpoint?: string | null;
+  waitlist_mode?: string | null;
+  action_type?: string | null;
+  is_sold_out?: boolean | null;
+  spots_limit?: number | null;
+  spots_taken?: number | null;
+  spots_remaining?: number | null;
+  [key: string]: unknown;
+};
+
 export type PricingPromo = {
   kind?: string | null;
   label?: string | null;
@@ -293,6 +334,7 @@ export type OfferDetail = {
   themes?: ThemeTag[] | null;
   sections?: SectionBlock[] | null;
   occurrences?: Occurrence[] | null;
+  pricing_groups?: PricingGroup[] | null;
   price_options?: PriceOption[] | null;
   booking_options?: BookingOption[] | null;
   pricing_promos?: PricingPromo[] | null;
