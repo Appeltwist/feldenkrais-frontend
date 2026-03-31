@@ -492,6 +492,11 @@ export default function ForestOfferTemplate({
   const faqSections = siteFaqSections.filter((section) => section.items.length > 0);
   const activePricingPromos = pricingPromos.filter((promo) => isActivePromo(promo as Record<string, unknown>));
   const totalPricingTiers = pricingGroups.reduce((count, group) => count + getPricingGroupTiers(group).length, 0);
+  const shouldPreferBookingOptions =
+    bookingOptions.length > 0 &&
+    pricingGroups.length === 1 &&
+    totalPricingTiers <= 1;
+  const shouldRenderGroupedPricing = pricingGroups.length > 0 && !shouldPreferBookingOptions;
   const pricingActionLabel = getForestPricingActionLabel(offerType, localeCode);
   const waitlistActionLabel = getForestWaitlistActionLabel(localeCode);
   const scheduleEventLocation = quickFacts?.venue
@@ -514,7 +519,7 @@ export default function ForestOfferTemplate({
         const supportingText = formatPromoSupportingText(first, localeCode);
         return [label, amount, supportingText].filter(Boolean).join(" ");
       })()
-    : pricingGroups.length > 0
+    : shouldRenderGroupedPricing
     ? (() => {
         const firstGroup = pricingGroups[0] as Record<string, unknown>;
         const firstTier = getPricingGroupTiers(pricingGroups[0])[0] as Record<string, unknown> | undefined;
@@ -993,7 +998,7 @@ export default function ForestOfferTemplate({
                   })}
                 </div>
               ) : null}
-              {pricingGroups.length > 0 ? (
+              {shouldRenderGroupedPricing ? (
                 <ForestGroupedPricingSelector
                   availableActionLabel={pricingActionLabel}
                   groups={pricingGroups}
@@ -1062,7 +1067,7 @@ export default function ForestOfferTemplate({
                 })}
                 </div>
               )}
-              {primaryCta && bookingOptions.length === 0 && pricingGroups.length === 0 ? (
+              {primaryCta && bookingOptions.length === 0 && !shouldRenderGroupedPricing ? (
                 isExternalHref(primaryCta.url) ? (
                   <a className="fl-btn fl-btn--primary forest-pricing-compact__cta" href={primaryCta.url} rel="noreferrer" target="_blank">
                     {primaryCta.label || labels.book}

@@ -9368,6 +9368,13 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   font-size: 0.9rem;
 }
 
+.forest-pricing-compact__group-tier {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+}
+
 .forest-pricing-compact__group-action {
   display: flex;
   justify-content: flex-start;

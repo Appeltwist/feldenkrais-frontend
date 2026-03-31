@@ -3,8 +3,8 @@
 import { useState } from "react";
 
 import { isExternalHref } from "@/lib/locale-path";
-import { normalizeText, pickString } from "@/lib/offers";
-import type { OfferType, PricingGroup } from "@/lib/types";
+import { getPricingGroupTiers, normalizeText, pickString } from "@/lib/offers";
+import type { OfferType, PricingGroup, PricingGroupTier } from "@/lib/types";
 
 type ForestGroupedPricingSelectorProps = {
   availableActionLabel: string;
@@ -48,6 +48,22 @@ function getWaitlistUrl(group: PricingGroup) {
   ]);
 }
 
+function getBookingUrl(group: PricingGroup) {
+  const record = group as Record<string, unknown>;
+  return pickString(record, ["booking_url", "bookingUrl"]);
+}
+
+function getTierKey(tier: PricingGroupTier, index: number) {
+  const record = tier as Record<string, unknown>;
+  const explicitKey = record.tier_id ?? record.booking_url ?? record.bookingUrl;
+  if (explicitKey !== undefined && explicitKey !== null && String(explicitKey).trim()) {
+    return String(explicitKey);
+  }
+
+  const label = pickString(record, ["label", "name", "title"], "tier");
+  return `${label}-${index}`;
+}
+
 function getSelectPlaceholder(locale: string) {
   return locale.toLowerCase().startsWith("fr") ? "Choisir un tarif" : "Select a tier";
 }
@@ -79,12 +95,25 @@ export default function ForestGroupedPricingSelector({
         const groupHeading = getGroupHeading(group, groupIndex, groups.length);
         const groupIsSoldOut = groupRecord.is_sold_out === true;
         const waitlistUrl = getWaitlistUrl(group);
-        const tiers = Array.isArray(group.tiers) ? group.tiers : [];
+        const groupBookingUrl = getBookingUrl(group);
+        const tiers = getPricingGroupTiers(group);
+        const hasTierChoice = !groupIsSoldOut && tiers.length > 1;
         const selectedTierId = selectedTierByGroup[groupKey] ?? "";
-        const selectedTier = tiers.find((tier) => String(tier.tier_id ?? "") === selectedTierId) ?? null;
-        const selectedTierUrl = selectedTier ? pickString(selectedTier as Record<string, unknown>, ["booking_url", "bookingUrl"]) : "";
+        const defaultTier = !groupIsSoldOut && tiers.length === 1 ? tiers[0] : null;
+        const selectedTier = hasTierChoice
+          ? tiers.find((tier, tierIndex) => getTierKey(tier, tierIndex) === selectedTierId) ?? null
+          : defaultTier;
+        const selectedTierRecord = selectedTier as Record<string, unknown> | null;
+        const selectedTierUrl = selectedTierRecord ? pickString(selectedTierRecord, ["booking_url", "bookingUrl"]) : "";
+        const directTierLabel = selectedTierRecord ? pickString(selectedTierRecord, ["label", "name", "title"], "Tier") : "";
+        const directTierAmount = selectedTierRecord
+          ? formatOfferMoney(
+              selectedTierRecord.amount ?? selectedTierRecord.price ?? selectedTierRecord.value ?? selectedTierRecord.formatted,
+              selectedTierRecord.currency ?? selectedTierRecord.currency_code,
+            )
+          : "";
         const actionLabel = groupIsSoldOut ? waitlistActionLabel : availableActionLabel;
-        const actionUrl = groupIsSoldOut ? waitlistUrl : selectedTierUrl;
+        const actionUrl = groupIsSoldOut ? waitlistUrl : selectedTierUrl || groupBookingUrl;
         const actionDisabled = !actionUrl;
         const external = actionUrl ? isExternalHref(actionUrl) : false;
 
@@ -101,7 +130,7 @@ export default function ForestGroupedPricingSelector({
               </div>
             ) : null}
 
-            {!groupIsSoldOut && tiers.length > 0 ? (
+            {hasTierChoice ? (
               <label className="forest-pricing-compact__select-field">
                 <span className="sr-only">{selectLabel}</span>
                 <div className="forest-pricing-compact__select-wrap">
@@ -118,9 +147,9 @@ export default function ForestGroupedPricingSelector({
                     value={selectedTierId}
                   >
                     <option value="">{selectPlaceholder}</option>
-                    {tiers.map((tier) => {
+                    {tiers.map((tier, tierIndex) => {
                       const tierRecord = tier as Record<string, unknown>;
-                      const tierId = String(tier.tier_id ?? "");
+                      const tierId = getTierKey(tier, tierIndex);
                       const tierLabel = pickString(tierRecord, ["label", "name", "title"], "Tier");
                       const tierAmount = formatOfferMoney(
                         tierRecord.amount ?? tierRecord.price ?? tierRecord.value ?? tierRecord.formatted,
@@ -140,6 +169,13 @@ export default function ForestGroupedPricingSelector({
                   </span>
                 </div>
               </label>
+            ) : !groupIsSoldOut && selectedTierRecord ? (
+              <div className="forest-pricing-compact__group-tier">
+                <div className="forest-pricing-compact__copy">
+                  <span className="forest-pricing-compact__label">{directTierLabel}</span>
+                </div>
+                {directTierAmount ? <span className="forest-pricing-compact__amount">{directTierAmount}</span> : null}
+              </div>
             ) : null}
 
             <div className="forest-pricing-compact__group-action">
