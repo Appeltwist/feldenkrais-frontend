@@ -74,7 +74,9 @@ export default function ForestFooter({ locale }: { locale: string }) {
             274 Rue des Alliés<br />
             1190 Forest, Belgium<br />
             <a href="tel:+32485726837">+32 485 72 68 37</a><br />
-            <Link href={contactHref}>{c.contactPageLabel}</Link>
+            <Link className="fl-footer__contact-link" href={contactHref}>
+              {c.contactPageLabel}
+            </Link>
           </address>
         </div>
       </div>
