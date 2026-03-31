@@ -2,8 +2,8 @@ import EducationWorkshopArchivePage from "@/components/education/EducationWorksh
 import ForestOfferCollectionPage from "@/components/offers/ForestOfferCollectionPage";
 import OfferListPage from "@/components/offers/OfferListPage";
 import { fetchOffers, fetchSiteConfig } from "@/lib/api";
-import { getEducationEventArchive } from "@/lib/education-events";
 import { resolveEducationNarrativePage } from "@/lib/education-page";
+import { buildEducationWorkshopCollection, fetchForestFeaturedWorkshops } from "@/lib/education-workshops";
 import { isForestCenter } from "@/lib/forest-theme";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
@@ -47,9 +47,10 @@ export default async function WorkshopsPage() {
       type: "WORKSHOP",
       locale,
     }).catch(() => []);
-    const archiveEvents = offers.length === 0 ? getEducationEventArchive(locale) : [];
+    const forestWorkshops = await fetchForestFeaturedWorkshops(locale).catch(() => []);
+    const upcomingWorkshops = buildEducationWorkshopCollection(locale, offers, forestWorkshops);
 
-    return <EducationWorkshopArchivePage archiveEvents={archiveEvents} locale={locale} offers={offers} page={page} />;
+    return <EducationWorkshopArchivePage locale={locale} page={page} upcomingWorkshops={upcomingWorkshops} />;
   }
 
   return <OfferListPage heading="Workshops" offerType="WORKSHOP" routeKey="workshops" />;

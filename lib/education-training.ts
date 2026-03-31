@@ -116,7 +116,7 @@ function buildProgramPdfUrl(key: "cantal" | "brussels" | "paris") {
 export function getEducationTrainingProgramStats(locale: string): EducationTrainingProgramStat[] {
   return [
     { value: t(locale, "4 ans", "4 years"), label: t(locale, "Durée du parcours", "Program duration") },
-    { value: t(locale, "8 à 12", "8 to 12"), label: t(locale, "Segments selon le centre", "Segments depending on center") },
+    { value: t(locale, "8 à 12 segments", "8 to 12 segments"), label: t(locale, "Segments selon le centre", "Segments depending on center") },
     { value: t(locale, "160 jours", "160 days"), label: t(locale, "Temps d’étude cumulé", "Cumulative study time") },
     { value: t(locale, "800 heures", "800 hours"), label: t(locale, "Volume pédagogique", "Teaching volume") },
   ];

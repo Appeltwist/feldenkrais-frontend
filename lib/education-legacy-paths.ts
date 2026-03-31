@@ -49,6 +49,7 @@ const EDUCATION_LEGACY_PATH_ALIASES: Record<string, string> = {
   "/workshops": "/workshops",
   "/all-workshops": "/workshops",
   "/ateliers-formations": "/workshops",
+  "/atelier_intro": "/atelier_intro",
   "/day-in-training": "/day-in-training",
   "/a-typical-day-in-a-training": "/day-in-training",
   "/une-journee-dans-la-formation": "/day-in-training",

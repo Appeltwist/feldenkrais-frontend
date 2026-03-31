@@ -4,11 +4,6 @@ import EducationDayInTrainingPage from "@/components/education/EducationDayInTra
 import { resolveEducationNarrativePage } from "@/lib/education-page";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
-import {
-  getEducationTrainingCohorts,
-  getEducationTrainingIncludedItems,
-  getEducationTrainingProgramStats,
-} from "@/lib/education-training";
 
 export default async function DayInTrainingPage() {
   const hostname = await getHostname();
@@ -19,13 +14,5 @@ export default async function DayInTrainingPage() {
     notFound();
   }
 
-  return (
-    <EducationDayInTrainingPage
-      cohorts={getEducationTrainingCohorts(locale)}
-      includedItems={getEducationTrainingIncludedItems(locale)}
-      locale={locale}
-      page={page}
-      trainingStats={getEducationTrainingProgramStats(locale)}
-    />
-  );
+  return <EducationDayInTrainingPage locale={locale} page={page} />;
 }

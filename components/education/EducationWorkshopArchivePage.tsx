@@ -1,27 +1,17 @@
+import Image from "next/image";
 import Link from "next/link";
 
-import type { OfferSummary } from "@/lib/api";
-import type { EducationEventEntry } from "@/lib/education-events";
-import { getOfferLabels } from "@/lib/i18n";
 import { localizePath } from "@/lib/locale-path";
-import {
-  asRecord,
-  formatDateTime,
-  getCanonicalOfferPath,
-  getOfferSlug,
-  getOfferTitle,
-  pickString,
-  readNextOccurrence,
-} from "@/lib/offers";
+import type { EducationWorkshopCollectionItem } from "@/lib/education-workshops";
 import type { NarrativePage } from "@/lib/site-config";
 
 import EducationContentPage from "./EducationContentPage";
+import EducationWorkshopSlider from "./EducationWorkshopSlider";
 
 type EducationWorkshopArchivePageProps = {
-  archiveEvents?: EducationEventEntry[];
   locale: string;
-  offers: OfferSummary[];
   page: NarrativePage;
+  upcomingWorkshops: EducationWorkshopCollectionItem[];
 };
 
 function t(locale: string, fr: string, en: string) {
@@ -29,274 +19,140 @@ function t(locale: string, fr: string, en: string) {
 }
 
 export default function EducationWorkshopArchivePage({
-  archiveEvents = [],
   locale,
-  offers,
   page,
+  upcomingWorkshops,
 }: EducationWorkshopArchivePageProps) {
-  const labels = getOfferLabels(locale);
-  const nextOffer = offers
-    .map((offer) => ({ offer, nextOccurrence: readNextOccurrence(offer) }))
-    .sort((left, right) => left.nextOccurrence.start.localeCompare(right.nextOccurrence.start))[0];
-  const nextArchiveEvent = [...archiveEvents].sort((left, right) => left.startDate.localeCompare(right.startDate))[0];
-
   const resolvedPage: NarrativePage = {
     ...page,
-    title: t(locale, "Stages & formations", "Trainings and workshops"),
+    title: t(locale, "Tous les workshops", "All workshops"),
     subtitle: t(
       locale,
-      "Améliorez vos compétences, en présence ou en ligne. Vous trouverez ici un aperçu des stages, événements et masterclasses FE.",
-      "Improve your skills, in person or online. Here you can see the FE mix of live workshops, events, and masterclasses.",
+      "Retrouvez ici les workshops FE à venir et une sélection de formats Feldenkrais associés.",
+      "Find the upcoming FE workshops here, along with a selection of related Feldenkrais formats.",
     ),
     hero: {
-      ...page.hero,
-      title: t(locale, "Stages & formations", "Trainings and workshops"),
+      title: t(locale, "Tous les workshops", "All workshops"),
       body: t(
         locale,
-        "Un point d’entrée FE pour les événements en direct et les formats d’apprentissage en ligne.",
-        "An FE entry point for live events and online learning formats.",
+        "Les introductions FE à la formation apparaissent ici avec une sélection de workshops Feldenkrais à venir, ainsi qu’un accès direct à la plateforme.",
+        "The FE introductions to the training appear here alongside a curated set of upcoming Feldenkrais workshops, plus a direct path into the platform.",
       ),
-      imageUrl:
-        page.hero.imageUrl ||
-        "https://feldenkrais-education.com/wp-content/uploads/sites/15/2024/10/DSC02199-Large.jpeg",
+      imageUrl: null,
     },
+    primaryCta: null,
     sections: [],
   };
 
-  const eventCount = offers.length > 0 ? offers.length : archiveEvents.length;
+  function renderWorkshopCard(workshop: EducationWorkshopCollectionItem) {
+    const tags = [workshop.locationLabel, workshop.monthLabel, workshop.audienceLabel].filter(Boolean);
+    const actionLabel = workshop.external
+      ? t(locale, "Ouvrir le workshop", "Open workshop")
+      : t(locale, "Voir la page", "View page");
+    const body = (
+      <>
+        <div
+          className="education-workshop-feature-card__media"
+          style={{
+            backgroundImage: `linear-gradient(180deg, rgba(18, 23, 34, 0.14), rgba(18, 23, 34, 0.82)), url(${workshop.imageUrl || "/brands/feldenkrais-education/training/hero-room.jpeg"})`,
+          }}
+        />
+        <div className="education-workshop-feature-card__body">
+          {tags.length > 0 ? (
+            <div className="education-workshop-feature-card__tags">
+              {tags.map((tag) => (
+                <span className="education-workshop-feature-card__tag" key={`${workshop.id}-${tag}`}>
+                  {tag}
+                </span>
+              ))}
+            </div>
+          ) : null}
+          <h3>{workshop.title}</h3>
+          <p className="education-workshop-feature-card__summary">{workshop.summary}</p>
+          {workshop.whenLabel ? <p className="education-workshop-feature-card__meta">{workshop.whenLabel}</p> : null}
+          <span className="education-button education-button--secondary">{actionLabel}</span>
+        </div>
+      </>
+    );
 
-  function formatArchiveEventWhen(startDate: string, endDate: string) {
-    if (!startDate) {
-      return t(locale, "Archive FE", "FE archive");
+    if (workshop.external) {
+      return (
+        <a
+          className="education-workshop-feature-card education-card"
+          href={workshop.href}
+          key={workshop.id}
+          rel="noreferrer"
+          target="_blank"
+        >
+          {body}
+        </a>
+      );
     }
 
-    const start = new Date(startDate);
-    if (Number.isNaN(start.getTime())) {
-      return startDate;
-    }
-
-    const formatter = new Intl.DateTimeFormat(locale.toLowerCase().startsWith("fr") ? "fr-BE" : "en-GB", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    });
-
-    if (!endDate) {
-      return formatter.format(start);
-    }
-
-    const end = new Date(endDate);
-    if (Number.isNaN(end.getTime()) || start.toDateString() === end.toDateString()) {
-      return formatter.format(start);
-    }
-
-    return `${formatter.format(start)} - ${formatter.format(end)}`;
+    return (
+      <Link className="education-workshop-feature-card education-card" href={workshop.href} key={workshop.id}>
+        {body}
+      </Link>
+    );
   }
 
   return (
-    <EducationContentPage className="education-workshops-page" eyebrow="Workshops" page={resolvedPage}>
-      <section className="education-center-intro education-card">
-        <article className="education-center-intro__story">
-          <p className="home-section-kicker">{t(locale, "Événements FE", "FE events")}</p>
-          <h2>{t(locale, "Événements en direct et approfondissements en ligne", "Live events and online deep dives")}</h2>
-          <p>
-            {t(
-              locale,
-              "Le site FE précédent ouvrait cette page sur les stages en direct, puis orientait vers les masterclasses et ressources en ligne. On garde cette logique ici.",
-              "The previous FE site opened this page with live workshops, then directed people into online masterclasses and resources. We keep that structure here.",
-            )}
-          </p>
-          <p className="education-training-intro__note">
-            {t(
-              locale,
-              "Les offres ci-dessous restent pilotées par le backend partagé, mais la présentation reprend le rôle éditorial FE de cette page.",
-              "The offers below still come from the shared backend, but the presentation restores the FE editorial role this page used to have.",
-            )}
-          </p>
-        </article>
-        <aside className="education-center-intro__facts">
-          <p className="education-page__date-range">{t(locale, "À l’affiche", "What is on")}</p>
-          <h2>{t(locale, "Repères utiles", "Useful markers")}</h2>
-          <dl className="education-center-facts">
-            <div>
-              <dt>{t(locale, "Événements visibles", "Visible events")}</dt>
-              <dd>{eventCount}</dd>
-            </div>
-            <div>
-              <dt>{t(locale, "Formats", "Formats")}</dt>
-              <dd>{t(locale, "Présentiel + en ligne", "In person + online")}</dd>
-            </div>
-            <div>
-              <dt>{t(locale, "Prochaine date", "Next date")}</dt>
-              <dd>
-                {nextOffer
-                  ? formatDateTime(nextOffer.nextOccurrence.start, locale, nextOffer.nextOccurrence.timezone)
-                  : nextArchiveEvent
-                    ? formatArchiveEventWhen(nextArchiveEvent.startDate, nextArchiveEvent.endDate)
-                  : t(locale, "À venir", "Coming soon")}
-              </dd>
-            </div>
-          </dl>
-          <div className="education-center-intro__actions">
-            <Link className="education-button" href={localizePath(locale, "/calendar")}>
-              {t(locale, "Voir le calendrier", "View the calendar")}
-            </Link>
-            <Link className="education-button education-button--secondary" href={localizePath(locale, "/shop")}>
-              {t(locale, "Voir les masterclasses", "See masterclasses")}
-            </Link>
-          </div>
-        </aside>
-      </section>
-
+    <EducationContentPage className="education-workshops-page" eyebrow="Workshops" hideHero page={resolvedPage}>
       <section className="home-section">
         <div className="link-row home-section-head">
-          <h2>{t(locale, "Événements en direct", "Live events")}</h2>
-          <Link className="text-link" href={localizePath(locale, "/calendar")}>
-            {t(locale, "Ouvrir le calendrier", "Open the calendar")}
-          </Link>
-        </div>
-        {offers.length === 0 && archiveEvents.length === 0 ? (
-          <section className="education-listing">
-            <p>
+          <div>
+            <h2>{t(locale, "Workshops à venir", "Upcoming workshops")}</h2>
+            <p className="home-section__intro">
               {t(
                 locale,
-                "Aucun stage publié pour le moment. Les prochaines dates FE apparaîtront ici dès qu’elles seront publiées.",
-                "No workshops are published right now. Upcoming FE dates will appear here as soon as they are published.",
+                "Les introductions FE à la formation apparaissent ici avec trois workshops Feldenkrais proposés par Forest Lighthouse.",
+                "The FE introductions to the training appear here alongside three Feldenkrais-related workshops offered by Forest Lighthouse.",
               )}
             </p>
-          </section>
-        ) : offers.length === 0 ? (
-          <div className="education-card-grid">
-            {archiveEvents.map((event) => (
-              <article className="education-card education-offer-card" key={event.slug}>
-                {event.imageUrl ? (
-                  <div
-                    className="education-offer-card__media"
-                    style={{
-                      backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.1), rgba(255,255,255,0.92)), url(${event.imageUrl})`,
-                    }}
-                  />
-                ) : null}
-                <div className="education-offer-card__body">
-                  <p className="education-offer-card__type">
-                    {event.attendanceMode === "online"
-                      ? t(locale, "Webinaire FE", "FE webinar")
-                      : t(locale, "Archive FE", "FE archive")}
-                  </p>
-                  <h2>{event.title}</h2>
-                  <p>{event.excerpt}</p>
-                  <p className="education-offer-card__meta">
-                    <strong>{t(locale, "Date", "Date")}:</strong> {formatArchiveEventWhen(event.startDate, event.endDate)}
-                  </p>
-                  <div className="education-offer-card__actions">
-                    <Link className="education-text-link" href={localizePath(locale, `/event/${event.slug}`)}>
-                      {t(locale, "Voir les détails", "View details")}
-                    </Link>
-                    {event.sourceUrl ? (
-                      <a className="education-button education-button--secondary" href={event.sourceUrl} rel="noreferrer" target="_blank">
-                        {t(locale, "Source", "Source")}
-                      </a>
-                    ) : null}
-                  </div>
-                </div>
-              </article>
-            ))}
           </div>
-        ) : (
-          <div className="education-card-grid">
-            {offers.map((offer, index) => {
-              const offerRecord = asRecord(offer);
-              const slug = getOfferSlug(offer);
-              const title = getOfferTitle(offer, "Untitled offer");
-              const canonicalPath = getCanonicalOfferPath(offer);
-              const detailsPath = localizePath(locale, canonicalPath || `/offer/${slug}`);
-              const excerpt = pickString(offerRecord, ["excerpt", "summary", "short_description"]);
-              const nextOccurrence = readNextOccurrence(offer);
-              const nextOccurrenceLabel = formatDateTime(
-                nextOccurrence.start,
-                locale,
-                nextOccurrence.timezone,
-              );
-              const heroImageUrl = pickString(offerRecord, ["hero_image_url", "heroImageUrl"]);
+        </div>
 
-              return (
-                <article className="education-card education-offer-card" key={slug || `workshop-${index}`}>
-                  {heroImageUrl ? (
-                    <div
-                      className="education-offer-card__media"
-                      style={{
-                        backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.1), rgba(255,255,255,0.92)), url(${heroImageUrl})`,
-                      }}
-                    />
-                  ) : null}
-                  <div className="education-offer-card__body">
-                    <p className="education-offer-card__type">
-                      {t(locale, "Événement FE", "FE live event")}
-                    </p>
-                    <h2>{title}</h2>
-                    {excerpt ? <p>{excerpt}</p> : null}
-                    <p className="education-offer-card__meta">
-                      <strong>{labels.nextOccurrence}:</strong> {nextOccurrenceLabel || "-"}
-                    </p>
-                    {slug ? (
-                      <div className="education-offer-card__actions">
-                        <Link className="education-text-link" href={detailsPath}>
-                          {labels.openDetails}
-                        </Link>
-                        <Link className="education-button education-button--secondary" href={detailsPath}>
-                          {t(locale, "Voir la page", "View page")}
-                        </Link>
-                      </div>
-                    ) : null}
-                  </div>
-                </article>
-              );
-            })}
-          </div>
+        {upcomingWorkshops.length === 0 ? (
+          <section className="education-listing">
+            <p>{t(locale, "Aucun workshop à afficher pour le moment.", "No workshops to show right now.")}</p>
+          </section>
+        ) : (
+          <EducationWorkshopSlider
+            ariaLabel={t(locale, "Liste des workshops à venir", "List of upcoming workshops")}
+          >
+            {upcomingWorkshops.map((workshop) => renderWorkshopCard(workshop))}
+          </EducationWorkshopSlider>
         )}
       </section>
 
-      <section className="home-section">
-        <div className="link-row home-section-head">
-          <h2>{t(locale, "Masterclasses et ressources en ligne", "Online masterclasses and resources")}</h2>
-          <Link className="text-link" href={localizePath(locale, "/shop")}>
-            {t(locale, "Voir la boutique FE", "See the FE shop")}
-          </Link>
+      <section className="education-promo-row education-promo-row--platform education-workshops-page__platform">
+        <div className="education-promo-row__copy education-promo-row__copy--dark">
+          <h2>
+            <span>{t(locale, "Masterclasses en ligne", "Online Masterclasses")}</span>
+          </h2>
+          <div className="education-promo-row__rule" />
+          <p>
+            {t(
+              locale,
+              "Découvrez nos ressources en ligne: workshops publics, masterclasses et contenus d’approfondissement pour prolonger l’apprentissage.",
+              "Check out our online resources: public workshops, masterclasses, and deeper study material to continue the learning.",
+            )}
+          </p>
+          <div className="education-promo-row__actions">
+            <Link className="education-button" href={localizePath(locale, "/platform")}>
+              {t(locale, "En savoir plus", "Learn more")}
+            </Link>
+          </div>
         </div>
-        <div className="education-card-grid education-card-grid--home-links">
-          <article className="education-card education-home-link-card">
-            <p className="home-section-kicker">{t(locale, "Catalogue", "Catalog")}</p>
-            <h3>{t(locale, "Masterclasses publiques", "Public masterclasses")}</h3>
-            <p>
-              {t(
-                locale,
-                "Retrouvez les masterclasses FE et les ressources numériques qui prolongent les stages en direct.",
-                "Browse FE masterclasses and digital resources that extend the live workshop experience.",
-              )}
-            </p>
-            <div className="education-offer-card__actions">
-              <Link className="education-button" href={localizePath(locale, "/shop")}>
-                {t(locale, "Voir la sélection", "See the selection")}
-              </Link>
-            </div>
-          </article>
 
-          <article className="education-card education-home-link-card">
-            <p className="home-section-kicker">{t(locale, "Plateforme", "Platform")}</p>
-            <h3>{t(locale, "Approfondir entre les segments", "Go deeper between segments")}</h3>
-            <p>
-              {t(
-                locale,
-                "Le site FE ancien reliait déjà les stages à des formats en ligne. Nous gardons ici ce pont vers Neurosomatic.",
-                "The old FE site already connected workshops to online learning formats. We keep that bridge to Neurosomatic here.",
-              )}
-            </p>
-            <div className="education-offer-card__actions">
-              <a className="education-button" href="https://neurosomatic.com" rel="noreferrer" target="_blank">
-                {t(locale, "Ouvrir Neurosomatic", "Open Neurosomatic")}
-              </a>
-            </div>
-          </article>
+        <div className="education-promo-row__visual">
+          <Image
+            alt={t(locale, "Aperçu des masterclasses en ligne", "Preview of online masterclasses")}
+            height={653}
+            sizes="(max-width: 900px) 100vw, 520px"
+            src="/brands/feldenkrais-education/workshops/group-23942.png"
+            width={1154}
+          />
         </div>
       </section>
     </EducationContentPage>

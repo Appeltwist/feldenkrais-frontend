@@ -10,6 +10,7 @@ type EducationContentPageProps = {
   children?: ReactNode;
   className?: string;
   eyebrow?: string;
+  hideHero?: boolean;
 };
 
 export default function EducationContentPage({
@@ -17,35 +18,38 @@ export default function EducationContentPage({
   children,
   className = "",
   eyebrow,
+  hideHero = false,
 }: EducationContentPageProps) {
   const locale = resolveLocale(page.locale);
   const intro = page.hero.body || page.subtitle;
 
   return (
     <section className={`education-page ${className}`.trim()}>
-      <header
-        className="education-page__hero"
-        style={
-          page.hero.imageUrl
-            ? {
-                backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.30), rgba(255,255,255,0.88)), url(${page.hero.imageUrl})`,
-              }
-            : undefined
-        }
-      >
-        <div className="education-page__hero-inner">
-          <p className="education-page__eyebrow">{eyebrow || page.routeKey.replaceAll("-", " ")}</p>
-          <h1>{page.hero.title || page.title}</h1>
-          {intro ? <p className="education-page__subtitle">{intro}</p> : null}
-          {page.primaryCta ? (
-            <div className="education-page__actions">
-              <Link className="education-button" href={page.primaryCta.url}>
-                {page.primaryCta.label}
-              </Link>
-            </div>
-          ) : null}
-        </div>
-      </header>
+      {hideHero ? null : (
+        <header
+          className="education-page__hero"
+          style={
+            page.hero.imageUrl
+              ? {
+                  backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.30), rgba(255,255,255,0.88)), url(${page.hero.imageUrl})`,
+                }
+              : undefined
+          }
+        >
+          <div className="education-page__hero-inner">
+            <p className="education-page__eyebrow">{eyebrow || page.routeKey.replaceAll("-", " ")}</p>
+            <h1>{page.hero.title || page.title}</h1>
+            {intro ? <p className="education-page__subtitle">{intro}</p> : null}
+            {page.primaryCta ? (
+              <div className="education-page__actions">
+                <Link className="education-button" href={page.primaryCta.url}>
+                  {page.primaryCta.label}
+                </Link>
+              </div>
+            ) : null}
+          </div>
+        </header>
+      )}
 
       <div className="education-page__surface">
         {children}

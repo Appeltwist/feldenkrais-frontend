@@ -7,6 +7,8 @@ import WorkshopTemplate from "@/components/offers/WorkshopTemplate";
 import { ApiError, fetchOfferDetail, fetchOffers, fetchSiteConfig, fetchSiteFaq, type OfferDetail, type OfferSummary } from "@/lib/api";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
+import { getEducationAtelierIntroContent, getEducationIntroWorkshopBySlug } from "@/lib/education-workshops";
+import { localizePath } from "@/lib/locale-path";
 import { buildOfferMetadata, loadOfferRouteData } from "@/lib/offer-page";
 import { buildOfferLocaleSwitchPaths } from "@/lib/offer-locale-paths";
 import { getCanonicalOfferPath, getDomains, getOfferType } from "@/lib/offers";
@@ -17,6 +19,22 @@ type OfferPageProps = {
 
 export async function generateMetadata({ params }: OfferPageProps): Promise<Metadata> {
   const { slug } = await params;
+  const hostname = await getHostname();
+  const requestSiteConfig = await fetchSiteConfig(hostname).catch(() => null);
+  const requestLocale = await getRequestLocale(requestSiteConfig?.defaultLocale || "en");
+  const introWorkshop =
+    requestSiteConfig?.siteSlug === "feldenkrais-education"
+      ? getEducationIntroWorkshopBySlug(requestLocale, slug)
+      : null;
+
+  if (introWorkshop) {
+    const atelierIntro = getEducationAtelierIntroContent(requestLocale);
+    return {
+      title: atelierIntro.page.seo?.title || atelierIntro.page.title,
+      description: atelierIntro.page.seo?.description || atelierIntro.page.subtitle || atelierIntro.lead,
+    };
+  }
+
   const { offer, origin, siteConfig } = await loadOfferRouteData(slug, "request");
 
   if (!offer) {
@@ -45,6 +63,14 @@ export default async function WorkshopDetailPage({ params }: OfferPageProps) {
   }
 
   const requestLocale = await getRequestLocale(siteConfig.defaultLocale);
+  const introWorkshop =
+    siteConfig.siteSlug === "feldenkrais-education"
+      ? getEducationIntroWorkshopBySlug(requestLocale, slug)
+      : null;
+
+  if (introWorkshop) {
+    permanentRedirect(localizePath(requestLocale, "/atelier_intro"));
+  }
 
   let offer: OfferDetail | null = null;
   let contentLocale = requestLocale;

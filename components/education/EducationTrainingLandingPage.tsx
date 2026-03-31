@@ -11,6 +11,7 @@ import {
 import { localizePath } from "@/lib/locale-path";
 import type { NarrativePage } from "@/lib/site-config";
 
+import EducationScrollSequence from "./EducationScrollSequence";
 import EducationTrainingActionBar from "./EducationTrainingActionBar";
 import EducationTrainingYearSlider from "./EducationTrainingYearSlider";
 
@@ -20,9 +21,6 @@ type EducationTrainingLandingPageProps = {
 };
 
 const HERO_IMAGE_URL = "/brands/feldenkrais-education/training/hero-room.jpeg";
-const TRAINING_STAIRS_GIF_URL = "/brands/feldenkrais-education/training/gif-stairs.gif";
-const TRAINING_HANDS_GIF_URL = "/brands/feldenkrais-education/training/gif-hands-on.gif";
-const TRAINING_WALK_GIF_URL = "/brands/feldenkrais-education/training/gif-walk.gif";
 const TRAINING_PLATFORM_IMAGE_URL = "/brands/feldenkrais-education/training/platform-devices.png";
 const TRAINING_EUROTAB_LOGO_URL = "/brands/feldenkrais-education/training/eurotab.png";
 const TRAINING_IFF_LOGO_URL = "/brands/feldenkrais-education/training/iff.png";
@@ -33,6 +31,16 @@ const TRAINING_YEAR_IMAGE_URLS = [
   "/brands/feldenkrais-education/training/year-3.jpg",
   "/brands/feldenkrais-education/training/year-4.jpeg",
 ];
+
+function buildSequenceFrameUrls(sequenceName: "hands" | "step" | "walk", frameCount: number) {
+  return Array.from({ length: frameCount }, (_, index) => (
+    `/brands/feldenkrais-education/training/sequences/${sequenceName}/frame-${String(index + 1).padStart(2, "0")}.png`
+  ));
+}
+
+const TRAINING_STEP_FRAME_URLS = buildSequenceFrameUrls("step", 36);
+const TRAINING_HANDS_FRAME_URLS = buildSequenceFrameUrls("hands", 27);
+const TRAINING_WALK_FRAME_URLS = buildSequenceFrameUrls("walk", 29);
 
 function t(locale: string, fr: string, en: string) {
   return locale.toLowerCase().startsWith("fr") ? fr : en;
@@ -177,6 +185,8 @@ export default function EducationTrainingLandingPage({
       className="education-training-landing"
       data-route={page.routeKey}
     >
+      <div aria-hidden="true" className="education-training-landing__backdrop" />
+
       <section
         className="education-training-hero"
         style={{
@@ -319,13 +329,11 @@ export default function EducationTrainingLandingPage({
         <EducationTrainingActionBar cohorts={actionCohorts} locale={locale} />
         <div className="education-training-stat-hero">
           <div className="education-training-stat-hero__gif">
-            <Image
+            <EducationScrollSequence
               alt="Training stairs illustration"
-              height={400}
-              sizes="(max-width: 900px) 100vw, 420px"
-              src={TRAINING_STAIRS_GIF_URL}
-              unoptimized
-              width={400}
+              frameUrls={TRAINING_STEP_FRAME_URLS}
+              height={360}
+              width={640}
             />
           </div>
           <div className="education-training-stat-hero__values">
@@ -371,14 +379,12 @@ export default function EducationTrainingLandingPage({
       </section>
 
       <section className="education-training-section education-training-section--gif-break">
-        <Image
+        <EducationScrollSequence
           alt="Training hands-on illustration"
           className="education-training-gif-break"
-          height={250}
-          sizes="(max-width: 900px) 60vw, 280px"
-          src={TRAINING_HANDS_GIF_URL}
-          unoptimized
-          width={250}
+          frameUrls={TRAINING_HANDS_FRAME_URLS}
+          height={360}
+          width={640}
         />
       </section>
 
@@ -411,13 +417,11 @@ export default function EducationTrainingLandingPage({
       <section className="education-training-section education-training-section--enrollment">
         <div className="education-training-enrollment">
           <div className="education-training-enrollment__gif">
-            <Image
+            <EducationScrollSequence
               alt="Walking illustration"
-              height={400}
-              sizes="(max-width: 900px) 100vw, 420px"
-              src={TRAINING_WALK_GIF_URL}
-              unoptimized
-              width={400}
+              frameUrls={TRAINING_WALK_FRAME_URLS}
+              height={360}
+              width={640}
             />
           </div>
 
