@@ -8,16 +8,18 @@ import ForestHomeOfferExplorer, {
 } from "@/components/home/ForestHomeOfferExplorer";
 import ForestHomeHeroVideo from "@/components/home/ForestHomeHeroVideo";
 import { ForestPageShell } from "@/components/forest/ForestPageShell";
-import { fetchOfferDetail, fetchOffers } from "@/lib/api";
+import { fetchCalendarWithMeta, fetchOfferDetail, fetchOffers, type CalendarItem } from "@/lib/api";
 import { cleanDisplayText } from "@/lib/content-cleanup";
 import { getForestExcerptOverride, getForestImageOverride } from "@/lib/forest-excerpts";
 import { getForestFacilitatorNamesOverride } from "@/lib/forest-facilitator-overrides";
 import { getForestHomeContent } from "@/lib/forest-home-content";
 import {
   asRecord,
+  asRecords,
   getCanonicalOfferPath,
   getCanonicalOfferPathByTypeAndSlug,
   getDomains,
+  getOccurrenceFacilitator,
   getFacilitatorName,
   getFacilitators,
   getOfferSlug,
@@ -51,6 +53,10 @@ type HomeHighlightCard = {
   facilitatorImage: string;
   dateSummary: string;
   dateLabels: string[];
+};
+type OfferLookupEntry = {
+  offer: OfferSummary;
+  key: string;
 };
 
 function HomeStoryIcon({ icon }: { icon: "light" | "pause" | "terrace" }) {
@@ -113,6 +119,26 @@ function stripHtml(value: string | null | undefined) {
   return (value || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 }
 
+function getTodayInBrussels() {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Brussels",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+
+  return formatter.format(new Date());
+}
+
+function addDays(date: string, days: number) {
+  const parsed = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) {
+    return date;
+  }
+  parsed.setDate(parsed.getDate() + days);
+  return parsed.toISOString().slice(0, 10);
+}
+
 function compactText(value: string | null | undefined, limit = 150) {
   const text = stripHtml(value);
   if (!text) {
@@ -122,6 +148,21 @@ function compactText(value: string | null | undefined, limit = 150) {
     return text;
   }
   return `${text.slice(0, limit).trimEnd()}...`;
+}
+
+function compareOccurrenceStart(a: { start_datetime?: string | null }, b: { start_datetime?: string | null }) {
+  const aStart = a.start_datetime || "";
+  const bStart = b.start_datetime || "";
+  if (!aStart && !bStart) {
+    return 0;
+  }
+  if (!aStart) {
+    return 1;
+  }
+  if (!bStart) {
+    return -1;
+  }
+  return aStart.localeCompare(bStart);
 }
 
 function isUsableExcerpt(value: string) {
@@ -428,6 +469,14 @@ function formatGroupedTrainingLabels(offer: OfferSummary | OfferDetail, locale: 
     .filter(Boolean);
 }
 
+function getGroupedOccurrenceEntries(group: CalendarItem) {
+  return asRecords(asRecord(group)?.next_occurrences).sort(compareOccurrenceStart);
+}
+
+function getGroupedOfferRecord(group: CalendarItem) {
+  return asRecord(asRecord(group)?.offer);
+}
+
 function buildOfferSequence(
   source: {
     workshops: OfferSummary[];
@@ -467,11 +516,26 @@ function buildOfferSequence(
   return selected;
 }
 
-async function safeFetchOffers(hostname: string, locale: string, type: OfferType) {
+async function safeFetchOffers(hostname: string, locale: string, type: OfferType, from?: string) {
   try {
-    return await fetchOffers({ hostname, locale, type });
+    return await fetchOffers({ hostname, locale, type, from });
   } catch {
     return [] as OfferSummary[];
+  }
+}
+
+async function safeFetchGroupedUpcomingOffers(hostname: string, locale: string, from: string, to: string) {
+  try {
+    const payload = await fetchCalendarWithMeta({
+      hostname,
+      locale,
+      from,
+      to,
+      groupBy: "offer",
+    });
+    return payload.items;
+  } catch {
+    return [] as CalendarItem[];
   }
 }
 
@@ -502,6 +566,21 @@ function selectPriorityHighlights(workshops: OfferSummary[], trainings: OfferSum
   }
 
   return selected.slice(0, limit);
+}
+
+function buildOfferLookup(...buckets: OfferSummary[][]) {
+  const lookup = new Map<string, OfferLookupEntry>();
+  buckets.flat().forEach((offer) => {
+    const slug = getOfferSlug(offer);
+    if (!slug) {
+      return;
+    }
+    const key = `${getOfferType(offer)}:${slug}`;
+    if (!lookup.has(key)) {
+      lookup.set(key, { offer, key });
+    }
+  });
+  return lookup;
 }
 
 function buildHighlightCard(
@@ -626,6 +705,104 @@ function buildExploreCard(
   };
 }
 
+function buildExploreCardFromGroupedOffer(
+  group: CalendarItem,
+  locale: string,
+  labels: {
+    datesComingSoonLabel: string;
+    byAppointmentLabel: string;
+  },
+  lookup: Map<string, OfferLookupEntry>,
+): ForestHomeOfferCard | null {
+  const offerRecord = getGroupedOfferRecord(group);
+  if (!offerRecord) {
+    return null;
+  }
+
+  const type = pickString(offerRecord, ["type"]).toUpperCase() as OfferType;
+  const slug = pickString(offerRecord, ["slug"]);
+  const title = pickString(offerRecord, ["title"], "Untitled");
+  if (!slug || !type || !title) {
+    return null;
+  }
+
+  const key = `${type}:${slug}`;
+  const summary = lookup.get(key)?.offer ?? null;
+  const occurrenceEntries = getGroupedOccurrenceEntries(group);
+  const firstOccurrence = occurrenceEntries[0] ?? null;
+  const occurrenceFacilitator = getOccurrenceFacilitator(firstOccurrence);
+  const summaryFacilitators = summary ? getFacilitators(summary as OfferDetail) : [];
+  const facilitatorOverride = getForestFacilitatorNamesOverride(slug);
+  const facilitatorNames = facilitatorOverride
+    ? formatFacilitatorNames(facilitatorOverride)
+    : occurrenceFacilitator?.display_name ||
+      formatFacilitatorNames(
+        summaryFacilitators.map((facilitator) => getFacilitatorName(facilitator, "")).filter(Boolean),
+      );
+  const facilitatorImage =
+    pickString(asRecord(occurrenceFacilitator), ["photo_url", "photoUrl", "image_url", "imageUrl"]) ||
+    pickString(asRecord(summaryFacilitators[0]), ["photo_url", "photoUrl", "image_url", "imageUrl", "avatar_url", "avatarUrl"]);
+  const rawDateLabels =
+    type === "CLASS"
+      ? []
+      : (() => {
+          const seen = new Set<string>();
+          const labelsFromOccurrences: string[] = [];
+          occurrenceEntries.forEach((entry) => {
+            const start = pickString(entry, ["start_datetime", "start", "start_at", "datetime", "date"]);
+            const timezone = pickString(entry, ["timezone", "tz", "time_zone"]);
+            if (!start) {
+              return;
+            }
+            const parsed = new Date(start);
+            if (Number.isNaN(parsed.getTime())) {
+              return;
+            }
+            const label = new Intl.DateTimeFormat(locale || "en", {
+              day: "numeric",
+              month: "short",
+              ...(timezone ? { timeZone: timezone } : {}),
+            }).format(parsed);
+            if (!seen.has(label)) {
+              seen.add(label);
+              labelsFromOccurrences.push(label);
+            }
+          });
+          return labelsFromOccurrences;
+        })();
+  const dateLine =
+    type === "CLASS"
+      ? (() => {
+          const start = pickString(firstOccurrence, ["start_datetime", "start", "start_at", "datetime", "date"]);
+          const timezone = pickString(firstOccurrence, ["timezone", "tz", "time_zone"]);
+          return start ? formatClassOccurrenceLabel(start, locale, timezone) : labels.datesComingSoonLabel;
+        })()
+      : rawDateLabels.length > 0
+        ? (() => {
+            const summaryLabel = getDateSummary(type, rawDateLabels, locale);
+            return summaryLabel ? `${rawDateLabels[0]} · ${summaryLabel}` : rawDateLabels[0];
+          })()
+        : summary
+          ? buildExploreDateLine(summary, locale, labels)
+          : labels.datesComingSoonLabel;
+
+  return {
+    href: localizePath(locale, getCanonicalOfferPathByTypeAndSlug(type, slug) || `/offer/${slug}`),
+    title,
+    imageUrl:
+      getForestImageOverride(title) ||
+      pickString(offerRecord, ["hero_image_url", "heroImageUrl", "image_url", "imageUrl"]) ||
+      facilitatorImage ||
+      FALLBACK_HIGHLIGHT_IMAGE,
+    excerpt: summary ? getOfferDescription(summary, 160) : "",
+    typeLabel: getTypeLabel(type, locale),
+    typeVariant: getOfferTypeVariant(type),
+    facilitatorLine: facilitatorNames ? `${getWithLabel(locale)} ${facilitatorNames}` : "",
+    dateLine,
+    domainSlugs: getDomains((summary ?? (offerRecord as unknown)) as OfferDetail).map((domain) => String(domain.id)),
+  };
+}
+
 function Separator() {
   return (
     <div aria-hidden="true" className="fl-separator fl-separator--subtle" role="separator">
@@ -636,11 +813,13 @@ function Separator() {
 
 export default async function ForestHomePage({ hostname, locale }: ForestHomePageProps) {
   const content = getForestHomeContent(locale);
+  const upcomingFrom = getTodayInBrussels();
+  const upcomingTo = addDays(upcomingFrom, 120);
 
   const [workshops, trainings, classes, privateSessions] = await Promise.all([
-    safeFetchOffers(hostname, locale, "WORKSHOP"),
-    safeFetchOffers(hostname, locale, "TRAINING_INFO"),
-    safeFetchOffers(hostname, locale, "CLASS"),
+    safeFetchOffers(hostname, locale, "WORKSHOP", upcomingFrom),
+    safeFetchOffers(hostname, locale, "TRAINING_INFO", upcomingFrom),
+    safeFetchOffers(hostname, locale, "CLASS", upcomingFrom),
     safeFetchOffers(hostname, locale, "PRIVATE_SESSION"),
   ]);
 
@@ -659,32 +838,45 @@ export default async function ForestHomePage({ hostname, locale }: ForestHomePag
     )
   ).filter(Boolean);
 
-  const mixedSelection = buildOfferSequence(
-    {
-      workshops,
-      trainings,
-      classes,
-      privateSessions,
-    },
+  const groupedUpcomingOffers = await safeFetchGroupedUpcomingOffers(
+    hostname,
+    locale,
+    upcomingFrom,
+    upcomingTo,
   );
+  const offerLookup = buildOfferLookup(workshops, trainings, classes, privateSessions);
+  const exploreCards = groupedUpcomingOffers
+    .map((group) =>
+      buildExploreCardFromGroupedOffer(
+        group,
+        locale,
+        {
+          datesComingSoonLabel: content.explore.datesComingSoonLabel,
+          byAppointmentLabel: content.explore.byAppointmentLabel,
+        },
+        offerLookup,
+      ),
+    )
+    .filter((card): card is ForestHomeOfferCard => card !== null);
 
-  const exploreCards = mixedSelection.map((offer) =>
-    buildExploreCard(offer, locale, {
-      datesComingSoonLabel: content.explore.datesComingSoonLabel,
-      byAppointmentLabel: content.explore.byAppointmentLabel,
-    }),
-  );
-
-  const exploreFilters = mixedSelection.reduce<ForestHomeOfferFilter[]>((filters, offer) => {
-    getDomains(offer as OfferDetail).forEach((domain) => {
-      const slug = String(domain.id);
+  const exploreFilters = exploreCards.reduce<ForestHomeOfferFilter[]>((filters, card) => {
+    card.domainSlugs.forEach((slug) => {
       if (!slug || filters.some((filter) => filter.slug === slug)) {
         return;
       }
-      if (!domain.name) {
+      const label = groupedUpcomingOffers
+        .map((group) => getGroupedOfferRecord(group))
+        .find((offerRecord) =>
+          asRecords(offerRecord?.domains).some((domain) => String(domain.id ?? domain.slug ?? "") === slug),
+        );
+      const matchedDomain = asRecords(label?.domains).find(
+        (domain) => String(domain.id ?? domain.slug ?? "") === slug,
+      );
+      const domainName = pickString(matchedDomain ?? null, ["name"]);
+      if (!domainName) {
         return;
       }
-      filters.push({ slug, label: domain.name });
+      filters.push({ slug, label: domainName });
     });
     return filters;
   }, []);
