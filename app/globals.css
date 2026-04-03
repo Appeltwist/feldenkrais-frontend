@@ -7240,6 +7240,63 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   color: #efb1b1;
 }
 
+.forest-newsletter-page {
+  padding: clamp(1.25rem, 2vw, 2rem) 1rem 5rem;
+}
+
+.forest-newsletter-page__frame {
+  margin: 0 auto;
+  max-width: min(1100px, 100%);
+  overflow: hidden;
+  padding: clamp(1rem, 2vw, 1.5rem);
+  position: relative;
+}
+
+.forest-newsletter-page__frame::before {
+  background:
+    radial-gradient(circle at top left, rgba(212, 166, 74, 0.18), transparent 38%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 18%);
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+.forest-newsletter-page__frame--archive {
+  max-width: min(880px, 100%);
+}
+
+.forest-newsletter-page__body {
+  position: relative;
+  z-index: 1;
+}
+
+.forest-newsletter-page__body > center,
+.forest-newsletter-page__body > table {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.forest-newsletter-page__body a {
+  overflow-wrap: anywhere;
+}
+
+.forest-newsletter-page__body img {
+  height: auto;
+  max-width: 100%;
+}
+
+@media (max-width: 720px) {
+  .forest-newsletter-page {
+    padding-inline: 0.75rem;
+  }
+
+  .forest-newsletter-page__frame {
+    border-radius: 24px;
+    padding: 0.75rem;
+  }
+}
+
 /* ── discover slider edge fades + card hover ── */
 .forest-discover-slider__track {
   position: relative;
