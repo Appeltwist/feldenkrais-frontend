@@ -1,6 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import BlockRenderer from "@/components/blocks/BlockRenderer";
+import { cleanDisplayText } from "@/lib/content-cleanup";
+import type { ApiTrainingCohortSummary, ApiTrainingProgramDetail } from "@/lib/api";
 import { getEducationCenters } from "@/lib/education-content";
 import {
   getEducationTrainingCohorts,
@@ -9,15 +12,19 @@ import {
   getEducationTrainingProgramStats,
 } from "@/lib/education-training";
 import { localizePath } from "@/lib/locale-path";
+import { asRecord, pickString } from "@/lib/offers";
 import type { NarrativePage } from "@/lib/site-config";
+import type { SectionBlock } from "@/lib/types";
 
 import EducationScrollSequence from "./EducationScrollSequence";
 import EducationTrainingActionBar from "./EducationTrainingActionBar";
 import EducationTrainingYearSlider from "./EducationTrainingYearSlider";
 
 type EducationTrainingLandingPageProps = {
+  cmsCohorts?: ApiTrainingCohortSummary[];
   page: NarrativePage;
   locale: string;
+  program?: ApiTrainingProgramDetail | null;
 };
 
 const HERO_IMAGE_URL = "/brands/feldenkrais-education/training/hero-room.jpeg";
@@ -44,6 +51,92 @@ const TRAINING_WALK_FRAME_URLS = buildSequenceFrameUrls("walk", 29);
 
 function t(locale: string, fr: string, en: string) {
   return locale.toLowerCase().startsWith("fr") ? fr : en;
+}
+
+function stripHtmlToText(value: string | null | undefined) {
+  if (!value) {
+    return "";
+  }
+
+  return cleanDisplayText(value.replace(/<br\s*\/?>/gi, " ").replace(/<[^>]+>/g, " "));
+}
+
+function normalizeHeading(value: string | null | undefined) {
+  return stripHtmlToText(value).toLowerCase();
+}
+
+function matchesHeading(heading: string | null | undefined, expected: string[]) {
+  const normalized = normalizeHeading(heading);
+  return expected.some((candidate) => normalized === candidate || normalized.includes(candidate));
+}
+
+function findSection(
+  blocks: SectionBlock[] | null | undefined,
+  type: string,
+  headings: string[],
+) {
+  return (blocks || []).find((block) => {
+    if (!block || typeof block !== "object" || block.type !== type) {
+      return false;
+    }
+
+    const value = asRecord(block.value);
+    return matchesHeading(pickString(value, ["heading", "title"]), headings);
+  });
+}
+
+function getSectionHeading(block: SectionBlock | undefined, fallback: string) {
+  const value = asRecord(block?.value);
+  return pickString(value, ["heading", "title"]) || fallback;
+}
+
+function getRichSectionBody(block: SectionBlock | undefined, fallback: string) {
+  const value = asRecord(block?.value);
+  return stripHtmlToText(pickString(value, ["body", "description"])) || fallback;
+}
+
+function getFeatureItems(
+  block: SectionBlock | undefined,
+  fallback: Array<{ title: string; body: string }>,
+) {
+  const value = asRecord(block?.value);
+  const rawItems = Array.isArray(value?.items) ? value.items : [];
+  const items = rawItems
+    .map((item) => {
+      const record = asRecord(item);
+      const title = pickString(record, ["title", "heading"]);
+      const body = stripHtmlToText(pickString(record, ["body", "description"]));
+      if (!title || !body) {
+        return null;
+      }
+
+      return { title, body };
+    })
+    .filter((item): item is { title: string; body: string } => item !== null);
+
+  return items.length > 0 ? items : fallback;
+}
+
+function getJourneySteps(
+  block: SectionBlock | undefined,
+  fallback: Array<{ title: string; label: string }>,
+) {
+  const value = asRecord(block?.value);
+  const rawItems = Array.isArray(value?.items) ? value.items : [];
+  const items = rawItems
+    .map((item) => {
+      const record = asRecord(item);
+      const title = pickString(record, ["title", "heading"]);
+      const label = stripHtmlToText(pickString(record, ["description", "body"]));
+      if (!title || !label) {
+        return null;
+      }
+
+      return { title, label };
+    })
+    .filter((item): item is { title: string; label: string } => item !== null);
+
+  return items.length > 0 ? items : fallback;
 }
 
 function SectionHeading({
@@ -120,16 +213,45 @@ function TrainingFactIcon({ kind }: { kind: "director" | "period" | "pricing" | 
 }
 
 export default function EducationTrainingLandingPage({
+  cmsCohorts = [],
   page,
   locale,
+  program,
 }: EducationTrainingLandingPageProps) {
   const centers = getEducationCenters(locale);
-  const cohorts = getEducationTrainingCohorts(locale);
+  const localCohorts = getEducationTrainingCohorts(locale);
+  const cmsCohortBySlug = new Map(cmsCohorts.map((cohort) => [cohort.slug, cohort]));
+  const cmsCohortByCenter = new Map(
+    cmsCohorts
+      .filter((cohort) => cohort.center?.slug)
+      .map((cohort) => [cohort.center?.slug || "", cohort]),
+  );
+  const cohorts = localCohorts.map((cohort) => {
+    const cmsCohort = cmsCohortBySlug.get(cohort.slug) || cmsCohortByCenter.get(cohort.centerSlug);
+    return {
+      ...cohort,
+      admissionsUrl: cmsCohort?.applicationUrl || cohort.admissionsUrl,
+      director: cmsCohort?.facilitators[0]?.displayName || cohort.director,
+      name: cmsCohort?.title || cohort.name,
+      periodLabel: cmsCohort?.subtitle || cohort.periodLabel,
+      pricing: cmsCohort?.pricingSummary || cohort.pricing,
+      programPdfUrl: cmsCohort?.brochureUrl || cohort.programPdfUrl,
+    };
+  });
   const curriculum = getEducationTrainingCurriculum(locale);
-  const includedItems = getEducationTrainingIncludedItems(locale);
+  const defaultIncludedItems = getEducationTrainingIncludedItems(locale);
   const programStats = getEducationTrainingProgramStats(locale);
+  const overviewSection = findSection(program?.sections, "rich_section", ["overview", "aperçu", "apercu"]);
+  const includedSection = findSection(program?.sections, "feature_stack", ["what else is included", "ce qui est inclus"]);
+  const betweenSection = findSection(program?.sections, "feature_stack", ["between segments", "entre les segments"]);
+  const enrollmentSection = findSection(program?.sections, "journey_steps", ["enrollment process", "processus d inscription", "processus d'inscription"]);
+  const consumedProgramSections = new Set(
+    [overviewSection, includedSection, betweenSection, enrollmentSection].filter(Boolean),
+  );
+  const remainingProgramSections = (program?.sections || []).filter((section) => !consumedProgramSections.has(section));
+  const includedItems = getFeatureItems(includedSection, defaultIncludedItems);
+  const betweenSegmentsItems = getFeatureItems(betweenSection, defaultIncludedItems.slice(3, 7));
   const includedLearningItems = includedItems.slice(0, 3);
-  const betweenSegmentsItems = includedItems.slice(3, 7);
   const cohortByCenter = new Map(cohorts.map((cohort) => [cohort.centerSlug, cohort]));
   const actionCohorts = cohorts.map((cohort) => ({
     slug: cohort.slug,
@@ -157,7 +279,7 @@ export default function EducationTrainingLandingPage({
       value: "100%",
     },
   ];
-  const enrollmentSteps = [
+  const defaultEnrollmentSteps = [
     {
       label: t(locale, "Télécharger le PDF", "Download the PDF"),
       title: "Step 1",
@@ -177,8 +299,21 @@ export default function EducationTrainingLandingPage({
     {
       label: t(locale, "Commencer le parcours", "Start the journey"),
       title: "Step 5",
-    },
-  ];
+      },
+    ];
+  const enrollmentSteps = getJourneySteps(enrollmentSection, defaultEnrollmentSteps);
+  const heroTitle = page.hero.title || program?.title || t(locale, "Formation Feldenkrais", "Feldenkrais Training");
+  const heroSubtitle = program?.subtitle || page.subtitle || t(locale, "Vivre l'inhabituel", "Living the inhabitual");
+  const heroImageUrl = page.hero.imageUrl || program?.heroImageUrl || HERO_IMAGE_URL;
+  const introLead =
+    getRichSectionBody(overviewSection, "") ||
+    program?.excerpt ||
+    page.hero.body ||
+    t(
+      locale,
+      "C'est plus qu'un métier. Feldenkrais Education propose une formation professionnelle sur quatre ans pour devenir praticien certifié. Ce parcours vous permettra non seulement d'enseigner la méthode, mais aussi de transformer en profondeur votre manière de vivre et d'apprendre.",
+      "It's more than just a profession. Feldenkrais Education proposes a 4-year professional training program to become a certified Feldenkrais practitioner. The training will allow you not only to teach the method, but also to profoundly change the quality of your life.",
+    );
 
   return (
     <div
@@ -190,13 +325,12 @@ export default function EducationTrainingLandingPage({
       <section
         className="education-training-hero"
         style={{
-          backgroundImage:
-            `linear-gradient(180deg, rgba(18, 23, 34, 0.42), rgba(18, 23, 34, 0.52)), url(${HERO_IMAGE_URL})`,
+          backgroundImage: `linear-gradient(180deg, rgba(18, 23, 34, 0.42), rgba(18, 23, 34, 0.52)), url(${heroImageUrl})`,
         }}
       >
         <div className="education-training-hero__content">
-          <h1>{t(locale, "Formation Feldenkrais", "Feldenkrais Training")}</h1>
-          <p>{t(locale, "Vivre l'inhabituel", "Living the inhabitual")}</p>
+          <h1>{heroTitle}</h1>
+          <p>{heroSubtitle}</p>
           <EducationTrainingActionBar className="education-training-hero__actions" cohorts={actionCohorts} locale={locale} />
         </div>
       </section>
@@ -208,13 +342,7 @@ export default function EducationTrainingLandingPage({
             subtitle={t(locale, "Devenir praticien Feldenkrais", "A Feldenkrais Practitioner")}
             title={t(locale, "Envisagez de le devenir", "Consider Becoming")}
           />
-          <p>
-            {t(
-              locale,
-              "C'est plus qu'un métier. Feldenkrais Education propose une formation professionnelle sur quatre ans pour devenir praticien certifié. Ce parcours vous permettra non seulement d'enseigner la méthode, mais aussi de transformer en profondeur votre manière de vivre et d'apprendre.",
-              "It's more than just a profession. Feldenkrais Education proposes a 4-year professional training program to become a certified Feldenkrais practitioner. The training will allow you not only to teach the method, but also to profoundly change the quality of your life.",
-            )}
-          </p>
+          <p>{introLead}</p>
         </div>
 
         <div className="education-training-video-frame">
@@ -361,7 +489,7 @@ export default function EducationTrainingLandingPage({
         <EducationTrainingActionBar cohorts={actionCohorts} locale={locale} />
         <SectionHeading
           subtitle={t(locale, "Pour votre apprentissage", "For your learning")}
-          title={t(locale, "Ce qui est inclus", "What else is included")}
+          title={getSectionHeading(includedSection, t(locale, "Ce qui est inclus", "What else is included"))}
         />
 
         <div className="education-training-included-grid">
@@ -391,7 +519,7 @@ export default function EducationTrainingLandingPage({
       <section className="education-training-section education-training-section--between">
         <SectionHeading
           subtitle={t(locale, "Continuer l'apprentissage", "Continue the learning")}
-          title={t(locale, "Entre les segments", "Between Segments")}
+          title={getSectionHeading(betweenSection, t(locale, "Entre les segments", "Between Segments"))}
         />
 
         <div className="education-training-between-grid">
@@ -428,7 +556,7 @@ export default function EducationTrainingLandingPage({
           <div className="education-training-enrollment__steps">
             <SectionHeading
               align="left"
-              title={t(locale, "Le processus d'inscription", "The Enrollment Process")}
+              title={getSectionHeading(enrollmentSection, t(locale, "Le processus d'inscription", "The Enrollment Process"))}
             />
             <div className="education-training-enrollment__list">
               {enrollmentSteps.map((step, index) => (
@@ -503,6 +631,18 @@ export default function EducationTrainingLandingPage({
           </div>
         </div>
       </section>
+
+      {page.sections.length > 0 ? (
+        <section className="education-training-section education-training-section--cms">
+          <BlockRenderer blocks={page.sections} locale={locale.toLowerCase().startsWith("fr") ? "fr" : "en"} />
+        </section>
+      ) : null}
+
+      {remainingProgramSections.length > 0 ? (
+        <section className="education-training-section education-training-section--cms">
+          <BlockRenderer blocks={remainingProgramSections} locale={locale.toLowerCase().startsWith("fr") ? "fr" : "en"} />
+        </section>
+      ) : null}
     </div>
   );
 }

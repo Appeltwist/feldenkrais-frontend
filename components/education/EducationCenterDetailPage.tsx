@@ -1,9 +1,17 @@
 import Link from "next/link";
 
+import type { ApiCenterDetail } from "@/lib/api";
 import type { EducationCenterProfile } from "@/lib/education-content";
 import { getEducationCenterPageContent } from "@/lib/education-center-page-content";
 import { getEducationTeacherProfiles } from "@/lib/education-teachers";
 import { getEducationTrainingCohortByCenter } from "@/lib/education-training";
+import {
+  extractLegacyDualButtonLinks,
+  extractLegacyDualHeading,
+  extractLegacyImageUrl,
+  extractLegacyParagraphs,
+  extractLegacyYouTubeId,
+} from "@/lib/legacy-page-signals";
 
 import EducationCenterContactForm from "./EducationCenterContactForm";
 import EducationContentPage from "./EducationContentPage";
@@ -11,6 +19,7 @@ import EducationVideoPreview from "./EducationVideoPreview";
 
 type EducationCenterDetailPageProps = {
   center: EducationCenterProfile;
+  cmsCenter?: ApiCenterDetail | null;
   locale: string;
 };
 
@@ -102,10 +111,18 @@ function t(locale: string, fr: string, en: string) {
 
 export default function EducationCenterDetailPage({
   center,
+  cmsCenter,
   locale,
 }: EducationCenterDetailPageProps) {
   const cohort = getEducationTrainingCohortByCenter(locale, center.slug);
   const content = getEducationCenterPageContent(locale, center, cohort);
+  const cmsParagraphs = extractLegacyParagraphs(cmsCenter?.body, 5);
+  const cmsHeroHeading = extractLegacyDualHeading(cmsCenter?.body);
+  const cmsHeroButtons = extractLegacyDualButtonLinks(cmsCenter?.body);
+  const cmsImageUrl = extractLegacyImageUrl(cmsCenter?.body);
+  const cmsVideoId = extractLegacyYouTubeId(cmsCenter?.body);
+  const cmsPrimaryAction = cmsHeroButtons[0] || null;
+  const cmsSecondaryAction = cmsHeroButtons[1] || null;
   const teacherLookup = new Map(
     getEducationTeacherProfiles(locale).map((teacher) => [teacher.displayName, teacher]),
   );
@@ -119,11 +136,6 @@ export default function EducationCenterDetailPage({
       };
     })
     .slice(0, 2);
-
-  const resolvedPage = {
-    ...center.page,
-    sections: [],
-  };
 
   const cohortFacts = cohort
     ? [
@@ -155,26 +167,32 @@ export default function EducationCenterDetailPage({
       className="education-center-page education-center-page--reworked"
       eyebrow={t(locale, "Centre", "Center")}
       hideHero
-      page={resolvedPage}
+      page={center.page}
     >
       <section
         className="education-center-shell education-center-shell--hero"
         style={{
-          backgroundImage: `linear-gradient(180deg, rgba(15, 18, 24, 0.28), rgba(15, 18, 24, 0.56)), url(${content.hero.backgroundImageUrl})`,
+          backgroundImage: `linear-gradient(180deg, rgba(15, 18, 24, 0.28), rgba(15, 18, 24, 0.56)), url(${cmsImageUrl || content.hero.backgroundImageUrl})`,
         }}
       >
         <div className="education-center-shell__hero-inner">
           <ScopeBadge>{content.labels.center}</ScopeBadge>
-          <h1>{content.hero.title}</h1>
-          <p>{content.hero.subtitle}</p>
+          <h1>{cmsHeroHeading?.title || content.hero.title}</h1>
+          <p>{cmsHeroHeading?.subtitle || cmsCenter?.summary || content.hero.subtitle}</p>
           <div className="education-center-shell__hero-actions">
-            {cohort ? (
-              <a className="education-button education-center-shell__primary-button" href={cohort.admissionsUrl}>
-                {content.hero.enrollLabel}
+            {cohort || cmsPrimaryAction ? (
+              <a
+                className="education-button education-center-shell__primary-button"
+                href={cmsPrimaryAction?.href || cohort?.admissionsUrl || "#"}
+              >
+                {cmsPrimaryAction?.label || content.hero.enrollLabel}
               </a>
             ) : null}
-            <a className="education-button education-center-shell__secondary-button" href={content.hero.appointmentHref}>
-              {content.hero.appointmentLabel}
+            <a
+              className="education-button education-center-shell__secondary-button"
+              href={cmsSecondaryAction?.href || content.hero.appointmentHref}
+            >
+              {cmsSecondaryAction?.label || content.hero.appointmentLabel}
             </a>
           </div>
         </div>
@@ -185,7 +203,7 @@ export default function EducationCenterDetailPage({
           <div className="education-center-section-copy">
             <ScopeBadge>{content.labels.center}</ScopeBadge>
             <SectionHeading subtitle={content.intro.subtitle} title={content.intro.title} />
-            {content.intro.paragraphs.map((paragraph) => (
+            {(cmsParagraphs.length > 0 ? cmsParagraphs : content.intro.paragraphs).map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>
             ))}
           </div>
@@ -194,9 +212,9 @@ export default function EducationCenterDetailPage({
             className="education-center-video"
             playLabel={t(locale, "Lire la vidéo", "Play video")}
             posterPosition={content.intro.video.posterPosition}
-            posterUrl={content.intro.video.posterUrl}
+            posterUrl={cmsImageUrl || content.intro.video.posterUrl}
             title={content.intro.video.title}
-            videoId={content.intro.video.videoId}
+            videoId={cmsVideoId || content.intro.video.videoId}
           />
         </div>
       </section>
@@ -318,7 +336,9 @@ export default function EducationCenterDetailPage({
             <p>{content.contact.intro}</p>
             <p className="education-center-contact-block__appointment">
               <strong>{content.contact.appointmentPrefix}</strong>{" "}
-              <a href={content.contact.appointmentHref}>{content.contact.appointmentLabel}</a>
+              <a href={cmsSecondaryAction?.href || content.contact.appointmentHref}>
+                {cmsSecondaryAction?.label || content.contact.appointmentLabel}
+              </a>
             </p>
           </div>
           <EducationCenterContactForm

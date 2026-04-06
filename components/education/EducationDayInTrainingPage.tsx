@@ -79,8 +79,11 @@ export default function EducationDayInTrainingPage({ locale, page }: EducationDa
       label: content.actions.signUpLabel,
       url: content.actions.signUpUrl,
     },
-    sections: [],
   };
+  const heroTitle = resolvedPage.hero.title || resolvedPage.title || content.hero.title;
+  const heroBody = resolvedPage.hero.body || resolvedPage.subtitle || content.hero.subtitle;
+  const signUpLabel = resolvedPage.primaryCta?.label || content.actions.signUpLabel;
+  const signUpUrl = resolvedPage.primaryCta?.url || content.actions.signUpUrl;
 
   return (
     <EducationContentPage
@@ -96,9 +99,14 @@ export default function EducationDayInTrainingPage({ locale, page }: EducationDa
         }}
       >
         <div className="education-day-hero__inner">
-          <h1>{content.hero.title}</h1>
-          <p>{content.hero.subtitle}</p>
-          <ActionRow {...content.actions} />
+          <h1>{heroTitle}</h1>
+          <p>{heroBody}</p>
+          <ActionRow
+            meetingLabel={content.actions.meetingLabel}
+            meetingUrl={content.actions.meetingUrl}
+            signUpLabel={signUpLabel}
+            signUpUrl={signUpUrl}
+          />
         </div>
       </section>
 
@@ -279,7 +287,12 @@ export default function EducationDayInTrainingPage({ locale, page }: EducationDa
           ) : null}
         </div>
 
-        <ActionRow {...content.actions} />
+        <ActionRow
+          meetingLabel={content.actions.meetingLabel}
+          meetingUrl={content.actions.meetingUrl}
+          signUpLabel={signUpLabel}
+          signUpUrl={signUpUrl}
+        />
       </section>
 
       <section className="education-day-section education-day-section--light">

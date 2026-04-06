@@ -28,9 +28,26 @@ function formatDate(locale: string, value: string, fallback?: string) {
 
   return new Intl.DateTimeFormat(locale.toLowerCase().startsWith("fr") ? "fr-BE" : "en-GB", {
     day: "2-digit",
-    month: "long",
+    month: "short",
     year: "numeric",
   }).format(parsed);
+}
+
+function buildCoverStyle(entry: EducationNewsletterEntry, index: number) {
+  if (entry.imageUrl) {
+    return {
+      backgroundImage: `linear-gradient(180deg, rgba(20, 24, 34, 0.10), rgba(20, 24, 34, 0.72)), url(${entry.imageUrl})`,
+    };
+  }
+
+  const gradients = [
+    "linear-gradient(135deg, #44506d, #2f354a)",
+    "linear-gradient(135deg, #7f8da8, #434d63)",
+    "linear-gradient(135deg, #53637f, #30384b)",
+    "linear-gradient(135deg, #6c7b95, #394155)",
+  ];
+
+  return { backgroundImage: gradients[index % gradients.length] };
 }
 
 export default function EducationNewsletterArchivePage({
@@ -38,74 +55,66 @@ export default function EducationNewsletterArchivePage({
   entries,
   locale,
 }: EducationNewsletterArchivePageProps) {
-  const [featured, ...archive] = entries;
+  const resolvedPage: NarrativePage = {
+    ...page,
+    sections: [],
+  };
 
   return (
-    <EducationContentPage eyebrow="Newsletter" page={page}>
-      {featured ? (
-        <section className="education-center-intro education-card">
-          <article className="education-center-intro__story">
-            <p className="home-section-kicker">{t(locale, "Dernière édition", "Latest issue")}</p>
-            <h2>{featured.title}</h2>
-            <p>{featured.lead || featured.excerpt}</p>
-            <p className="education-training-intro__note">
-              {t(
-                locale,
-                "Nous commençons par remettre l’archive éditoriale FE en circulation avec les newsletters les plus récentes, avant une modélisation backend plus complète.",
-                "We are bringing the FE editorial archive back into circulation through the recent newsletters first, ahead of a fuller backend article model.",
-              )}
-            </p>
-          </article>
-          <aside className="education-center-intro__facts">
-            <p className="education-page__date-range">{formatDate(locale, featured.publishedAt, featured.publishedLabel)}</p>
-            <h2>{t(locale, "À lire maintenant", "Read now")}</h2>
-            <dl className="education-center-facts">
-              <div>
-                <dt>{t(locale, "Archive", "Archive")}</dt>
-                <dd>{t(locale, "Infolettre FE", "FE newsletter")}</dd>
-              </div>
-              <div>
-                <dt>{t(locale, "Langue", "Language")}</dt>
-                <dd>{locale.toLowerCase().startsWith("fr") ? "Français" : "English"}</dd>
-              </div>
-              <div>
-                <dt>{t(locale, "Éditions visibles", "Visible issues")}</dt>
-                <dd>{entries.length}</dd>
-              </div>
-            </dl>
-            <div className="education-center-intro__actions">
-              <Link className="education-button" href={localizePath(locale, `/newsletter/${featured.slug}`)}>
-                {t(locale, "Lire cette édition", "Read this issue")}
-              </Link>
-              <Link className="education-button education-button--secondary" href={localizePath(locale, "/contact")}>
-                {t(locale, "Nous contacter", "Contact us")}
-              </Link>
-            </div>
-          </aside>
-        </section>
-      ) : null}
-
-      <section className="home-section">
-        <div className="link-row home-section-head">
-          <h2>{t(locale, "Archive des éditions", "Issue archive")}</h2>
-          <Link className="text-link" href={localizePath(locale, "/platform")}>
-            {t(locale, "Voir la plateforme", "See the platform")}
-          </Link>
+    <EducationContentPage className="education-newsletter-archive-page" hideHero page={resolvedPage}>
+      <section className="education-newsletter-signup">
+        <div className="education-newsletter-signup__inner">
+          <h1>{t(locale, "Abonnez-vous à la newsletter", "Subscribe to the newsletter")}</h1>
+          <form action={localizePath(locale, "/newsletter")} className="education-newsletter-signup__form" method="get">
+            <input
+              aria-label={t(locale, "Adresse e-mail", "Email address")}
+              name="email"
+              placeholder={t(locale, "Adresse e-mail", "Email Address")}
+              type="email"
+            />
+            <button type="submit">{t(locale, "S'abonner", "Subscribe")}</button>
+          </form>
         </div>
-        <div className="education-card-grid education-card-grid--newsletter">
-          {archive.map((entry) => (
-            <article className="education-card education-newsletter-card" key={entry.slug}>
-              <div className="education-newsletter-card__body">
-                <p className="education-page__date-range">{formatDate(locale, entry.publishedAt, entry.publishedLabel)}</p>
-                <h3>{entry.title}</h3>
-                <p>{entry.excerpt}</p>
-                <div className="education-offer-card__actions">
-                  <Link className="education-button" href={localizePath(locale, `/newsletter/${entry.slug}`)}>
-                    {t(locale, "Lire", "Read")}
-                  </Link>
+      </section>
+
+      <section className="education-newsletter-archive">
+        <div className="education-newsletter-archive__heading">
+          <h2>{t(locale, "Archive des numéros", "Issue archive")}</h2>
+          <p>
+            {t(
+              locale,
+              "Parcourez les anciennes éditions comme une petite bibliothèque éditoriale.",
+              "Browse past issues like a small editorial library.",
+            )}
+          </p>
+        </div>
+
+        <div className="education-newsletter-archive__shelf">
+          {entries.map((entry, index) => (
+            <Link
+              className="education-newsletter-issue-card"
+              href={localizePath(locale, `/newsletter/${entry.slug}`)}
+              key={entry.slug}
+            >
+              <div className="education-newsletter-issue-card__cover" style={buildCoverStyle(entry, index)}>
+                <span className="education-newsletter-issue-card__date">
+                  {formatDate(locale, entry.publishedAt, entry.publishedLabel)}
+                </span>
+                <div className="education-newsletter-issue-card__cover-text">
+                  <span className="education-newsletter-issue-card__eyebrow">
+                    {t(locale, "Newsletter", "Newsletter")}
+                  </span>
+                  <h3>{entry.title}</h3>
                 </div>
               </div>
-            </article>
+
+              <div className="education-newsletter-issue-card__body">
+                <p>{entry.excerpt || entry.lead}</p>
+                <span className="education-newsletter-issue-card__link">
+                  {t(locale, "Lire l’édition", "Read issue")}
+                </span>
+              </div>
+            </Link>
           ))}
         </div>
       </section>

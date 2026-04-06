@@ -17,7 +17,7 @@ import type {
 } from "@/lib/site-config";
 import { getRequiredApiBase } from "@/lib/server-env";
 import { resolveHostname } from "@/lib/server-hostname";
-import type { CalendarItem, OfferDetail, OfferSummary, PrivateBookingConfig, SiteFaqSection } from "@/lib/types";
+import type { CalendarItem, OfferDetail, OfferSummary, PrivateBookingConfig, SectionBlock, SiteFaqSection } from "@/lib/types";
 
 export type QueryValue = string | number | boolean | null | undefined;
 
@@ -81,6 +81,84 @@ export type FetchTeacherDetailParams = {
   center?: string;
   slug: string;
   locale?: string;
+};
+
+export type ApiCenterSummary = {
+  id: number;
+  slug: string;
+  name: string;
+  kind: string;
+  city?: string | null;
+  country?: string | null;
+  summary?: string | null;
+  websiteUrl?: string | null;
+  admissionsCenterId?: string | null;
+};
+
+export type ApiCenterDetail = ApiCenterSummary & {
+  body?: string | null;
+};
+
+export type ApiFacilitator = {
+  id: number;
+  displayName: string;
+  slug: string | null;
+  photoUrl: string | null;
+  title: string | null;
+  shortBio: string | null;
+  bio: string | null;
+  quote: string | null;
+};
+
+export type ApiTrainingProgramSummary = {
+  id: number;
+  slug: string;
+  title: string;
+  subtitle?: string | null;
+  excerpt?: string | null;
+  heroImageUrl?: string | null;
+  brochureUrl?: string | null;
+  applicationUrl?: string | null;
+  facilitators: ApiFacilitator[];
+};
+
+export type ApiTrainingProgramDetail = ApiTrainingProgramSummary & {
+  body?: string | null;
+  sections: SectionBlock[];
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+};
+
+export type ApiTrainingCohortSummary = {
+  id: number;
+  slug: string;
+  title: string;
+  subtitle?: string | null;
+  excerpt?: string | null;
+  heroImageUrl?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  languageSummary?: string | null;
+  locationSummary?: string | null;
+  venue?: string | null;
+  pricingSummary?: string | null;
+  brochureUrl?: string | null;
+  applicationUrl?: string | null;
+  applicationStatus?: string | null;
+  admissionsCohortId?: string | null;
+  center: ApiCenterSummary | null;
+  facilitators: ApiFacilitator[];
+};
+
+export type ApiTrainingCohortDetail = ApiTrainingCohortSummary & {
+  program?: {
+    slug: string;
+    title: string;
+  } | null;
+  body?: string | null;
+  sections: SectionBlock[];
+  seoTitle?: string | null;
+  seoDescription?: string | null;
 };
 
 export type { Brand, Center, NarrativePage, SiteAnnouncement, SiteConfig, SiteFooter, SiteFooterContact, SiteFooterGroup, SiteNavItem, SocialLink } from "@/lib/site-config";
@@ -715,6 +793,179 @@ function normalizeNarrativePage(payload: unknown): NarrativePage | null {
   };
 }
 
+function normalizeFacilitators(value: unknown) {
+  return toList<RawRecord>(value, [])
+    .map((item) => {
+      const record = asRecord(item);
+      if (!record) {
+        return null;
+      }
+
+      const idValue = record.id;
+      const displayName = pickString(record, ["display_name", "displayName", "name"]);
+      if (typeof idValue !== "number" || !displayName) {
+        return null;
+      }
+
+      return {
+        id: idValue,
+        displayName: cleanDisplayText(displayName),
+        slug: pickString(record, ["slug"]) || null,
+        photoUrl: pickString(record, ["photo_url", "photoUrl"]) || null,
+        title: pickString(record, ["title"]) || null,
+        shortBio: pickString(record, ["short_bio", "shortBio"]) || null,
+        bio: pickString(record, ["bio"]) || null,
+        quote: pickString(record, ["quote"]) || null,
+      } satisfies ApiFacilitator;
+    })
+    .filter((item): item is ApiFacilitator => item !== null);
+}
+
+function normalizeCenterSummary(record: unknown): ApiCenterSummary | null {
+  const value = asRecord(record);
+  if (!value) {
+    return null;
+  }
+
+  const idValue = value.id;
+  const slug = pickString(value, ["slug"]);
+  const name = pickString(value, ["name"]);
+  const kind = pickString(value, ["kind"]);
+
+  if (typeof idValue !== "number" || !slug || !name || !kind) {
+    return null;
+  }
+
+  return {
+    id: idValue,
+    slug,
+    name: cleanDisplayText(name),
+    kind,
+    city: pickString(value, ["city"]) || null,
+    country: pickString(value, ["country"]) || null,
+    summary: pickString(value, ["summary"]) || null,
+    websiteUrl: pickString(value, ["website_url", "websiteUrl"]) || null,
+    admissionsCenterId: pickString(value, ["admissions_center_id", "admissionsCenterId"]) || null,
+  };
+}
+
+function normalizeCenterDetail(payload: unknown): ApiCenterDetail | null {
+  const record = asRecord(payload);
+  const summary = normalizeCenterSummary(record);
+  if (!summary) {
+    return null;
+  }
+
+  return {
+    ...summary,
+    body: pickString(record, ["body"]) || null,
+  };
+}
+
+function normalizeTrainingProgramSummary(payload: unknown): ApiTrainingProgramSummary | null {
+  const record = asRecord(payload);
+  if (!record) {
+    return null;
+  }
+
+  const idValue = record.id;
+  const slug = pickString(record, ["slug"]);
+  const title = pickString(record, ["title"]);
+
+  if (typeof idValue !== "number" || !slug || !title) {
+    return null;
+  }
+
+  return {
+    id: idValue,
+    slug,
+    title: cleanDisplayText(title),
+    subtitle: pickString(record, ["subtitle"]) || null,
+    excerpt: pickString(record, ["excerpt"]) || null,
+    heroImageUrl: pickString(record, ["hero_image_url", "heroImageUrl"]) || null,
+    brochureUrl: pickString(record, ["brochure_url", "brochureUrl"]) || null,
+    applicationUrl: pickString(record, ["application_url", "applicationUrl"]) || null,
+    facilitators: normalizeFacilitators(record.facilitators),
+  };
+}
+
+function normalizeTrainingProgramDetail(payload: unknown): ApiTrainingProgramDetail | null {
+  const record = asRecord(payload);
+  const summary = normalizeTrainingProgramSummary(record);
+  if (!summary) {
+    return null;
+  }
+
+  return {
+    ...summary,
+    body: pickString(record, ["body"]) || null,
+    sections: toArray(record?.sections) as SectionBlock[],
+    seoTitle: pickString(record, ["seo_title", "seoTitle"]) || null,
+    seoDescription: pickString(record, ["seo_description", "seoDescription"]) || null,
+  };
+}
+
+function normalizeTrainingCohortSummary(payload: unknown): ApiTrainingCohortSummary | null {
+  const record = asRecord(payload);
+  if (!record) {
+    return null;
+  }
+
+  const idValue = record.id;
+  const slug = pickString(record, ["slug"]);
+  const title = pickString(record, ["title"]);
+
+  if (typeof idValue !== "number" || !slug || !title) {
+    return null;
+  }
+
+  return {
+    id: idValue,
+    slug,
+    title: cleanDisplayText(title),
+    subtitle: pickString(record, ["subtitle"]) || null,
+    excerpt: pickString(record, ["excerpt"]) || null,
+    heroImageUrl: pickString(record, ["hero_image_url", "heroImageUrl"]) || null,
+    startDate: pickString(record, ["start_date", "startDate"]) || null,
+    endDate: pickString(record, ["end_date", "endDate"]) || null,
+    languageSummary: pickString(record, ["language_summary", "languageSummary"]) || null,
+    locationSummary: pickString(record, ["location_summary", "locationSummary"]) || null,
+    venue: pickString(record, ["venue"]) || null,
+    pricingSummary: pickString(record, ["pricing_summary", "pricingSummary"]) || null,
+    brochureUrl: pickString(record, ["brochure_url", "brochureUrl"]) || null,
+    applicationUrl: pickString(record, ["application_url", "applicationUrl"]) || null,
+    applicationStatus: pickString(record, ["application_status", "applicationStatus"]) || null,
+    admissionsCohortId: pickString(record, ["admissions_cohort_id", "admissionsCohortId"]) || null,
+    center: normalizeCenterSummary(record.center),
+    facilitators: normalizeFacilitators(record.facilitators),
+  };
+}
+
+function normalizeTrainingCohortDetail(payload: unknown): ApiTrainingCohortDetail | null {
+  const record = asRecord(payload);
+  const summary = normalizeTrainingCohortSummary(record);
+  if (!summary) {
+    return null;
+  }
+
+  const programRecord = asRecord(record?.program);
+
+  return {
+    ...summary,
+    program:
+      programRecord && pickString(programRecord, ["slug"]) && pickString(programRecord, ["title"])
+        ? {
+            slug: pickString(programRecord, ["slug"]),
+            title: cleanDisplayText(pickString(programRecord, ["title"])),
+          }
+        : null,
+    body: pickString(record, ["body"]) || null,
+    sections: toArray(record?.sections) as SectionBlock[],
+    seoTitle: pickString(record, ["seo_title", "seoTitle"]) || null,
+    seoDescription: pickString(record, ["seo_description", "seoDescription"]) || null,
+  };
+}
+
 export async function fetchSiteConfig(hostname: string, locale?: string) {
   const normalizedHostname = normalizeHostname(hostname);
   const payload = await requestJson<unknown>("/site-config", {
@@ -736,6 +987,93 @@ export async function fetchNarrativePage(hostname: string, routeKey: string, loc
     });
 
     return normalizeNarrativePage(payload);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+export async function fetchCenters(hostname: string, locale?: string) {
+  const normalizedHostname = normalizeHostname(hostname);
+  const payload = await requestJson<unknown>("/centers", {
+    domain: normalizedHostname,
+    locale,
+  });
+
+  return toList<unknown>(payload, []).map(normalizeCenterSummary).filter((item): item is ApiCenterSummary => item !== null);
+}
+
+export async function fetchCenterDetail(hostname: string, slug: string, locale?: string) {
+  const normalizedHostname = normalizeHostname(hostname);
+
+  try {
+    const payload = await requestJson<unknown>(`/centers/${encodeURIComponent(slug)}`, {
+      domain: normalizedHostname,
+      locale,
+    });
+
+    return normalizeCenterDetail(payload);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+export async function fetchTrainingPrograms(hostname: string, locale?: string) {
+  const normalizedHostname = normalizeHostname(hostname);
+  const payload = await requestJson<unknown>("/trainings/programs", {
+    domain: normalizedHostname,
+    locale,
+  });
+
+  return toList<unknown>(payload, []).map(normalizeTrainingProgramSummary).filter((item): item is ApiTrainingProgramSummary => item !== null);
+}
+
+export async function fetchTrainingProgramDetail(hostname: string, slug: string, locale?: string) {
+  const normalizedHostname = normalizeHostname(hostname);
+
+  try {
+    const payload = await requestJson<unknown>(`/trainings/programs/${encodeURIComponent(slug)}`, {
+      domain: normalizedHostname,
+      locale,
+    });
+
+    return normalizeTrainingProgramDetail(payload);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+export async function fetchTrainingProgramCohorts(hostname: string, slug: string, locale?: string) {
+  const normalizedHostname = normalizeHostname(hostname);
+  const payload = await requestJson<unknown>(`/trainings/programs/${encodeURIComponent(slug)}/cohorts`, {
+    domain: normalizedHostname,
+    locale,
+  });
+
+  return toList<unknown>(payload, []).map(normalizeTrainingCohortSummary).filter((item): item is ApiTrainingCohortSummary => item !== null);
+}
+
+export async function fetchTrainingCohortDetail(hostname: string, slug: string, locale?: string) {
+  const normalizedHostname = normalizeHostname(hostname);
+
+  try {
+    const payload = await requestJson<unknown>(`/trainings/cohorts/${encodeURIComponent(slug)}`, {
+      domain: normalizedHostname,
+      locale,
+    });
+
+    return normalizeTrainingCohortDetail(payload);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
       return null;

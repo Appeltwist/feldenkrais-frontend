@@ -54,6 +54,7 @@ const FALLBACK_CONFIGS: Record<string, SiteConfig> = {
   "127.0.0.1": FL_CONFIG,
 };
 
+import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
 export async function generateMetadata(): Promise<Metadata> {

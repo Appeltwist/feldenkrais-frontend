@@ -37,6 +37,7 @@ export type EducationVideoGuideTopic = {
   questionCount: number;
   sampleQuestions: string[];
   previewVideo: EducationVideoItem | null;
+  playlistUrl: string | null;
 };
 
 export type EducationVideosData = {
@@ -426,6 +427,13 @@ function buildVideoData(locale: string): EducationVideosData | null {
       title: topicConfig.heading,
       href: localizePath(targetLocale, topicConfig.href),
       description: previewItem?.summary || "",
+      playlistUrl:
+        faqItems.some((item) => item.videoId)
+          ? `https://www.youtube.com/watch_videos?video_ids=${faqItems
+              .map((item) => item.videoId)
+              .filter(Boolean)
+              .join(",")}`
+          : null,
       questionCount: faqItems.length,
       sampleQuestions: faqItems.slice(0, 3).map((item) => item.label),
       previewVideo: previewItem?.videoId

@@ -26,8 +26,12 @@ export default async function WorkshopsPage() {
 
   if (siteConfig?.siteSlug === "feldenkrais-education") {
     const locale = await getRequestLocale(siteConfig.defaultLocale);
-    const page =
-      (await resolveEducationNarrativePage(hostname, "workshops", locale)) ?? {
+    const [page, platformPage] = await Promise.all([
+      resolveEducationNarrativePage(hostname, "workshops", locale),
+      resolveEducationNarrativePage(hostname, "platform", locale),
+    ]);
+    const resolvedPage =
+      page ?? {
         routeKey: "workshops",
         locale,
         title: "Workshops",
@@ -50,7 +54,14 @@ export default async function WorkshopsPage() {
     const forestWorkshops = await fetchForestFeaturedWorkshops(locale).catch(() => []);
     const upcomingWorkshops = buildEducationWorkshopCollection(locale, offers, forestWorkshops);
 
-    return <EducationWorkshopArchivePage locale={locale} page={page} upcomingWorkshops={upcomingWorkshops} />;
+    return (
+      <EducationWorkshopArchivePage
+        locale={locale}
+        page={resolvedPage}
+        platformPage={platformPage}
+        upcomingWorkshops={upcomingWorkshops}
+      />
+    );
   }
 
   return <OfferListPage heading="Workshops" offerType="WORKSHOP" routeKey="workshops" />;

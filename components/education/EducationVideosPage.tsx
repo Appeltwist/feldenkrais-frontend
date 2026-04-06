@@ -1,10 +1,13 @@
-import Link from "next/link";
-
-import type { EducationVideosData } from "@/lib/education-videos";
-import { localizePath } from "@/lib/locale-path";
+import type {
+  EducationVideoItem,
+  EducationVideoSection,
+  EducationVideosData,
+} from "@/lib/education-videos";
 import type { NarrativePage } from "@/lib/site-config";
 
 import EducationContentPage from "./EducationContentPage";
+import EducationPlatformPromoRow from "./EducationPlatformPromoRow";
+import EducationVideoCarousel from "./EducationVideoCarousel";
 
 type EducationVideosPageProps = {
   data: EducationVideosData;
@@ -14,6 +17,31 @@ type EducationVideosPageProps = {
 
 function t(locale: string, fr: string, en: string) {
   return locale.toLowerCase().startsWith("fr") ? fr : en;
+}
+
+function findSection(
+  sections: EducationVideoSection[],
+  patterns: RegExp[],
+  fallbackIndex: number,
+) {
+  return (
+    sections.find((section) => patterns.some((pattern) => pattern.test(section.title))) ??
+    sections[fallbackIndex] ??
+    null
+  );
+}
+
+function uniqueByVideo(items: EducationVideoItem[]) {
+  const seen = new Set<string>();
+
+  return items.filter((item) => {
+    if (seen.has(item.videoId)) {
+      return false;
+    }
+
+    seen.add(item.videoId);
+    return true;
+  });
 }
 
 export default function EducationVideosPage({
@@ -34,248 +62,191 @@ export default function EducationVideosPage({
     sections: [],
   };
 
+  const conferencesSection = findSection(data.sections, [/conference/i, /conférence/i], 2);
+  const testimonialsSection = findSection(
+    data.sections,
+    [/people say/i, /testimonial/i, /témoignage/i],
+    1,
+  );
+  const trainingsSection = findSection(
+    data.sections,
+    [/training/i, /formation/i],
+    0,
+  );
+
+  const highlightItems = uniqueByVideo(
+    [
+      ...(data.featuredVideo ? [data.featuredVideo] : []),
+      ...(conferencesSection?.items ?? []),
+      ...(trainingsSection?.items ?? []),
+      ...(testimonialsSection?.items ?? []),
+    ].filter(Boolean),
+  ).slice(0, 7);
+
+  const highlightHero = highlightItems[0] ?? data.featuredVideo ?? null;
+
   return (
-    <EducationContentPage className="education-videos-page" eyebrow="Video" page={resolvedPage}>
-      <section className="education-center-intro education-card">
-        <article className="education-center-intro__story">
-          <p className="home-section-kicker">{t(locale, "Bibliothèque FE", "FE video library")}</p>
-          <h2>{t(locale, "Une archive vidéo remise en circulation", "A video archive brought back into circulation")}</h2>
-          <p>{data.pageSummary}</p>
-          <p className="education-training-intro__note">
-            {t(
-              locale,
-              "Comme sur le site FE précédent, cette page mélange conférences, témoignages, présentation des formations et guide d’entrée dans l’univers Feldenkrais.",
-              "As on the previous FE site, this page combines conferences, testimonials, training orientation, and a starter guide into the Feldenkrais world.",
-            )}
-          </p>
-        </article>
-        <aside className="education-center-intro__facts">
-          <p className="education-page__date-range">{t(locale, "Archive FE", "FE archive")}</p>
-          <h2>{t(locale, "Ce qui est visible", "What is visible")}</h2>
-          <dl className="education-center-facts">
-            <div>
-              <dt>{t(locale, "Sections vidéo", "Video sections")}</dt>
-              <dd>{data.sections.length}</dd>
-            </div>
-            <div>
-              <dt>{t(locale, "Clips indexés", "Indexed clips")}</dt>
-              <dd>{data.totalVideoCount}</dd>
-            </div>
-            <div>
-              <dt>{t(locale, "Guide d’entrée", "Starter guide")}</dt>
-              <dd>{data.starterGuideTopics.length}</dd>
-            </div>
-          </dl>
-          <div className="education-center-intro__actions">
-            <Link className="education-button" href="#featured-video">
-              {t(locale, "Voir la sélection", "See the selection")}
-            </Link>
-            <Link className="education-button education-button--secondary" href={localizePath(locale, "/trainings")}>
-              {t(locale, "Explorer les formations", "Explore trainings")}
-            </Link>
-          </div>
-        </aside>
+    <EducationContentPage
+      className="education-videos-page education-videos-page--reworked"
+      eyebrow="Videos"
+      hideHero
+      page={resolvedPage}
+    >
+      <section
+        className="education-videos-hero"
+        style={
+          resolvedPage.hero.imageUrl
+            ? {
+                backgroundImage: `linear-gradient(180deg, rgba(12, 19, 29, 0.56), rgba(14, 20, 30, 0.6)), url(${resolvedPage.hero.imageUrl})`,
+              }
+            : undefined
+        }
+      >
+        <div className="education-videos-hero__inner">
+          <h1>{resolvedPage.hero.title || resolvedPage.title}</h1>
+          {resolvedPage.hero.body || resolvedPage.subtitle ? (
+            <p>{resolvedPage.hero.body || resolvedPage.subtitle}</p>
+          ) : null}
+        </div>
       </section>
 
-      {data.featuredVideo ? (
-        <section className="education-videos-featured education-card" id="featured-video">
-          <div className="education-videos-featured__player">
-            <iframe
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              loading="lazy"
-              src={`https://www.youtube.com/embed/${data.featuredVideo.videoId}?rel=0`}
-              title={data.featuredVideo.title}
-            />
+      {highlightHero ? (
+        <section className="education-videos-section education-videos-section--highlight">
+          <div className="education-videos-section__head">
+            <h2>{data.featuredHeading}</h2>
           </div>
-          <div className="education-videos-featured__copy">
-            <p className="home-section-kicker">{data.featuredHeading}</p>
-            <h2>{data.featuredVideo.title}</h2>
-            <p>
-              {t(
-                locale,
-                "Nous gardons ici l’idée de la mise en avant du moment qui donnait du rythme à la vidéothèque FE historique.",
-                "This keeps the old FE idea of a current highlight that gave rhythm to the video library.",
-              )}
-            </p>
-            <div className="education-offer-card__actions">
-              <a
-                className="education-button"
-                href={data.featuredVideo.youtubeUrl}
-                rel="noreferrer"
-                target="_blank"
-              >
-                {t(locale, "Voir sur YouTube", "Watch on YouTube")}
-              </a>
-              {data.sourceUrl ? (
-                <a
-                  className="education-button education-button--secondary"
-                  href={data.sourceUrl}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  {t(locale, "Voir la source d’origine", "See original source")}
-                </a>
-              ) : null}
+          <a
+            className="education-videos-highlight"
+            href={highlightHero.youtubeUrl}
+            rel="noreferrer"
+            target="_blank"
+          >
+            <div className="education-videos-highlight__poster">
+              <img
+                alt={highlightHero.title}
+                className="education-videos-highlight__image"
+                fetchPriority="high"
+                loading="eager"
+                src={highlightHero.thumbnailUrl}
+              />
             </div>
-          </div>
+
+            <span className="education-videos-highlight__play" aria-hidden="true">
+              <span />
+            </span>
+          </a>
         </section>
       ) : null}
 
-      {data.sections.map((section) => (
-        <section className="home-section" key={section.title}>
-          <div className="link-row home-section-head">
-            <h2>{section.title}</h2>
-            <Link className="text-link" href={localizePath(locale, "/trainings")}>
-              {t(locale, "Voir les formations", "See trainings")}
-            </Link>
+      {conferencesSection ? (
+        <section className="education-videos-section">
+          <div className="education-videos-section__head">
+            <h2>{conferencesSection.title}</h2>
           </div>
-          <div className="education-card-grid education-card-grid--videos">
-            {section.items.map((item) => (
-              <article className="education-card education-video-card" key={`${section.title}-${item.videoId}`}>
-                <a
-                  aria-label={item.title}
-                  className="education-video-card__media"
-                  href={item.youtubeUrl}
-                  rel="noreferrer"
-                  style={{
-                    backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.82)), url(${item.thumbnailUrl})`,
-                  }}
-                  target="_blank"
-                >
-                  <span className="education-video-card__play">
-                    {t(locale, "Voir", "Watch")}
-                  </span>
-                </a>
-                <div className="education-video-card__body">
-                  <p className="education-page__date-range">{section.title}</p>
-                  <h3>{item.title}</h3>
-                  <div className="education-offer-card__actions">
-                    <a className="education-button" href={item.youtubeUrl} rel="noreferrer" target="_blank">
-                      {t(locale, "Lire la vidéo", "Play video")}
-                    </a>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
+          <EducationVideoCarousel
+            className="education-video-carousel--wide"
+            desktopSlides={2}
+            items={conferencesSection.items}
+            locale={locale}
+            tabletSlides={1}
+          />
         </section>
-      ))}
+      ) : null}
 
-      <section className="education-center-intro education-card" id="starter-guide">
-        <article className="education-center-intro__story">
-          <p className="home-section-kicker">{data.starterGuideTitle}</p>
-          <h2>{data.starterGuideSubtitle || t(locale, "Une porte d’entrée dans l’univers FE", "An entry point into the FE universe")}</h2>
-          <p>{data.starterGuideSummary}</p>
-          <p className="education-training-intro__note">
-            {t(
-              locale,
-              "Le site historique FE terminait la vidéothèque par un guide structuré autour de la formation, de la méthode, de Moshe et de l’équipe. On garde cette logique ici.",
-              "The historic FE site ended the library with a structured guide around the training, the method, Moshe, and the team. We keep that logic here.",
-            )}
-          </p>
-        </article>
-        <aside className="education-center-intro__facts">
-          <p className="education-page__date-range">{t(locale, "Alan Questel", "Alan Questel")}</p>
-          <h2>{t(locale, "Thèmes du guide", "Guide themes")}</h2>
-          <dl className="education-center-facts">
-            <div>
-              <dt>{t(locale, "Chapitres", "Chapters")}</dt>
-              <dd>{data.starterGuideTopics.length}</dd>
-            </div>
-            <div>
-              <dt>{t(locale, "Questions visibles", "Visible questions")}</dt>
-              <dd>{data.starterGuideTopics.reduce((count, item) => count + item.questionCount, 0)}</dd>
-            </div>
-            <div>
-              <dt>{t(locale, "Orientation", "Orientation")}</dt>
-              <dd>{t(locale, "Guide d’entrée FE", "FE starter guide")}</dd>
-            </div>
-          </dl>
-          <div className="education-center-intro__actions">
-            <Link className="education-button" href={localizePath(locale, "/teachers/alan-questel")}>
-              {t(locale, "Voir Alan Questel", "View Alan Questel")}
-            </Link>
-            <Link className="education-button education-button--secondary" href={localizePath(locale, "/about")}>
-              {t(locale, "À propos de FE", "About FE")}
-            </Link>
+      {testimonialsSection ? (
+        <section className="education-videos-section">
+          <div className="education-videos-section__head">
+            <h2>{testimonialsSection.title}</h2>
           </div>
-        </aside>
-      </section>
+          <EducationVideoCarousel
+            className="education-video-carousel--testimonials"
+            desktopSlides={3}
+            items={testimonialsSection.items}
+            locale={locale}
+            tabletSlides={2}
+          />
+        </section>
+      ) : null}
 
-      <section className="home-section">
-        <div className="link-row home-section-head">
-          <h2>{t(locale, "Guide 20 Questions", "20 Questions guide")}</h2>
-          <Link className="text-link" href={localizePath(locale, "/what-is-feldenkrais")}>
-            {t(locale, "Approfondir la méthode", "Go deeper into the method")}
-          </Link>
+      {trainingsSection ? (
+        <section className="education-videos-section">
+          <div className="education-videos-section__head">
+            <h2>{trainingsSection.title}</h2>
+          </div>
+          <EducationVideoCarousel
+            className="education-video-carousel--trainings"
+            desktopSlides={2}
+            items={trainingsSection.items}
+            locale={locale}
+            tabletSlides={1}
+          />
+        </section>
+      ) : null}
+
+      <EducationPlatformPromoRow
+        className="education-videos-page__platform"
+        content={{
+          body: t(
+            locale,
+            "Si vous manquez une conférence en direct, vous pouvez retrouver la version complète sur la plateforme Feldenkrais. L’essai gratuit de 7 jours permet d’y entrer immédiatement.",
+            "If you miss any live conferences, the full videos are available on the Feldenkrais platform. You can start with a 7-day free trial and watch them there.",
+          ),
+          buttonLabel: t(locale, "Commencer", "Start now"),
+          href: "/platform",
+          imageUrl: "/brands/feldenkrais-education/training/platform-devices.png",
+          subtitle: t(locale, "sur la plateforme Feldenkrais", "on the Feldenkrais Platform"),
+          title: t(locale, "Regardez les conférences complètes", "Watch the full conferences"),
+        }}
+        locale={locale}
+      />
+
+      <section className="education-videos-guide">
+        <div className="education-videos-guide__intro">
+          <p className="education-page__date-range">Alan Questel</p>
+          <h2>{data.starterGuideTitle}</h2>
+          {data.starterGuideSubtitle ? <p className="education-videos-guide__subtitle">{data.starterGuideSubtitle}</p> : null}
+          <p>{data.starterGuideSummary}</p>
         </div>
-        <div className="education-card-grid education-card-grid--videos-guide">
+
+        <div className="education-videos-guide__topics">
           {data.starterGuideTopics.map((topic) => (
-            <article className="education-card education-video-guide-card" key={topic.title}>
-              {topic.previewVideo ? (
-                <div
-                  className="education-video-guide-card__media"
-                  style={{
-                    backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.86)), url(${topic.previewVideo.thumbnailUrl})`,
-                  }}
+            <article className="education-videos-guide-card" key={topic.title}>
+              <div className="education-videos-guide-card__image-wrap">
+                <img
+                  alt={t(locale, "Alan Questel", "Alan Questel")}
+                  className="education-videos-guide-card__image"
+                  loading="lazy"
+                  src="/brands/feldenkrais-education/day-in-training/alan.jpg"
                 />
-              ) : null}
-              <div className="education-video-guide-card__body">
+              </div>
+              <div className="education-videos-guide-card__body">
                 <p className="education-page__date-range">
                   {topic.questionCount} {t(locale, "questions", "questions")}
                 </p>
                 <h3>{topic.title}</h3>
                 {topic.description ? <p>{topic.description}</p> : null}
                 {topic.sampleQuestions.length > 0 ? (
-                  <ul className="education-video-guide-card__questions">
+                  <ul className="education-videos-guide-card__questions">
                     {topic.sampleQuestions.map((question) => (
                       <li key={`${topic.title}-${question}`}>{question}</li>
                     ))}
                   </ul>
                 ) : null}
-                <div className="education-offer-card__actions">
-                  <Link className="education-button" href={topic.href}>
-                    {t(locale, "Explorer ce thème", "Explore this topic")}
-                  </Link>
-                  {topic.previewVideo ? (
+                {topic.playlistUrl ? (
+                  <div className="education-videos-guide-card__actions">
                     <a
                       className="education-button education-button--secondary"
-                      href={topic.previewVideo.youtubeUrl}
+                      href={topic.playlistUrl}
                       rel="noreferrer"
                       target="_blank"
                     >
-                      {t(locale, "Voir un extrait", "Watch an excerpt")}
+                      {t(locale, "Voir la playlist sur YouTube", "Watch playlist on YouTube")}
                     </a>
-                  ) : null}
-                </div>
+                  </div>
+                ) : null}
               </div>
             </article>
           ))}
-        </div>
-      </section>
-
-      <section className="education-center-cta education-card">
-        <h2>{t(locale, "Prolonger l’exploration", "Keep exploring")}</h2>
-        <p>
-          {t(
-            locale,
-            "Le site FE historique reliait les vidéos aux formations, à la méthode, à Moshe, à l’équipe et à la vie dans les centres. On garde cette circulation ici pour aider les visiteurs à avancer.",
-            "The historic FE site tied videos back to trainings, the method, Moshe, the team, and life in the centers. We keep that circulation here to help visitors move forward.",
-          )}
-        </p>
-        <div className="education-offer-card__actions">
-          <Link className="education-button" href={localizePath(locale, "/day-in-training")}>
-            {t(locale, "Voir une journée dans la formation", "See a day in training")}
-          </Link>
-          <a
-            className="education-button education-button--secondary"
-            href="https://vimeo.com/feldenkraiseducation"
-            rel="noreferrer"
-            target="_blank"
-          >
-            {t(locale, "Ouvrir Vimeo", "Open Vimeo")}
-          </a>
         </div>
       </section>
     </EducationContentPage>

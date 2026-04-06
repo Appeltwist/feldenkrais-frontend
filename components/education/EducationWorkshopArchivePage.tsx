@@ -11,6 +11,7 @@ import EducationWorkshopSlider from "./EducationWorkshopSlider";
 type EducationWorkshopArchivePageProps = {
   locale: string;
   page: NarrativePage;
+  platformPage?: NarrativePage | null;
   upcomingWorkshops: EducationWorkshopCollectionItem[];
 };
 
@@ -21,27 +22,32 @@ function t(locale: string, fr: string, en: string) {
 export default function EducationWorkshopArchivePage({
   locale,
   page,
+  platformPage,
   upcomingWorkshops,
 }: EducationWorkshopArchivePageProps) {
   const resolvedPage: NarrativePage = {
     ...page,
-    title: t(locale, "Tous les workshops", "All workshops"),
-    subtitle: t(
-      locale,
-      "Retrouvez ici les workshops FE à venir et une sélection de formats Feldenkrais associés.",
-      "Find the upcoming FE workshops here, along with a selection of related Feldenkrais formats.",
-    ),
-    hero: {
-      title: t(locale, "Tous les workshops", "All workshops"),
-      body: t(
+    title: page.title || t(locale, "Tous les workshops", "All workshops"),
+    subtitle:
+      page.subtitle ||
+      t(
         locale,
-        "Les introductions FE à la formation apparaissent ici avec une sélection de workshops Feldenkrais à venir, ainsi qu’un accès direct à la plateforme.",
-        "The FE introductions to the training appear here alongside a curated set of upcoming Feldenkrais workshops, plus a direct path into the platform.",
+        "Retrouvez ici les workshops FE à venir et une sélection de formats Feldenkrais associés.",
+        "Find the upcoming FE workshops here, along with a selection of related Feldenkrais formats.",
       ),
-      imageUrl: null,
+    hero: {
+      title: page.hero.title || page.title || t(locale, "Tous les workshops", "All workshops"),
+      body:
+        page.hero.body ||
+        page.subtitle ||
+        t(
+          locale,
+          "Les introductions FE à la formation apparaissent ici avec une sélection de workshops Feldenkrais à venir, ainsi qu’un accès direct à la plateforme.",
+          "The FE introductions to the training appear here alongside a curated set of upcoming Feldenkrais workshops, plus a direct path into the platform.",
+        ),
+      imageUrl: page.hero.imageUrl || null,
     },
-    primaryCta: null,
-    sections: [],
+    primaryCta: page.primaryCta ?? null,
   };
 
   function renderWorkshopCard(workshop: EducationWorkshopCollectionItem) {
@@ -101,13 +107,14 @@ export default function EducationWorkshopArchivePage({
       <section className="home-section">
         <div className="link-row home-section-head">
           <div>
-            <h2>{t(locale, "Workshops à venir", "Upcoming workshops")}</h2>
+            <h2>{resolvedPage.title || t(locale, "Workshops à venir", "Upcoming workshops")}</h2>
             <p className="home-section__intro">
-              {t(
-                locale,
-                "Les introductions FE à la formation apparaissent ici avec trois workshops Feldenkrais proposés par Forest Lighthouse.",
-                "The FE introductions to the training appear here alongside three Feldenkrais-related workshops offered by Forest Lighthouse.",
-              )}
+              {resolvedPage.hero.body ||
+                t(
+                  locale,
+                  "Les introductions FE à la formation apparaissent ici avec trois workshops Feldenkrais proposés par Forest Lighthouse.",
+                  "The FE introductions to the training appear here alongside three Feldenkrais-related workshops offered by Forest Lighthouse.",
+                )}
             </p>
           </div>
         </div>
@@ -128,29 +135,38 @@ export default function EducationWorkshopArchivePage({
       <section className="education-promo-row education-promo-row--platform education-workshops-page__platform">
         <div className="education-promo-row__copy education-promo-row__copy--dark">
           <h2>
-            <span>{t(locale, "Masterclasses en ligne", "Online Masterclasses")}</span>
+            <span>{platformPage?.hero.title || platformPage?.title || t(locale, "Masterclasses en ligne", "Online Masterclasses")}</span>
           </h2>
           <div className="education-promo-row__rule" />
           <p>
-            {t(
-              locale,
-              "Découvrez nos ressources en ligne: workshops publics, masterclasses et contenus d’approfondissement pour prolonger l’apprentissage.",
-              "Check out our online resources: public workshops, masterclasses, and deeper study material to continue the learning.",
-            )}
+            {platformPage?.hero.body ||
+              platformPage?.subtitle ||
+              t(
+                locale,
+                "Découvrez nos ressources en ligne: workshops publics, masterclasses et contenus d’approfondissement pour prolonger l’apprentissage.",
+                "Check out our online resources: public workshops, masterclasses, and deeper study material to continue the learning.",
+              )}
           </p>
           <div className="education-promo-row__actions">
-            <Link className="education-button" href={localizePath(locale, "/platform")}>
-              {t(locale, "En savoir plus", "Learn more")}
+            <Link
+              className="education-button"
+              href={
+                platformPage?.primaryCta?.url?.startsWith("/")
+                  ? localizePath(locale, platformPage.primaryCta.url)
+                  : platformPage?.primaryCta?.url || localizePath(locale, "/platform")
+              }
+            >
+              {platformPage?.primaryCta?.label || t(locale, "En savoir plus", "Learn more")}
             </Link>
           </div>
         </div>
 
         <div className="education-promo-row__visual">
           <Image
-            alt={t(locale, "Aperçu des masterclasses en ligne", "Preview of online masterclasses")}
+            alt={platformPage?.hero.title || t(locale, "Aperçu des masterclasses en ligne", "Preview of online masterclasses")}
             height={653}
             sizes="(max-width: 900px) 100vw, 520px"
-            src="/brands/feldenkrais-education/workshops/group-23942.png"
+            src={platformPage?.hero.imageUrl || "/brands/feldenkrais-education/workshops/group-23942.png"}
             width={1154}
           />
         </div>

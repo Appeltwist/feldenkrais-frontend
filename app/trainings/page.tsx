@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 
 import EducationTrainingLandingPage from "@/components/education/EducationTrainingLandingPage";
 import OfferListPage from "@/components/offers/OfferListPage";
-import { fetchSiteConfig } from "@/lib/api";
+import { fetchSiteConfig, fetchTrainingProgramCohorts, fetchTrainingProgramDetail, fetchTrainingPrograms } from "@/lib/api";
 import { resolveEducationNarrativePage } from "@/lib/education-page";
 import { isForestCenter } from "@/lib/forest-theme";
 import { getHostname } from "@/lib/get-hostname";
@@ -27,11 +27,22 @@ export default async function TrainingsPage() {
   }
 
   const locale = await getRequestLocale(siteConfig.defaultLocale);
-  const page = await resolveEducationNarrativePage(hostname, "trainings", locale);
+  const [page, programs] = await Promise.all([
+    resolveEducationNarrativePage(hostname, "trainings", locale),
+    fetchTrainingPrograms(hostname, locale).catch(() => []),
+  ]);
 
   if (!page) {
     notFound();
   }
 
-  return <EducationTrainingLandingPage locale={locale} page={page} />;
+  const primaryProgram = programs[0] || null;
+  const [programDetail, programCohorts] = primaryProgram
+    ? await Promise.all([
+        fetchTrainingProgramDetail(hostname, primaryProgram.slug, locale).catch(() => null),
+        fetchTrainingProgramCohorts(hostname, primaryProgram.slug, locale).catch(() => []),
+      ])
+    : [null, []];
+
+  return <EducationTrainingLandingPage cmsCohorts={programCohorts} locale={locale} page={page} program={programDetail} />;
 }

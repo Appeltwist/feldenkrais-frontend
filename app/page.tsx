@@ -4,12 +4,15 @@ import BlockRenderer from "@/components/blocks/BlockRenderer";
 import EducationNewsletterSignupRow from "@/components/education/EducationNewsletterSignupRow";
 import EducationPlatformPromoRow from "@/components/education/EducationPlatformPromoRow";
 import ForestHomePage from "@/components/home/ForestHomePage";
+import { fetchTrainingProgramDetail, fetchTrainingPrograms } from "@/lib/api";
+import { resolveEducationNarrativePage } from "@/lib/education-page";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
 import { resolveApiHostname } from "@/lib/hostname-routing";
 import { getCanonicalOfferPathByTypeAndSlug } from "@/lib/offers";
 import { localizePath } from "@/lib/locale-path";
 import { getRequiredApiBase } from "@/lib/server-env";
+import type { NarrativePage } from "@/lib/site-config";
 import type { SectionBlock } from "@/lib/types";
 
 type HomeDomain = {
@@ -76,6 +79,15 @@ type HomeEntryOption = {
   imageAlt: string;
 };
 
+type HomePageReferences = {
+  methodPage: NarrativePage | null;
+  newsletterPage: NarrativePage | null;
+  platformPage: NarrativePage | null;
+  trainingsPage: NarrativePage | null;
+  trainingProgramImageUrl?: string | null;
+  workshopsPage: NarrativePage | null;
+};
+
 const MAX_WORKSHOP_PREVIEW_CARDS = 4;
 const HOME_METHOD_CARD_IMAGE_URL = "/brands/forest-lighthouse/feldenkrais-session.jpg";
 const HOME_METHOD_VIDEO_POSTER_URL =
@@ -128,52 +140,86 @@ function formatOccurrence(value: string, locale: string, timezone?: string) {
   return timezone ? `${formatted} (${timezone})` : formatted;
 }
 
-function buildHomeEntryOptions(locale: string): HomeEntryOption[] {
+function resolveCmsHref(locale: string, href: string | null | undefined, fallbackPath: string) {
+  const target = href || fallbackPath;
+  return target.startsWith("/") ? localizePath(locale, target) : target;
+}
+
+function buildHomeEntryOptions(locale: string, refs: HomePageReferences): HomeEntryOption[] {
   const isFr = locale.toLowerCase().startsWith("fr");
 
-  return [
+  const defaults: HomeEntryOption[] = [
     {
       key: "method",
-      title: isFr ? "Découvrir la méthode" : "Discover the method",
+      title: refs.methodPage?.hero.title || refs.methodPage?.title || (isFr ? "Découvrir la méthode" : "Discover the method"),
       description:
-        isFr
+        refs.methodPage?.hero.body ||
+        refs.methodPage?.subtitle ||
+        (isFr
           ? "Comprendre les bases de la méthode Feldenkrais, ses principes, et les différentes façons d’y entrer."
-          : "Understand the foundations of the Feldenkrais Method, its principles, and the different ways to begin.",
-      ctaLabel: isFr ? "Aller à la méthode" : "Go to the method",
-      href: "/what-is-feldenkrais",
-      imageUrl: HOME_METHOD_CARD_IMAGE_URL,
-      imageAlt: isFr ? "Personne en séance Feldenkrais" : "Person in a Feldenkrais session",
+          : "Understand the foundations of the Feldenkrais Method, its principles, and the different ways to begin."),
+      ctaLabel: refs.methodPage?.primaryCta?.label || (isFr ? "Aller à la méthode" : "Go to the method"),
+      href: resolveCmsHref(locale, refs.methodPage?.primaryCta?.url, "/what-is-feldenkrais"),
+      imageUrl: refs.methodPage?.hero.imageUrl || HOME_METHOD_CARD_IMAGE_URL,
+      imageAlt: refs.methodPage?.hero.title || (isFr ? "Personne en séance Feldenkrais" : "Person in a Feldenkrais session"),
     },
     {
       key: "lesson",
-      title: isFr ? "Faire une leçon" : "Try a lesson",
+      title: refs.platformPage?.hero.title || refs.platformPage?.title || (isFr ? "Faire une leçon" : "Try a lesson"),
       description:
-        isFr
+        refs.platformPage?.hero.body ||
+        refs.platformPage?.subtitle ||
+        (isFr
           ? "Commencer en ligne avec des leçons guidées, des masterclasses et des ressources pratiques sur la plateforme."
-          : "Start online with guided lessons, masterclasses, and practical resources on the platform.",
-      ctaLabel: isFr ? "Essayer la plateforme" : "Try the platform",
-      href: "/platform",
-      imageUrl: HOME_PLATFORM_VISUAL_URL,
-      imageAlt: isFr ? "Aperçu de la plateforme Neuro Somatic" : "Preview of the Neuro Somatic platform",
+          : "Start online with guided lessons, masterclasses, and practical resources on the platform."),
+      ctaLabel: refs.platformPage?.primaryCta?.label || (isFr ? "Essayer la plateforme" : "Try the platform"),
+      href: resolveCmsHref(locale, refs.platformPage?.primaryCta?.url, "/platform"),
+      imageUrl: refs.platformPage?.hero.imageUrl || HOME_PLATFORM_VISUAL_URL,
+      imageAlt: refs.platformPage?.hero.title || (isFr ? "Aperçu de la plateforme Neuro Somatic" : "Preview of the Neuro Somatic platform"),
     },
     {
       key: "training",
-      title: isFr ? "Devenir praticien·ne" : "Become a practitioner",
+      title: refs.trainingsPage?.hero.title || refs.trainingsPage?.title || (isFr ? "Devenir praticien·ne" : "Become a practitioner"),
       description:
-        isFr
+        refs.trainingsPage?.hero.body ||
+        refs.trainingsPage?.subtitle ||
+        (isFr
           ? "Explorer le parcours de formation professionnelle, les centres, et les prochaines cohortes."
-          : "Explore the professional training pathway, the centers, and the upcoming cohorts.",
-      ctaLabel: isFr ? "Voir la formation" : "View the training",
-      href: "/trainings",
-      imageUrl: HOME_TRAINING_VISUAL_URL,
-      imageAlt: isFr ? "Formation professionnelle Feldenkrais" : "Feldenkrais professional training",
+          : "Explore the professional training pathway, the centers, and the upcoming cohorts."),
+      ctaLabel: refs.trainingsPage?.primaryCta?.label || (isFr ? "Voir la formation" : "View the training"),
+      href: resolveCmsHref(locale, refs.trainingsPage?.primaryCta?.url, "/trainings"),
+      imageUrl: refs.trainingsPage?.hero.imageUrl || refs.trainingProgramImageUrl || HOME_TRAINING_VISUAL_URL,
+      imageAlt: refs.trainingsPage?.hero.title || (isFr ? "Formation professionnelle Feldenkrais" : "Feldenkrais professional training"),
     },
   ];
+
+  return defaults;
 }
 
-function HomeEntryOptions({ locale }: { locale: string }) {
+function HomeEntryOptions({
+  locale,
+  refs,
+  pillars = [],
+}: {
+  locale: string;
+  refs: HomePageReferences;
+  pillars?: HomePillar[];
+}) {
   const isFr = locale.toLowerCase().startsWith("fr");
-  const options = buildHomeEntryOptions(locale);
+  const options = buildHomeEntryOptions(locale, refs).map((option, index) => {
+    const pillar = pillars[index];
+    if (!pillar) {
+      return option;
+    }
+
+    return {
+      ...option,
+      title: pillar.title || option.title,
+      description: pillar.description || option.description,
+      ctaLabel: pillar.cta_label || option.ctaLabel,
+      href: resolveCmsHref(locale, pillar.cta_href, option.href),
+    };
+  });
 
   return (
     <section className="home-section">
@@ -187,7 +233,7 @@ function HomeEntryOptions({ locale }: { locale: string }) {
         {options.map((option) => (
           <Link
             className={`education-card education-home-entry-card education-home-entry-card--${option.key}`}
-            href={localizePath(locale, option.href)}
+            href={option.href}
             key={option.key}
           >
             <div className="education-home-entry-card__media">
@@ -207,14 +253,22 @@ function HomeEntryOptions({ locale }: { locale: string }) {
   );
 }
 
-function HomeIntroVideo({ locale }: { locale: string }) {
+function HomeIntroVideo({
+  locale,
+  methodPage,
+}: {
+  locale: string;
+  methodPage: NarrativePage | null;
+}) {
   const isFr = locale.toLowerCase().startsWith("fr");
+  const title = methodPage?.hero.title || methodPage?.title || (isFr ? "What is Feldenkrais ?" : "What is Feldenkrais?");
+  const posterUrl = methodPage?.hero.imageUrl || HOME_METHOD_VIDEO_POSTER_URL;
 
   return (
     <section className="home-video-section">
       <div className="home-video-section__header">
         <p className="home-section-kicker">{isFr ? "Vidéo d’introduction" : "Intro video"}</p>
-        <h2>{isFr ? "What is Feldenkrais ?" : "What is Feldenkrais?"}</h2>
+        <h2>{title}</h2>
       </div>
       <a
         className="home-video-card"
@@ -223,10 +277,10 @@ function HomeIntroVideo({ locale }: { locale: string }) {
         target="_blank"
       >
         <img
-          alt={isFr ? "Vidéo d’introduction à la méthode Feldenkrais" : "Introduction video to the Feldenkrais Method"}
+          alt={title}
           className="home-video-card__image"
           loading="lazy"
-          src={HOME_METHOD_VIDEO_POSTER_URL}
+          src={posterUrl}
         />
         <span className="home-video-card__play" aria-hidden="true">
           <svg fill="none" height="56" viewBox="0 0 56 56" width="56">
@@ -242,9 +296,11 @@ function HomeIntroVideo({ locale }: { locale: string }) {
 function HomeWhatsOnPreview({
   locale,
   cards,
+  workshopsPage,
 }: {
   locale: string;
   cards: HomeOfferCard[];
+  workshopsPage: NarrativePage | null;
 }) {
   const isFr = locale.toLowerCase().startsWith("fr");
   const workshopCards = cards.filter((card) => card.offer.type.trim().toUpperCase() === "WORKSHOP");
@@ -258,12 +314,14 @@ function HomeWhatsOnPreview({
       <section className="home-section home-workshops-section home-section--empty-state">
         <div className="home-workshops-section__head">
           <div>
-            <h2>{isFr ? "Formations et ateliers" : "Trainings and workshops"}</h2>
+            <h2>{workshopsPage?.title || (isFr ? "Formations et ateliers" : "Trainings and workshops")}</h2>
             <div className="home-workshops-section__rule" />
             <p className="home-section__intro">
-              {isFr
-                ? "Développez vos compétences, en personne ou en ligne. Vous trouverez ici un aperçu des formations et ateliers proposés actuellement."
-                : "Improve your skills, in person or online. Here, you will find an overview of the trainings and workshops we offer at the moment."}
+              {workshopsPage?.hero.body ||
+                workshopsPage?.subtitle ||
+                (isFr
+                  ? "Développez vos compétences, en personne ou en ligne. Vous trouverez ici un aperçu des formations et ateliers proposés actuellement."
+                  : "Improve your skills, in person or online. Here, you will find an overview of the trainings and workshops we offer at the moment.")}
             </p>
             <h3>{isFr ? "Événements en direct" : "Live events"}</h3>
           </div>
@@ -319,12 +377,14 @@ function HomeWhatsOnPreview({
     <section className="home-section home-workshops-section">
       <div className="home-workshops-section__head">
         <div>
-          <h2>{isFr ? "Formations et ateliers" : "Trainings and workshops"}</h2>
+          <h2>{workshopsPage?.title || (isFr ? "Formations et ateliers" : "Trainings and workshops")}</h2>
           <div className="home-workshops-section__rule" />
           <p className="home-section__intro">
-            {isFr
-              ? "Développez vos compétences, en personne ou en ligne. Vous trouverez ici un aperçu des formations et ateliers proposés actuellement."
-              : "Improve your skills, in person or online. Here, you will find an overview of the trainings and workshops we offer at the moment."}
+            {workshopsPage?.hero.body ||
+              workshopsPage?.subtitle ||
+              (isFr
+                ? "Développez vos compétences, en personne ou en ligne. Vous trouverez ici un aperçu des formations et ateliers proposés actuellement."
+                : "Improve your skills, in person or online. Here, you will find an overview of the trainings and workshops we offer at the moment.")}
           </p>
           <h3>{isFr ? "Événements en direct" : "Live events"}</h3>
         </div>
@@ -426,14 +486,53 @@ export default async function HomePage() {
   }
 
   const locale = home.meta.locale || requestedLocale || "en";
+  const [methodPage, platformPage, newsletterPage, trainingsPage, workshopsPage, trainingPrograms] = await Promise.all([
+    resolveEducationNarrativePage(hostname, "what-is-feldenkrais", locale).catch(() => null),
+    resolveEducationNarrativePage(hostname, "platform", locale).catch(() => null),
+    resolveEducationNarrativePage(hostname, "newsletter", locale).catch(() => null),
+    resolveEducationNarrativePage(hostname, "trainings", locale).catch(() => null),
+    resolveEducationNarrativePage(hostname, "workshops", locale).catch(() => null),
+    fetchTrainingPrograms(hostname, locale).catch(() => []),
+  ]);
+  const primaryTrainingProgram = trainingPrograms[0]
+    ? await fetchTrainingProgramDetail(hostname, trainingPrograms[0].slug, locale).catch(() => null)
+    : null;
+  const refs: HomePageReferences = {
+    methodPage,
+    newsletterPage,
+    platformPage,
+    trainingsPage,
+    trainingProgramImageUrl: primaryTrainingProgram?.heroImageUrl || null,
+    workshopsPage,
+  };
   const hasEditorialSections = hasMeaningfulHomeEditorialSections(home.sections);
   const homeContent = (
     <section className="page-section home-page">
-      <HomeEntryOptions locale={locale} />
-      <HomeIntroVideo locale={locale} />
-      <EducationNewsletterSignupRow locale={locale} />
-      <HomeWhatsOnPreview cards={home.whats_on_preview.cards} locale={locale} />
-      <EducationPlatformPromoRow locale={locale} />
+      <HomeEntryOptions locale={locale} pillars={home.pillars} refs={refs} />
+      <HomeIntroVideo locale={locale} methodPage={methodPage} />
+      <EducationNewsletterSignupRow
+        content={{
+          title: newsletterPage?.hero.title || newsletterPage?.title,
+          subtitle: newsletterPage?.subtitle,
+          body: newsletterPage?.hero.body || newsletterPage?.subtitle,
+          imageUrl: newsletterPage?.hero.imageUrl,
+          href: newsletterPage?.primaryCta?.url || "/newsletter",
+          buttonLabel: newsletterPage?.primaryCta?.label,
+        }}
+        locale={locale}
+      />
+      <HomeWhatsOnPreview cards={home.whats_on_preview.cards} locale={locale} workshopsPage={workshopsPage} />
+      <EducationPlatformPromoRow
+        content={{
+          title: platformPage?.hero.title || platformPage?.title,
+          subtitle: platformPage?.subtitle,
+          body: platformPage?.hero.body || platformPage?.subtitle,
+          imageUrl: platformPage?.hero.imageUrl,
+          href: platformPage?.primaryCta?.url || "/platform",
+          buttonLabel: platformPage?.primaryCta?.label,
+        }}
+        locale={locale}
+      />
       {hasEditorialSections ? <HomeEditorialSections blocks={home.sections || []} locale={locale} /> : null}
     </section>
   );
