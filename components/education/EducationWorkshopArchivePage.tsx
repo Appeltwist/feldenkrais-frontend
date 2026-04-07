@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import { localizePath } from "@/lib/locale-path";
@@ -6,6 +5,7 @@ import type { EducationWorkshopCollectionItem } from "@/lib/education-workshops"
 import type { NarrativePage } from "@/lib/site-config";
 
 import EducationContentPage from "./EducationContentPage";
+import EducationWorkshopFeatureCard from "./EducationWorkshopFeatureCard";
 import EducationWorkshopSlider from "./EducationWorkshopSlider";
 
 type EducationWorkshopArchivePageProps = {
@@ -47,60 +47,9 @@ export default function EducationWorkshopArchivePage({
         ),
       imageUrl: page.hero.imageUrl || null,
     },
+    sections: [],
     primaryCta: page.primaryCta ?? null,
   };
-
-  function renderWorkshopCard(workshop: EducationWorkshopCollectionItem) {
-    const tags = [workshop.locationLabel, workshop.monthLabel, workshop.audienceLabel].filter(Boolean);
-    const actionLabel = workshop.external
-      ? t(locale, "Ouvrir le workshop", "Open workshop")
-      : t(locale, "Voir la page", "View page");
-    const body = (
-      <>
-        <div
-          className="education-workshop-feature-card__media"
-          style={{
-            backgroundImage: `linear-gradient(180deg, rgba(18, 23, 34, 0.14), rgba(18, 23, 34, 0.82)), url(${workshop.imageUrl || "/brands/feldenkrais-education/training/hero-room.jpeg"})`,
-          }}
-        />
-        <div className="education-workshop-feature-card__body">
-          {tags.length > 0 ? (
-            <div className="education-workshop-feature-card__tags">
-              {tags.map((tag) => (
-                <span className="education-workshop-feature-card__tag" key={`${workshop.id}-${tag}`}>
-                  {tag}
-                </span>
-              ))}
-            </div>
-          ) : null}
-          <h3>{workshop.title}</h3>
-          <p className="education-workshop-feature-card__summary">{workshop.summary}</p>
-          {workshop.whenLabel ? <p className="education-workshop-feature-card__meta">{workshop.whenLabel}</p> : null}
-          <span className="education-button education-button--secondary">{actionLabel}</span>
-        </div>
-      </>
-    );
-
-    if (workshop.external) {
-      return (
-        <a
-          className="education-workshop-feature-card education-card"
-          href={workshop.href}
-          key={workshop.id}
-          rel="noreferrer"
-          target="_blank"
-        >
-          {body}
-        </a>
-      );
-    }
-
-    return (
-      <Link className="education-workshop-feature-card education-card" href={workshop.href} key={workshop.id}>
-        {body}
-      </Link>
-    );
-  }
 
   return (
     <EducationContentPage className="education-workshops-page" eyebrow="Workshops" hideHero page={resolvedPage}>
@@ -127,7 +76,9 @@ export default function EducationWorkshopArchivePage({
           <EducationWorkshopSlider
             ariaLabel={t(locale, "Liste des workshops à venir", "List of upcoming workshops")}
           >
-            {upcomingWorkshops.map((workshop) => renderWorkshopCard(workshop))}
+            {upcomingWorkshops.map((workshop) => (
+              <EducationWorkshopFeatureCard locale={locale} key={workshop.id} workshop={workshop} />
+            ))}
           </EducationWorkshopSlider>
         )}
       </section>
@@ -162,10 +113,10 @@ export default function EducationWorkshopArchivePage({
         </div>
 
         <div className="education-promo-row__visual">
-          <Image
+          <img
             alt={platformPage?.hero.title || t(locale, "Aperçu des masterclasses en ligne", "Preview of online masterclasses")}
             height={653}
-            sizes="(max-width: 900px) 100vw, 520px"
+            loading="lazy"
             src={platformPage?.hero.imageUrl || "/brands/feldenkrais-education/workshops/group-23942.png"}
             width={1154}
           />

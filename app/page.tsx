@@ -3,13 +3,24 @@ import Link from "next/link";
 import BlockRenderer from "@/components/blocks/BlockRenderer";
 import EducationNewsletterSignupRow from "@/components/education/EducationNewsletterSignupRow";
 import EducationPlatformPromoRow from "@/components/education/EducationPlatformPromoRow";
+import EducationWorkshopFeatureCard from "@/components/education/EducationWorkshopFeatureCard";
+import EducationWorkshopSlider from "@/components/education/EducationWorkshopSlider";
 import ForestHomePage from "@/components/home/ForestHomePage";
-import { fetchTrainingProgramDetail, fetchTrainingPrograms } from "@/lib/api";
+import {
+  fetchOffers,
+  fetchSiteConfig,
+  fetchTrainingProgramDetail,
+  fetchTrainingPrograms,
+} from "@/lib/api";
 import { resolveEducationNarrativePage } from "@/lib/education-page";
+import {
+  buildEducationWorkshopCollection,
+  fetchForestFeaturedWorkshops,
+  type EducationWorkshopCollectionItem,
+} from "@/lib/education-workshops";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
 import { resolveApiHostname } from "@/lib/hostname-routing";
-import { getCanonicalOfferPathByTypeAndSlug } from "@/lib/offers";
 import { localizePath } from "@/lib/locale-path";
 import { getRequiredApiBase } from "@/lib/server-env";
 import type { NarrativePage } from "@/lib/site-config";
@@ -73,7 +84,6 @@ type HomeEntryOption = {
   key: string;
   title: string;
   description: string;
-  ctaLabel: string;
   href: string;
   imageUrl: string;
   imageAlt: string;
@@ -88,17 +98,11 @@ type HomePageReferences = {
   workshopsPage: NarrativePage | null;
 };
 
-const MAX_WORKSHOP_PREVIEW_CARDS = 4;
 const HOME_METHOD_CARD_IMAGE_URL = "/brands/forest-lighthouse/feldenkrais-session.jpg";
-const HOME_METHOD_VIDEO_POSTER_URL =
-  "https://feldenkrais-education.com/wp-content/uploads/sites/15/2025/01/what-is-feldenkrais-scaled.jpg";
-const HOME_PLATFORM_VISUAL_URL =
-  "https://feldenkrais-education.com/wp-content/uploads/sites/15/2024/10/Group-23809-1.png";
+const HOME_METHOD_VIDEO_POSTER_URL = "https://i.ytimg.com/vi/voC0aWkl3f8/maxresdefault.jpg";
+const HOME_LESSON_CARD_IMAGE_URL = "/brands/feldenkrais-education/training/year-1.jpeg";
 const HOME_TRAINING_VISUAL_URL =
   "https://feldenkrais-education.com/wp-content/uploads/sites/15/2024/10/DSC02199-Large.jpeg";
-const HOME_WORKSHOP_VISUAL_URL =
-  "https://feldenkrais-education.com/wp-content/uploads/sites/15/2024/10/1085_11201349_S321.jpg";
-const HOME_WORKSHOP_FALLBACK_IMAGES = [HOME_WORKSHOP_VISUAL_URL, HOME_TRAINING_VISUAL_URL];
 const API_BASE = getRequiredApiBase();
 
 async function fetchHomePayload(hostname: string, locale: string) {
@@ -120,26 +124,6 @@ function isForestHomepage(hostname: string) {
   return resolveApiHostname(hostname).includes("forest-lighthouse");
 }
 
-function formatOccurrence(value: string, locale: string, timezone?: string) {
-  if (!value) {
-    return "";
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return value;
-  }
-
-  const formatter = new Intl.DateTimeFormat(locale || "en", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: timezone || undefined,
-  });
-
-  const formatted = formatter.format(parsed);
-  return timezone ? `${formatted} (${timezone})` : formatted;
-}
-
 function resolveCmsHref(locale: string, href: string | null | undefined, fallbackPath: string) {
   const target = href || fallbackPath;
   return target.startsWith("/") ? localizePath(locale, target) : target;
@@ -150,20 +134,6 @@ function buildHomeEntryOptions(locale: string, refs: HomePageReferences): HomeEn
 
   const defaults: HomeEntryOption[] = [
     {
-      key: "method",
-      title: refs.methodPage?.hero.title || refs.methodPage?.title || (isFr ? "Découvrir la méthode" : "Discover the method"),
-      description:
-        refs.methodPage?.hero.body ||
-        refs.methodPage?.subtitle ||
-        (isFr
-          ? "Comprendre les bases de la méthode Feldenkrais, ses principes, et les différentes façons d’y entrer."
-          : "Understand the foundations of the Feldenkrais Method, its principles, and the different ways to begin."),
-      ctaLabel: refs.methodPage?.primaryCta?.label || (isFr ? "Aller à la méthode" : "Go to the method"),
-      href: resolveCmsHref(locale, refs.methodPage?.primaryCta?.url, "/what-is-feldenkrais"),
-      imageUrl: refs.methodPage?.hero.imageUrl || HOME_METHOD_CARD_IMAGE_URL,
-      imageAlt: refs.methodPage?.hero.title || (isFr ? "Personne en séance Feldenkrais" : "Person in a Feldenkrais session"),
-    },
-    {
       key: "lesson",
       title: refs.platformPage?.hero.title || refs.platformPage?.title || (isFr ? "Faire une leçon" : "Try a lesson"),
       description:
@@ -172,10 +142,9 @@ function buildHomeEntryOptions(locale: string, refs: HomePageReferences): HomeEn
         (isFr
           ? "Commencer en ligne avec des leçons guidées, des masterclasses et des ressources pratiques sur la plateforme."
           : "Start online with guided lessons, masterclasses, and practical resources on the platform."),
-      ctaLabel: refs.platformPage?.primaryCta?.label || (isFr ? "Essayer la plateforme" : "Try the platform"),
       href: resolveCmsHref(locale, refs.platformPage?.primaryCta?.url, "/platform"),
-      imageUrl: refs.platformPage?.hero.imageUrl || HOME_PLATFORM_VISUAL_URL,
-      imageAlt: refs.platformPage?.hero.title || (isFr ? "Aperçu de la plateforme Neuro Somatic" : "Preview of the Neuro Somatic platform"),
+      imageUrl: HOME_LESSON_CARD_IMAGE_URL,
+      imageAlt: isFr ? "Personne suivant une leçon Feldenkrais" : "Person following a Feldenkrais lesson",
     },
     {
       key: "training",
@@ -186,14 +155,41 @@ function buildHomeEntryOptions(locale: string, refs: HomePageReferences): HomeEn
         (isFr
           ? "Explorer le parcours de formation professionnelle, les centres, et les prochaines cohortes."
           : "Explore the professional training pathway, the centers, and the upcoming cohorts."),
-      ctaLabel: refs.trainingsPage?.primaryCta?.label || (isFr ? "Voir la formation" : "View the training"),
       href: resolveCmsHref(locale, refs.trainingsPage?.primaryCta?.url, "/trainings"),
       imageUrl: refs.trainingsPage?.hero.imageUrl || refs.trainingProgramImageUrl || HOME_TRAINING_VISUAL_URL,
       imageAlt: refs.trainingsPage?.hero.title || (isFr ? "Formation professionnelle Feldenkrais" : "Feldenkrais professional training"),
     },
+    {
+      key: "method",
+      title: refs.methodPage?.hero.title || refs.methodPage?.title || (isFr ? "Découvrir la méthode" : "Discover the method"),
+      description:
+        refs.methodPage?.hero.body ||
+        refs.methodPage?.subtitle ||
+        (isFr
+          ? "Comprendre les bases de la méthode Feldenkrais, ses principes, et les différentes façons d’y entrer."
+          : "Understand the foundations of the Feldenkrais Method, its principles, and the different ways to begin."),
+      href: resolveCmsHref(locale, refs.methodPage?.primaryCta?.url, "/what-is-feldenkrais"),
+      imageUrl: refs.methodPage?.hero.imageUrl || HOME_METHOD_CARD_IMAGE_URL,
+      imageAlt: refs.methodPage?.hero.title || (isFr ? "Personne en séance Feldenkrais" : "Person in a Feldenkrais session"),
+    },
   ];
 
   return defaults;
+}
+
+function getHomeEntryButtonLabel(locale: string, key: HomeEntryOption["key"]) {
+  const isFr = locale.toLowerCase().startsWith("fr");
+
+  switch (key) {
+    case "lesson":
+      return isFr ? "Faire une leçon" : "Try a lesson";
+    case "training":
+      return isFr ? "Devenir praticien·ne" : "Become a practitioner";
+    case "method":
+      return isFr ? "Découvrir la méthode" : "Discover the method";
+    default:
+      return "";
+  }
 }
 
 function HomeEntryOptions({
@@ -206,8 +202,14 @@ function HomeEntryOptions({
   pillars?: HomePillar[];
 }) {
   const isFr = locale.toLowerCase().startsWith("fr");
+  const keyedPillars = new Map(
+    pillars
+      .filter((pillar) => pillar.key)
+      .map((pillar) => [pillar.key, pillar] as const),
+  );
+  const hasKeyedPillars = keyedPillars.size > 0;
   const options = buildHomeEntryOptions(locale, refs).map((option, index) => {
-    const pillar = pillars[index];
+    const pillar = keyedPillars.get(option.key) ?? (!hasKeyedPillars ? pillars[index] : undefined);
     if (!pillar) {
       return option;
     }
@@ -216,22 +218,19 @@ function HomeEntryOptions({
       ...option,
       title: pillar.title || option.title,
       description: pillar.description || option.description,
-      ctaLabel: pillar.cta_label || option.ctaLabel,
       href: resolveCmsHref(locale, pillar.cta_href, option.href),
     };
   });
 
   return (
-    <section className="home-section">
-      <div className="home-section-head">
-        <div>
-          <p className="home-section-kicker">{isFr ? "Choisir une porte d’entrée" : "Choose an entry point"}</p>
-          <h2>{isFr ? "Trois façons simples de commencer" : "Three simple ways to begin"}</h2>
-        </div>
-      </div>
+    <section
+      aria-label={isFr ? "Trois façons simples de commencer" : "Three simple ways to begin"}
+      className="home-section home-section--entry-panels"
+    >
       <div className="education-card-grid education-card-grid--home-entry">
         {options.map((option) => (
           <Link
+            aria-label={option.title}
             className={`education-card education-home-entry-card education-home-entry-card--${option.key}`}
             href={option.href}
             key={option.key}
@@ -240,10 +239,8 @@ function HomeEntryOptions({
               <img alt={option.imageAlt} loading="lazy" src={option.imageUrl} />
             </div>
             <div className="education-home-entry-card__body">
-              <h3>{option.title}</h3>
-              <p>{option.description}</p>
               <span className="education-button education-home-entry-card__link">
-                {option.ctaLabel}
+                {getHomeEntryButtonLabel(locale, option.key)}
               </span>
             </div>
           </Link>
@@ -262,7 +259,7 @@ function HomeIntroVideo({
 }) {
   const isFr = locale.toLowerCase().startsWith("fr");
   const title = methodPage?.hero.title || methodPage?.title || (isFr ? "What is Feldenkrais ?" : "What is Feldenkrais?");
-  const posterUrl = methodPage?.hero.imageUrl || HOME_METHOD_VIDEO_POSTER_URL;
+  const posterUrl = HOME_METHOD_VIDEO_POSTER_URL;
 
   return (
     <section className="home-video-section">
@@ -295,80 +292,35 @@ function HomeIntroVideo({
 
 function HomeWhatsOnPreview({
   locale,
-  cards,
+  upcomingWorkshops,
   workshopsPage,
 }: {
   locale: string;
-  cards: HomeOfferCard[];
+  upcomingWorkshops: EducationWorkshopCollectionItem[];
   workshopsPage: NarrativePage | null;
 }) {
   const isFr = locale.toLowerCase().startsWith("fr");
-  const workshopCards = cards.filter((card) => card.offer.type.trim().toUpperCase() === "WORKSHOP");
-  const previewCards = (workshopCards.length > 0
-    ? [...workshopCards, ...cards.filter((card) => card.offer.type.trim().toUpperCase() !== "WORKSHOP")]
-    : cards
-  ).slice(0, MAX_WORKSHOP_PREVIEW_CARDS);
+  const title = workshopsPage?.title || (isFr ? "Tous les workshops" : "All workshops");
+  const intro =
+    workshopsPage?.hero.body ||
+    workshopsPage?.subtitle ||
+    (isFr
+      ? "Les workshops sont l’une des portes d’entrée les plus claires vers Feldenkrais Education. Ils permettent de rencontrer la méthode à travers un thème, un enseignant, ou une question pratique avant de s’engager dans un parcours plus long."
+      : "Workshops are one of the clearest FE entry points. They let people meet the method through a theme, a teacher, or a practical question before committing to a longer path.");
 
-  if (previewCards.length === 0) {
+  if (upcomingWorkshops.length === 0) {
     return (
-      <section className="home-section home-workshops-section home-section--empty-state">
+      <section className="home-section home-workshops-section">
         <div className="home-workshops-section__head">
           <div>
-            <h2>{workshopsPage?.title || (isFr ? "Formations et ateliers" : "Trainings and workshops")}</h2>
+            <h2>{title}</h2>
             <div className="home-workshops-section__rule" />
-            <p className="home-section__intro">
-              {workshopsPage?.hero.body ||
-                workshopsPage?.subtitle ||
-                (isFr
-                  ? "Développez vos compétences, en personne ou en ligne. Vous trouverez ici un aperçu des formations et ateliers proposés actuellement."
-                  : "Improve your skills, in person or online. Here, you will find an overview of the trainings and workshops we offer at the moment.")}
-            </p>
-            <h3>{isFr ? "Événements en direct" : "Live events"}</h3>
+            <p className="home-section__intro">{intro}</p>
           </div>
-          <Link className="text-link" href={localizePath(locale, "/workshops")}>
-            {isFr ? "Voir tous les ateliers" : "View all workshops"}
-          </Link>
         </div>
-        <div className="education-card-grid education-card-grid--home-links">
-          <article className="education-card education-home-link-card home-workshops-fallback-card">
-            <div
-              className="education-offer-card__media home-workshops-fallback-card__media"
-              style={{
-                backgroundImage: `linear-gradient(180deg, rgba(19, 23, 32, 0.06), rgba(19, 23, 32, 0.72)), url(${HOME_TRAINING_VISUAL_URL})`,
-              }}
-            />
-            <div className="education-offer-card__body home-workshops-fallback-card__body">
-              <h3>{isFr ? "Formations professionnelles" : "Professional trainings"}</h3>
-              <p>
-                {isFr
-                  ? "Explorer les cohortes, les centres et le parcours long pour devenir praticien·ne."
-                  : "Explore the cohorts, centers, and long-form pathway for becoming a practitioner."}
-              </p>
-              <Link className="education-button home-workshops-fallback-card__link" href={localizePath(locale, "/trainings")}>
-                {isFr ? "Voir la formation" : "View training"}
-              </Link>
-            </div>
-          </article>
-          <article className="education-card education-home-link-card home-workshops-fallback-card">
-            <div
-              className="education-offer-card__media home-workshops-fallback-card__media"
-              style={{
-                backgroundImage: `linear-gradient(180deg, rgba(19, 23, 32, 0.06), rgba(19, 23, 32, 0.72)), url(${HOME_WORKSHOP_VISUAL_URL})`,
-              }}
-            />
-            <div className="education-offer-card__body home-workshops-fallback-card__body">
-              <h3>{isFr ? "Ateliers & masterclasses" : "Workshops & masterclasses"}</h3>
-              <p>
-                {isFr
-                  ? "Explorer les formats courts, intensifs et thématiques déjà disponibles dans le nouveau site."
-                  : "Explore the short, intensive, and thematic formats already available in the new site."}
-              </p>
-              <Link className="education-button home-workshops-fallback-card__link" href={localizePath(locale, "/workshops")}>
-                {isFr ? "Voir les ateliers" : "View workshops"}
-              </Link>
-            </div>
-          </article>
-        </div>
+        <section className="education-listing">
+          <p>{isFr ? "Aucun workshop à afficher pour le moment." : "No workshops to show right now."}</p>
+        </section>
       </section>
     );
   }
@@ -377,63 +329,18 @@ function HomeWhatsOnPreview({
     <section className="home-section home-workshops-section">
       <div className="home-workshops-section__head">
         <div>
-          <h2>{workshopsPage?.title || (isFr ? "Formations et ateliers" : "Trainings and workshops")}</h2>
+          <h2>{title}</h2>
           <div className="home-workshops-section__rule" />
-          <p className="home-section__intro">
-            {workshopsPage?.hero.body ||
-              workshopsPage?.subtitle ||
-              (isFr
-                ? "Développez vos compétences, en personne ou en ligne. Vous trouverez ici un aperçu des formations et ateliers proposés actuellement."
-                : "Improve your skills, in person or online. Here, you will find an overview of the trainings and workshops we offer at the moment.")}
-          </p>
-          <h3>{isFr ? "Événements en direct" : "Live events"}</h3>
+          <p className="home-section__intro">{intro}</p>
         </div>
-        <Link className="text-link" href={localizePath(locale, "/workshops")}>
-          {isFr ? "Voir tous les ateliers" : "View all workshops"}
-        </Link>
       </div>
-      <ul className="calendar-group-grid">
-        {previewCards.map((card, index) => {
-          const rawOfferPath =
-            getCanonicalOfferPathByTypeAndSlug(card.offer.type, card.offer.slug) || `/offer/${card.offer.slug}`;
-          const offerPath = localizePath(locale, rawOfferPath);
-          const primary = card.next_occurrences[0];
-          const domains = (card.offer.domains ?? []).map((domain) => domain.name).join(" · ");
-          const cardImageUrl =
-            card.offer.hero_image_url || HOME_WORKSHOP_FALLBACK_IMAGES[index % HOME_WORKSHOP_FALLBACK_IMAGES.length];
-
-          return (
-            <li className="card calendar-group-card" key={`${card.offer.type}-${card.offer.slug}`}>
-              <div
-                className="calendar-group-card__hero"
-                style={{
-                  backgroundImage: `linear-gradient(180deg, rgba(19, 23, 32, 0.08), rgba(19, 23, 32, 0.78)), url(${cardImageUrl})`,
-                }}
-              >
-                <p className="offer-type-label">{card.offer.type.replaceAll("_", " ")}</p>
-                <h2>{card.offer.title}</h2>
-              </div>
-
-              {domains ? <p className="calendar-group-card__domains">{domains}</p> : null}
-              {primary ? (
-                <p className="calendar-group-card__primary-time">
-                  {formatOccurrence(primary.start_datetime, locale, primary.timezone)}
-                </p>
-              ) : null}
-              <div className="link-row">
-                <Link className="text-link" href={offerPath}>
-                  {isFr ? "Voir le détail" : "Offer details"}
-                </Link>
-                {primary ? (
-                  <Link className="button-link" href={offerPath}>
-                    {card.cta_label || "Book"}
-                  </Link>
-                ) : null}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+      <EducationWorkshopSlider
+        ariaLabel={isFr ? "Liste des workshops à venir" : "List of upcoming workshops"}
+      >
+        {upcomingWorkshops.map((workshop) => (
+          <EducationWorkshopFeatureCard key={workshop.id} locale={locale} workshop={workshop} />
+        ))}
+      </EducationWorkshopSlider>
     </section>
   );
 }
@@ -486,14 +393,25 @@ export default async function HomePage() {
   }
 
   const locale = home.meta.locale || requestedLocale || "en";
-  const [methodPage, platformPage, newsletterPage, trainingsPage, workshopsPage, trainingPrograms] = await Promise.all([
+  const [methodPage, platformPage, newsletterPage, trainingsPage, workshopsPage, trainingPrograms, siteConfig] = await Promise.all([
     resolveEducationNarrativePage(hostname, "what-is-feldenkrais", locale).catch(() => null),
     resolveEducationNarrativePage(hostname, "platform", locale).catch(() => null),
     resolveEducationNarrativePage(hostname, "newsletter", locale).catch(() => null),
     resolveEducationNarrativePage(hostname, "trainings", locale).catch(() => null),
     resolveEducationNarrativePage(hostname, "workshops", locale).catch(() => null),
     fetchTrainingPrograms(hostname, locale).catch(() => []),
+    fetchSiteConfig(hostname).catch(() => null),
   ]);
+  const [workshopOffers, forestWorkshops] = await Promise.all([
+    fetchOffers({
+      hostname,
+      center: siteConfig?.centerSlug,
+      type: "WORKSHOP",
+      locale,
+    }).catch(() => []),
+    fetchForestFeaturedWorkshops(locale).catch(() => []),
+  ]);
+  const upcomingWorkshops = buildEducationWorkshopCollection(locale, workshopOffers, forestWorkshops);
   const primaryTrainingProgram = trainingPrograms[0]
     ? await fetchTrainingProgramDetail(hostname, trainingPrograms[0].slug, locale).catch(() => null)
     : null;
@@ -521,7 +439,7 @@ export default async function HomePage() {
         }}
         locale={locale}
       />
-      <HomeWhatsOnPreview cards={home.whats_on_preview.cards} locale={locale} workshopsPage={workshopsPage} />
+      <HomeWhatsOnPreview locale={locale} upcomingWorkshops={upcomingWorkshops} workshopsPage={workshopsPage} />
       <EducationPlatformPromoRow
         content={{
           title: platformPage?.hero.title || platformPage?.title,
