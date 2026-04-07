@@ -1,4 +1,4 @@
-const FOREST_FACILITATOR_NAME_OVERRIDES = {} as const;
+const FOREST_FACILITATOR_NAME_OVERRIDES: Record<string, readonly string[]> = {};
 
 export function getForestFacilitatorNamesOverride(slug: string | null | undefined) {
   if (!slug) {
