@@ -19,6 +19,7 @@ import { getForestPlaceholderCopy, getOfferLabels, resolveLocale } from "@/lib/i
 import { isExternalHref, localizePath } from "@/lib/locale-path";
 import {
   asRecord,
+  compareOccurrenceStart,
   getBookingOptions,
   getCanonicalOfferPath,
   getDisplayScheduleEntries,
@@ -207,6 +208,111 @@ function formatOfferMoney(amount: unknown, currency: unknown) {
   return [normalizeText(amount), normalizeText(currency)].filter(Boolean).join(" ");
 }
 
+function formatLocalizedTime(dateStr: string, locale: string, timezone?: string | null) {
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat(locale || "en", {
+    hour: "2-digit",
+    minute: "2-digit",
+    ...(timezone ? { timeZone: timezone } : {}),
+  }).format(date);
+}
+
+function normalizeOccurrenceMatchText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\b(workshop|atelier|session|cours|class)\b/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function formatLinkedOccurrenceLine(
+  occurrence: Record<string, unknown>,
+  locale: string,
+) {
+  const start = pickString(occurrence, ["start_datetime", "start", "start_at", "datetime", "date"]);
+  if (!start) {
+    return "";
+  }
+
+  const timezone = pickString(occurrence, ["timezone", "tz", "time_zone"]) || undefined;
+  const compact = parseCompactDate(start, locale, timezone);
+  if (!compact) {
+    return "";
+  }
+
+  const end = pickString(occurrence, ["end_datetime", "end", "end_at"]);
+  const endTime = end ? formatLocalizedTime(end, locale, timezone) : "";
+  const timeLabel = endTime && endTime !== compact.time ? `${compact.time}–${endTime}` : compact.time;
+
+  return [compact.dayOfWeek, compact.dayNum, compact.month].filter(Boolean).join(" ") + (timeLabel ? ` · ${timeLabel}` : "");
+}
+
+function resolveLinkedBookingOccurrences(
+  optionRecord: Record<string, unknown>,
+  offerOccurrences: Record<string, unknown>[],
+  totalBookingOptions: number,
+) {
+  const sortedOccurrences = [...offerOccurrences].sort(compareOccurrenceStart);
+  const now = Date.now();
+  const futureOccurrences = sortedOccurrences.filter((occurrence) => {
+    const start = pickString(occurrence, ["start_datetime", "start", "start_at", "datetime", "date"]);
+    if (!start) {
+      return false;
+    }
+    const parsed = Date.parse(start);
+    return Number.isFinite(parsed) ? parsed >= now : false;
+  });
+  const candidateOccurrences = futureOccurrences.length > 0 ? futureOccurrences : sortedOccurrences;
+
+  const linkedOccurrenceIds = Array.isArray(optionRecord.occurrence_ids)
+    ? optionRecord.occurrence_ids
+        .map((value) => normalizeText(value))
+        .filter(Boolean)
+    : [];
+
+  if (linkedOccurrenceIds.length > 0) {
+    const idSet = new Set(linkedOccurrenceIds);
+    return candidateOccurrences.filter((occurrence) => idSet.has(normalizeText(occurrence.id)));
+  }
+
+  const candidates = [
+    pickString(optionRecord, ["summary"]),
+    pickString(optionRecord, ["label", "name", "title"]),
+    pickString(optionRecord, ["date_summary", "dateSummary"]),
+  ]
+    .map(normalizeOccurrenceMatchText)
+    .filter(Boolean);
+
+  if (candidates.length > 0) {
+    const matched = candidateOccurrences.filter((occurrence) => {
+      const occurrenceLabel = normalizeOccurrenceMatchText(
+        pickString(occurrence, ["label", "label_override", "labelOverride"]),
+      );
+      if (!occurrenceLabel) {
+        return false;
+      }
+      return candidates.some((candidate) => candidate.includes(occurrenceLabel) || occurrenceLabel.includes(candidate));
+    });
+
+    if (matched.length > 0) {
+      return matched;
+    }
+  }
+
+  if (totalBookingOptions === 1) {
+    return candidateOccurrences;
+  }
+
+  return [] as Record<string, unknown>[];
+}
+
 function isActivePromo(promo: Record<string, unknown>) {
   const explicit = promo.is_active;
   if (typeof explicit === "boolean") {
@@ -393,6 +499,9 @@ export default function ForestOfferTemplate({
   const sections = getSections(offer);
   const mediaUrl = getMediaUrl(offer);
   const bookingOptions = getBookingOptions(offer);
+  const offerOccurrences = allOccurrences
+    .map((occurrence) => asRecord(occurrence))
+    .filter((occurrence): occurrence is Record<string, unknown> => occurrence !== null);
   const pricingGroups = getPricingGroups(offer);
   const pricingPromos = getPricingPromos(offer);
   const priceOptions = getPriceOptions(offer);
@@ -1044,7 +1153,13 @@ export default function ForestOfferTemplate({
                   );
                   const summary = pickString(optionRecord, ["summary"]);
                   const dateSummary = pickString(optionRecord, ["date_summary", "dateSummary"]);
-                  const supportingText = [summary, dateSummary].filter(Boolean).join(" · ");
+                  const linkedOccurrences = resolveLinkedBookingOccurrences(optionRecord, offerOccurrences, bookingOptions.length);
+                  const occurrenceLines = linkedOccurrences
+                    .map((occurrence) => formatLinkedOccurrenceLine(occurrence, localeCode))
+                    .filter(Boolean);
+                  const visibleOccurrenceLines = occurrenceLines.slice(0, 3);
+                  const remainingOccurrenceCount = occurrenceLines.length - visibleOccurrenceLines.length;
+                  const supportingText = [summary, occurrenceLines.length === 0 ? dateSummary : ""].filter(Boolean).join(" · ");
                   const optionActionType = pickString(optionRecord, ["action_type", "actionType"]);
                   const isWaitlistOption = optionRecord.is_sold_out === true || optionActionType === "WAITLIST_FORM";
                   const bookingUrl = offerType === "PRIVATE_SESSION"
@@ -1056,6 +1171,25 @@ export default function ForestOfferTemplate({
                         <span className="forest-pricing-compact__label">{label}</span>
                         {supportingText ? (
                           <span className="forest-pricing-compact__summary">{supportingText}</span>
+                        ) : null}
+                        {visibleOccurrenceLines.length > 0 ? (
+                          <div className="forest-pricing-compact__occurrences">
+                            {visibleOccurrenceLines.map((occurrenceLine, occurrenceIndex) => (
+                              <span
+                                className="forest-pricing-compact__occurrence"
+                                key={`booking-option-${label}-${index}-occurrence-${occurrenceIndex}`}
+                              >
+                                {occurrenceLine}
+                              </span>
+                            ))}
+                            {remainingOccurrenceCount > 0 ? (
+                              <span className="forest-pricing-compact__occurrence forest-pricing-compact__occurrence--more">
+                                {localeCode === "fr"
+                                  ? `+${remainingOccurrenceCount} autre${remainingOccurrenceCount > 1 ? "s" : ""} date${remainingOccurrenceCount > 1 ? "s" : ""}`
+                                  : `+${remainingOccurrenceCount} more date${remainingOccurrenceCount > 1 ? "s" : ""}`}
+                              </span>
+                            ) : null}
+                          </div>
                         ) : null}
                       </div>
                       <div className="forest-pricing-compact__meta">

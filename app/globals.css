@@ -9578,6 +9578,22 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   line-height: 1.45;
 }
 
+.forest-pricing-compact__occurrences {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.forest-pricing-compact__occurrence {
+  color: rgba(244, 242, 235, 0.48);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.forest-pricing-compact__occurrence--more {
+  color: rgba(244, 242, 235, 0.4);
+}
+
 .forest-pricing-compact__meta {
   display: flex;
   flex-direction: column;
