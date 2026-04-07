@@ -3,13 +3,14 @@
 import { useState } from "react";
 
 import { isExternalHref } from "@/lib/locale-path";
-import { getPricingGroupTiers, normalizeText, pickString } from "@/lib/offers";
-import type { OfferType, PricingGroup, PricingGroupTier } from "@/lib/types";
+import { asRecord, compareOccurrenceStart, getPricingGroupTiers, normalizeText, pickString } from "@/lib/offers";
+import type { Occurrence, OfferType, PricingGroup, PricingGroupTier } from "@/lib/types";
 
 type ForestGroupedPricingSelectorProps = {
   availableActionLabel: string;
   groups: PricingGroup[];
   locale: string;
+  occurrences?: Occurrence[];
   offerType: OfferType;
   waitlistActionLabel: string;
 };
@@ -76,16 +77,132 @@ function getSelectLabel(locale: string, offerType: OfferType) {
   return offerType === "WORKSHOP" ? "Choose your pricing tier" : "Choose a pricing option";
 }
 
+function parseCompactDate(dateStr: string, locale: string, timezone?: string | null) {
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  const parts = new Intl.DateTimeFormat(locale || "en", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    ...(timezone ? { timeZone: timezone } : {}),
+  }).formatToParts(date);
+
+  const lookup = parts.reduce<Record<string, string>>((acc, part) => {
+    if (part.type !== "literal") {
+      acc[part.type] = part.value;
+    }
+    return acc;
+  }, {});
+
+  return {
+    dayOfWeek: lookup.weekday ?? "",
+    dayNum: lookup.day ?? "",
+    month: lookup.month ?? "",
+  };
+}
+
+function normalizeOccurrenceMatchText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\b(workshop|atelier|session|cours|class)\b/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function formatLinkedOccurrenceLine(
+  occurrence: Record<string, unknown>,
+  locale: string,
+) {
+  const start = pickString(occurrence, ["start_datetime", "start", "start_at", "datetime", "date"]);
+  if (!start) {
+    return "";
+  }
+
+  const timezone = pickString(occurrence, ["timezone", "tz", "time_zone"]) || undefined;
+  const compact = parseCompactDate(start, locale, timezone);
+  if (!compact) {
+    return "";
+  }
+
+  return [compact.dayOfWeek, compact.dayNum, compact.month].filter(Boolean).join(" ");
+}
+
+function resolveLinkedPricingGroupOccurrences(
+  groupRecord: Record<string, unknown>,
+  offerOccurrences: Record<string, unknown>[],
+  totalGroups: number,
+) {
+  const sortedOccurrences = [...offerOccurrences].sort(compareOccurrenceStart);
+  const now = Date.now();
+  const futureOccurrences = sortedOccurrences.filter((occurrence) => {
+    const start = pickString(occurrence, ["start_datetime", "start", "start_at", "datetime", "date"]);
+    if (!start) {
+      return false;
+    }
+    const parsed = Date.parse(start);
+    return Number.isFinite(parsed) ? parsed >= now : false;
+  });
+  const candidateOccurrences = futureOccurrences.length > 0 ? futureOccurrences : sortedOccurrences;
+
+  const linkedOccurrenceIds = Array.isArray(groupRecord.occurrence_ids)
+    ? groupRecord.occurrence_ids.map((value) => normalizeText(value)).filter(Boolean)
+    : [];
+  if (linkedOccurrenceIds.length > 0) {
+    const idSet = new Set(linkedOccurrenceIds);
+    return candidateOccurrences.filter((occurrence) => idSet.has(normalizeText(occurrence.id)));
+  }
+
+  const candidates = [
+    pickString(groupRecord, ["summary"]),
+    pickString(groupRecord, ["label", "name", "title"]),
+    pickString(groupRecord, ["date_summary", "dateSummary"]),
+  ]
+    .map(normalizeOccurrenceMatchText)
+    .filter(Boolean);
+
+  if (candidates.length > 0) {
+    const matched = candidateOccurrences.filter((occurrence) => {
+      const occurrenceLabel = normalizeOccurrenceMatchText(
+        pickString(occurrence, ["label", "label_override", "labelOverride"]),
+      );
+      if (!occurrenceLabel) {
+        return false;
+      }
+      return candidates.some((candidate) => candidate.includes(occurrenceLabel) || occurrenceLabel.includes(candidate));
+    });
+
+    if (matched.length > 0) {
+      return matched;
+    }
+  }
+
+  if (totalGroups === 1) {
+    return candidateOccurrences;
+  }
+
+  return [] as Record<string, unknown>[];
+}
+
 export default function ForestGroupedPricingSelector({
   availableActionLabel,
   groups,
   locale,
+  occurrences = [],
   offerType,
   waitlistActionLabel,
 }: ForestGroupedPricingSelectorProps) {
   const [selectedTierByGroup, setSelectedTierByGroup] = useState<Record<string, string>>({});
   const selectPlaceholder = getSelectPlaceholder(locale);
   const selectLabel = getSelectLabel(locale, offerType);
+  const offerOccurrences = occurrences
+    .map((occurrence) => asRecord(occurrence))
+    .filter((occurrence): occurrence is Record<string, unknown> => occurrence !== null);
 
   return (
     <div className="forest-pricing-compact__list forest-pricing-compact__list--grouped">
@@ -116,6 +233,12 @@ export default function ForestGroupedPricingSelector({
         const actionUrl = groupIsSoldOut ? waitlistUrl : selectedTierUrl || groupBookingUrl;
         const actionDisabled = !actionUrl;
         const external = actionUrl ? isExternalHref(actionUrl) : false;
+        const linkedOccurrences = resolveLinkedPricingGroupOccurrences(groupRecord, offerOccurrences, groups.length);
+        const occurrenceLines = linkedOccurrences
+          .map((occurrence) => formatLinkedOccurrenceLine(occurrence, locale))
+          .filter(Boolean);
+        const visibleOccurrenceLines = occurrenceLines.slice(0, 3);
+        const remainingOccurrenceCount = occurrenceLines.length - visibleOccurrenceLines.length;
 
         return (
           <section className="forest-pricing-compact__group" key={groupKey}>
@@ -125,6 +248,25 @@ export default function ForestGroupedPricingSelector({
                 {groupIsSoldOut ? (
                   <span className="forest-pricing-compact__group-status">
                     {locale.toLowerCase().startsWith("fr") ? "Complet" : "Sold out"}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+            {visibleOccurrenceLines.length > 0 ? (
+              <div className="forest-pricing-compact__occurrences forest-pricing-compact__occurrences--group">
+                {visibleOccurrenceLines.map((occurrenceLine, occurrenceIndex) => (
+                  <span
+                    className="forest-pricing-compact__occurrence"
+                    key={`${groupKey}-occurrence-${occurrenceIndex}`}
+                  >
+                    {occurrenceLine}
+                  </span>
+                ))}
+                {remainingOccurrenceCount > 0 ? (
+                  <span className="forest-pricing-compact__occurrence forest-pricing-compact__occurrence--more">
+                    {locale.toLowerCase().startsWith("fr")
+                      ? `+${remainingOccurrenceCount} autre${remainingOccurrenceCount > 1 ? "s" : ""} date${remainingOccurrenceCount > 1 ? "s" : ""}`
+                      : `+${remainingOccurrenceCount} more date${remainingOccurrenceCount > 1 ? "s" : ""}`}
                   </span>
                 ) : null}
               </div>

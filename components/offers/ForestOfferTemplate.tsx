@@ -208,19 +208,6 @@ function formatOfferMoney(amount: unknown, currency: unknown) {
   return [normalizeText(amount), normalizeText(currency)].filter(Boolean).join(" ");
 }
 
-function formatLocalizedTime(dateStr: string, locale: string, timezone?: string | null) {
-  const date = new Date(dateStr);
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  return new Intl.DateTimeFormat(locale || "en", {
-    hour: "2-digit",
-    minute: "2-digit",
-    ...(timezone ? { timeZone: timezone } : {}),
-  }).format(date);
-}
-
 function normalizeOccurrenceMatchText(value: string) {
   return value
     .normalize("NFD")
@@ -247,11 +234,7 @@ function formatLinkedOccurrenceLine(
     return "";
   }
 
-  const end = pickString(occurrence, ["end_datetime", "end", "end_at"]);
-  const endTime = end ? formatLocalizedTime(end, locale, timezone) : "";
-  const timeLabel = endTime && endTime !== compact.time ? `${compact.time}–${endTime}` : compact.time;
-
-  return [compact.dayOfWeek, compact.dayNum, compact.month].filter(Boolean).join(" ") + (timeLabel ? ` · ${timeLabel}` : "");
+  return [compact.dayOfWeek, compact.dayNum, compact.month].filter(Boolean).join(" ");
 }
 
 function resolveLinkedBookingOccurrences(
@@ -1139,6 +1122,7 @@ export default function ForestOfferTemplate({
                   availableActionLabel={pricingActionLabel}
                   groups={pricingGroups}
                   locale={localeCode}
+                  occurrences={allOccurrences}
                   offerType={offerType}
                   waitlistActionLabel={waitlistActionLabel}
                 />

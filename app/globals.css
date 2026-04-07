@@ -9584,6 +9584,10 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   gap: 0.18rem;
 }
 
+.forest-pricing-compact__occurrences--group {
+  margin: 0.15rem 0 0.65rem;
+}
+
 .forest-pricing-compact__occurrence {
   color: rgba(244, 242, 235, 0.48);
   font-size: 0.78rem;
