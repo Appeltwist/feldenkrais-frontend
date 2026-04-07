@@ -1,6 +1,4 @@
-const FOREST_FACILITATOR_NAME_OVERRIDES = {
-  pilates: ["Joy", "Ana", "Orazio"],
-} as const;
+const FOREST_FACILITATOR_NAME_OVERRIDES = {} as const;
 
 export function getForestFacilitatorNamesOverride(slug: string | null | undefined) {
   if (!slug) {
