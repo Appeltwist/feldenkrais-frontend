@@ -1,10 +1,12 @@
 import { ForestPageShell } from "@/components/forest/ForestPageShell";
 import MindbodyScheduleWidget from "@/components/classes/MindbodyScheduleWidget";
+import TrialReviewsCarousel from "@/components/trial/TrialReviewsCarousel";
 import { fetchSiteConfig } from "@/lib/api";
 import { isForestCenter } from "@/lib/forest-theme";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
 import { getPricingContent } from "@/lib/pricing-content";
+import { getTrialReviewsContent } from "@/lib/trial-reviews-content";
 
 const MINDBODY_SCHEDULE_WIDGET_ID = "db159594878";
 
@@ -26,6 +28,7 @@ export default async function TrialPage() {
 
   const content = getPricingContent(locale);
   const journeySteps = content.hero.journeySteps;
+  const reviewSection = getTrialReviewsContent(locale);
 
   return (
     <ForestPageShell>
@@ -84,6 +87,17 @@ export default async function TrialPage() {
             })}
           </div>
         </div>
+
+        {reviewSection.reviews.length > 0 ? (
+          <div className="trial-page__reviews">
+            <TrialReviewsCarousel
+              aggregateRating={reviewSection.aggregateRating}
+              ctaHref={reviewSection.ctaHref}
+              labels={reviewSection.labels}
+              reviews={reviewSection.reviews}
+            />
+          </div>
+        ) : null}
 
         {/* Mindbody Schedule Widget */}
         <div className="trial-page__widget">
