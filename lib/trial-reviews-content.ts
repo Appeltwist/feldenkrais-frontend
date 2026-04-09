@@ -19,6 +19,7 @@ export type TrialReviewsLabels = {
   eyebrow: string;
   title: string;
   intro: string;
+  aggregateLabel: string;
   ctaLabel: string;
   previousLabel: string;
   nextLabel: string;
@@ -38,6 +39,7 @@ const LABELS: Record<LocaleCode, TrialReviewsLabels> = {
     eyebrow: "",
     title: "Avis Google",
     intro: "",
+    aggregateLabel: "4.9/5 sur Google",
     ctaLabel: "Voir tous les avis",
     previousLabel: "Avis précédent",
     nextLabel: "Avis suivant",
@@ -49,6 +51,7 @@ const LABELS: Record<LocaleCode, TrialReviewsLabels> = {
     eyebrow: "",
     title: "Google reviews",
     intro: "",
+    aggregateLabel: "4.9/5 on Google",
     ctaLabel: "View all reviews",
     previousLabel: "Previous review",
     nextLabel: "Next review",

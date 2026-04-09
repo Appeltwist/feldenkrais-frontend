@@ -227,6 +227,7 @@ export default function TrialReviewsCarousel({
         <div className="trial-reviews__intro">
           {labels.eyebrow ? <p className="trial-reviews__eyebrow">{labels.eyebrow}</p> : null}
           <h2 className="trial-reviews__title">{labels.title}</h2>
+          <p className="trial-reviews__aggregate">{labels.aggregateLabel}</p>
           {labels.intro ? <p className="trial-reviews__summary">{labels.intro}</p> : null}
         </div>
 

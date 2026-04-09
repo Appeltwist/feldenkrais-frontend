@@ -3226,6 +3226,14 @@ a {
   line-height: 1.02;
 }
 
+.trial-reviews__aggregate {
+  margin: 0;
+  color: #f4d58a;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
 .trial-reviews__summary {
   margin: 0;
   max-width: 42rem;
