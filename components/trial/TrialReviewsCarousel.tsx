@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from "react";
 import type { TrialReview, TrialReviewsLabels } from "@/lib/trial-reviews-content";
 
 type TrialReviewsCarouselProps = {
-  aggregateRating: string;
   ctaHref: string;
   labels: TrialReviewsLabels;
   reviews: TrialReview[];
@@ -34,7 +33,6 @@ function findNearestSlide(track: HTMLDivElement) {
 }
 
 export default function TrialReviewsCarousel({
-  aggregateRating,
   ctaHref,
   labels,
   reviews,
@@ -230,12 +228,6 @@ export default function TrialReviewsCarousel({
           {labels.eyebrow ? <p className="trial-reviews__eyebrow">{labels.eyebrow}</p> : null}
           <h2 className="trial-reviews__title">{labels.title}</h2>
           {labels.intro ? <p className="trial-reviews__summary">{labels.intro}</p> : null}
-          <div className="trial-reviews__aggregate">
-            <span aria-hidden="true" className="trial-reviews__stars">
-              ★★★★★
-            </span>
-            <span>{labels.aggregateLabel.replace("4.9", aggregateRating)}</span>
-          </div>
         </div>
 
         <a className="trial-reviews__cta" href={ctaHref} rel="noopener noreferrer" target="_blank">
@@ -275,16 +267,7 @@ export default function TrialReviewsCarousel({
         {reviews.map((review, index) => (
           <article className="trial-reviews__card" key={`${review.author}-${index}`}>
             <div className="trial-reviews__card-head">
-              <div>
-                <p className="trial-reviews__author">{review.author}</p>
-                <p className="trial-reviews__date">{review.relativeDate}</p>
-              </div>
-              <p
-                aria-label={`${review.rating} ${labels.reviewRatingLabel}`}
-                className="trial-reviews__card-rating"
-              >
-                {"★".repeat(review.rating)}
-              </p>
+              <p className="trial-reviews__author">{review.author}</p>
             </div>
             <p className="trial-reviews__body">{review.body}</p>
           </article>

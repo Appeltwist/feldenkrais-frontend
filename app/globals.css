@@ -3234,22 +3234,6 @@ a {
   line-height: 1.65;
 }
 
-.trial-reviews__aggregate {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-  width: fit-content;
-  color: #f4f2eb;
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.trial-reviews__stars,
-.trial-reviews__card-rating {
-  color: #f4d58a;
-  letter-spacing: 0.08em;
-}
-
 .trial-reviews__cta {
   display: inline-flex;
   align-items: center;
@@ -3334,19 +3318,6 @@ a {
   color: #f8f0ec;
   font-size: 1rem;
   font-weight: 700;
-}
-
-.trial-reviews__date {
-  margin: 0.2rem 0 0;
-  color: rgba(244, 236, 232, 0.56);
-  font-size: 0.84rem;
-}
-
-.trial-reviews__card-rating {
-  margin: 0;
-  font-size: 0.94rem;
-  font-weight: 700;
-  white-space: nowrap;
 }
 
 .trial-reviews__body {

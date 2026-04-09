@@ -91,7 +91,6 @@ export default async function TrialPage() {
         {reviewSection.reviews.length > 0 ? (
           <div className="trial-page__reviews">
             <TrialReviewsCarousel
-              aggregateRating={reviewSection.aggregateRating}
               ctaHref={reviewSection.ctaHref}
               labels={reviewSection.labels}
               reviews={reviewSection.reviews}

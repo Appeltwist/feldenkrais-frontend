@@ -7,34 +7,27 @@ type LocalizedText = Record<LocaleCode, string>;
 
 type TrialReviewSeed = {
   author: string;
-  rating: number;
   body: LocalizedText;
-  relativeDate: LocalizedText;
 };
 
 export type TrialReview = {
   author: string;
-  rating: number;
   body: string;
-  relativeDate: string;
 };
 
 export type TrialReviewsLabels = {
   eyebrow: string;
   title: string;
   intro: string;
-  aggregateLabel: string;
   ctaLabel: string;
   previousLabel: string;
   nextLabel: string;
   goToLabel: string;
   sectionLabel: string;
   trackLabel: string;
-  reviewRatingLabel: string;
 };
 
 export type TrialReviewsSectionContent = {
-  aggregateRating: string;
   ctaHref: string;
   labels: TrialReviewsLabels;
   reviews: TrialReview[];
@@ -45,125 +38,81 @@ const LABELS: Record<LocaleCode, TrialReviewsLabels> = {
     eyebrow: "",
     title: "Avis Google",
     intro: "",
-    aggregateLabel: "4.9/5 sur Google",
     ctaLabel: "Voir tous les avis",
     previousLabel: "Avis précédent",
     nextLabel: "Avis suivant",
     goToLabel: "Aller à l'avis",
     sectionLabel: "Avis Google Forest Lighthouse",
     trackLabel: "Carrousel d'avis Google",
-    reviewRatingLabel: "sur 5 étoiles",
   },
   en: {
     eyebrow: "",
     title: "Google reviews",
     intro: "",
-    aggregateLabel: "4.9/5 on Google",
     ctaLabel: "View all reviews",
     previousLabel: "Previous review",
     nextLabel: "Next review",
     goToLabel: "Go to review",
     sectionLabel: "Forest Lighthouse Google reviews",
     trackLabel: "Google reviews carousel",
-    reviewRatingLabel: "out of 5 stars",
   },
 };
 
 const REVIEW_SEED: TrialReviewSeed[] = [
   {
-    author: "Claire B.",
-    rating: 5,
+    author: "Rina L.",
     body: {
-      fr: "Un lieu très beau et apaisant, avec une équipe chaleureuse. On s'y sent accueilli dès les premières minutes.",
-      en: "A beautiful, calming place with a warm team. You feel welcome within the first few minutes.",
-    },
-    relativeDate: {
-      fr: "il y a 2 mois",
-      en: "2 months ago",
+      fr: "Lieu accueillant et sans prétention, où l'on peut pratiquer le yoga dans une atmosphère agréable. Peu coûteux par rapport à la plupart des studios bruxellois.",
+      en: "A welcoming, unpretentious place where you can practise yoga in a pleasant atmosphere. Affordable compared with most studios in Brussels.",
     },
   },
   {
-    author: "Julien M.",
-    rating: 5,
+    author: "Rossella M.",
     body: {
-      fr: "J'ai découvert Forest Lighthouse avec un cours d'essai et j'ai tout de suite eu envie de revenir. L'ambiance est douce et les indications sont très claires.",
-      en: "I discovered Forest Lighthouse through a trial class and immediately wanted to come back. The atmosphere is gentle and the guidance is very clear.",
-    },
-    relativeDate: {
-      fr: "il y a 3 mois",
-      en: "3 months ago",
+      fr: "Très chouette ! Cours sympa et ambiance agréable, je recommande !",
+      en: "Really lovely! Great class and a pleasant atmosphere. I recommend it!",
     },
   },
   {
-    author: "Nora D.",
-    rating: 5,
+    author: "Joëlle W.",
     body: {
-      fr: "Le studio est lumineux, calme et très bien tenu. Même en tant que débutante, je me suis sentie à ma place.",
-      en: "The studio is bright, calm, and beautifully kept. Even as a beginner, I felt completely at ease.",
-    },
-    relativeDate: {
-      fr: "il y a 4 mois",
-      en: "4 months ago",
+      fr: "Espace agréable. Cours donnés avec enthousiasme et savoir-faire. Accueil super chaleureux.",
+      en: "A lovely space. Classes are taught with enthusiasm and real know-how. The welcome is incredibly warm.",
     },
   },
   {
-    author: "Sophie R.",
-    rating: 5,
+    author: "Clara V.",
     body: {
-      fr: "J'apprécie particulièrement la qualité de l'enseignement et l'attention portée à chacun. C'est un endroit où l'on ralentit vraiment.",
-      en: "I especially appreciate the quality of the teaching and the attention given to each person. It is a place where you can genuinely slow down.",
-    },
-    relativeDate: {
-      fr: "il y a 5 mois",
-      en: "5 months ago",
+      fr: "La Forest Lighthouse est un lieu magnifique, familial, rénové avec amour par Betzabel et Nikos qui nous accueillent chaleureusement. Il y a une offre diversifiée de cours hebdomadaires : Feldenkrais, Pilates, Yoga, chant polyphonique… et des formations sont organisées régulièrement.",
+      en: "Forest Lighthouse is a beautiful, family-oriented place, lovingly renovated by Betzabel and Nikos, who welcome everyone warmly. There is a diverse offering of weekly classes: Feldenkrais, Pilates, Yoga, polyphonic singing, and trainings are organized regularly.",
     },
   },
   {
-    author: "Thomas L.",
-    rating: 5,
+    author: "Janie F.",
     body: {
-      fr: "Très bel espace pour pratiquer le yoga et le mouvement. L'accueil est simple, humain, et jamais intimidant.",
-      en: "A lovely space for yoga and movement practice. The welcome is simple, human, and never intimidating.",
-    },
-    relativeDate: {
-      fr: "il y a 6 mois",
-      en: "6 months ago",
+      fr: "Lieu accueillant et chaleureux, un espace lumineux approprié pour des cours introspectifs de qualité, une offre variée... je recommande les cours du Lighthouse.",
+      en: "A welcoming, warm place, with a bright space that suits high-quality introspective classes and a varied offering. I recommend the Lighthouse classes.",
     },
   },
   {
-    author: "Emma V.",
-    rating: 5,
+    author: "Florence A.",
     body: {
-      fr: "Je suis venue pour un cours, puis j'ai commencé à revenir chaque semaine. Le lieu a quelque chose de très ancrant.",
-      en: "I came for one class and then started coming back every week. There is something deeply grounding about the space.",
-    },
-    relativeDate: {
-      fr: "il y a 7 mois",
-      en: "7 months ago",
+      fr: "Très agréable lieu, et formateurs de qualité dans leurs expertises respectives. Je recommande chaleureusement tous leurs cours et pratiques, pour un mieux-être du corps et de l'esprit, une liberté de mouvement retrouvée.",
+      en: "A very pleasant place, with teachers of real quality in their respective fields. I warmly recommend all their classes and practices for greater well-being of body and mind, and a renewed freedom of movement.",
     },
   },
   {
-    author: "Marc A.",
-    rating: 5,
+    author: "Valeria G.",
     body: {
-      fr: "Le planning est varié et l'équipe répond rapidement aux questions. Une très belle adresse à Forest pour pratiquer avec régularité.",
-      en: "The schedule is varied and the team responds quickly to questions. A wonderful place in Forest to build a regular practice.",
-    },
-    relativeDate: {
-      fr: "il y a 8 mois",
-      en: "8 months ago",
+      fr: "Une atmosphère merveilleuse dans un très bel endroit. Les enseignants sont très bien préparés, accueillants et professionnels. Je suis moi-même coach, vous pouvez donc me faire confiance ;) Hautement recommandé.",
+      en: "Such a wonderful atmosphere in a great spot. The teachers are very prepared, friendly and professional. I am a coach myself, so you can trust my opinion ;) Highly recommended.",
     },
   },
   {
-    author: "Camille P.",
-    rating: 5,
+    author: "Ines M.",
     body: {
-      fr: "Forest Lighthouse est devenu un vrai point d'ancrage dans ma semaine. C'est professionnel, chaleureux et profondément humain.",
-      en: "Forest Lighthouse has become a real anchor in my week. It is professional, warm, and deeply human.",
-    },
-    relativeDate: {
-      fr: "il y a 9 mois",
-      en: "9 months ago",
+      fr: "Super agréable lieu, cours pédagogiques et accessibles à tous ! Parfait pour commencer la méthode Feldenkrais et affiner sa pratique de yoga.",
+      en: "A really lovely place, with clear teaching and classes that are accessible to everyone. Perfect for starting the Feldenkrais Method and deepening your yoga practice.",
     },
   },
 ];
@@ -176,14 +125,11 @@ export function getTrialReviewsContent(locale: string): TrialReviewsSectionConte
   const localeCode = resolveLocale(locale);
 
   return {
-    aggregateRating: "4.9",
     ctaHref: FOREST_GOOGLE_MAPS_HREF,
     labels: LABELS[localeCode],
     reviews: REVIEW_SEED.map((review) => ({
       author: review.author,
-      rating: review.rating,
       body: review.body[localeCode],
-      relativeDate: review.relativeDate[localeCode],
     })),
   };
 }
