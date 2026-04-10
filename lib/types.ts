@@ -6,6 +6,7 @@ export type PrimaryCTA = {
   label: string;
   url: string;
   style?: string | null;
+  icon?: string | null;
 };
 
 export type QuickFacts = {
@@ -329,6 +330,7 @@ export type OfferDetail = {
     | null;
   trial_eligible?: boolean;
   primary_cta?: PrimaryCTA | null;
+  secondary_cta?: PrimaryCTA | null;
   quick_facts?: QuickFacts | null;
   schedule_cards?: ScheduleCard[] | null;
   themes?: ThemeTag[] | null;

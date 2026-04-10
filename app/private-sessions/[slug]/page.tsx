@@ -7,7 +7,6 @@ import PrivateSessionTemplate from "@/components/offers/PrivateSessionTemplate";
 import { ApiError, fetchOfferDetail, fetchOffers, fetchSiteConfig, fetchSiteFaq, type OfferDetail, type OfferSummary } from "@/lib/api";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
-import { localizePath } from "@/lib/locale-path";
 import { buildOfferMetadata, loadOfferRouteData } from "@/lib/offer-page";
 import { buildOfferLocaleSwitchPaths } from "@/lib/offer-locale-paths";
 import { getCanonicalOfferPath, getDomains, getOfferType } from "@/lib/offers";
@@ -96,7 +95,6 @@ export default async function PrivateSessionDetailPage({ params }: OfferPageProp
   }
 
   if (siteConfig.centerSlug === "forest-lighthouse") {
-    const isFrench = requestLocale.toLowerCase().startsWith("fr");
     const [siteFaqSections, allOffers, localeSwitchPaths] = await Promise.all([
       fetchSiteFaq(hostname, requestLocale).catch(() => []),
       fetchOffers({ hostname, center: siteConfig.centerSlug, locale: contentLocale }).catch(() => [] as OfferSummary[]),
@@ -125,10 +123,6 @@ export default async function PrivateSessionDetailPage({ params }: OfferPageProp
           locale={requestLocale}
           offer={offer}
           offerType={offerType}
-          primaryCtaOverride={{
-            label: isFrench ? "Commencer" : "Start",
-            url: localizePath(requestLocale, `/private-sessions/${offer.slug ?? slug}/book`),
-          }}
           relatedOffers={relatedOffers}
           siteFaqSections={siteFaqSections}
         />

@@ -267,8 +267,30 @@ export function getPrimaryCta(offer: OfferDetail): PrimaryCTA | null {
     return null;
   }
 
-  const ctaRecord = asRecord(record.primary_cta ?? record.primaryCTA);
-  const fallbackUrl = getCanonicalUrl(offer);
+  return parseOfferCta(asRecord(record.primary_cta ?? record.primaryCTA), getCanonicalUrl(offer));
+}
+
+export function getSecondaryCta(offer: OfferDetail): PrimaryCTA | null {
+  const record = asRecord(offer);
+  if (!record) {
+    return null;
+  }
+
+  return parseOfferCta(asRecord(record.secondary_cta ?? record.secondaryCTA));
+}
+
+function parseOfferCta(ctaRecord: RawRecord | null, fallbackUrl = ""): PrimaryCTA | null {
+  if (!ctaRecord) {
+    return fallbackUrl
+      ? {
+          label: "",
+          url: fallbackUrl,
+          style: null,
+          icon: null,
+        }
+      : null;
+  }
+
   const url = pickString(ctaRecord, ["url", "href"], fallbackUrl);
 
   if (!url) {
@@ -277,11 +299,13 @@ export function getPrimaryCta(offer: OfferDetail): PrimaryCTA | null {
 
   const label = pickString(ctaRecord, ["label", "title", "text"]);
   const style = pickString(ctaRecord, ["style", "variant"]);
+  const icon = pickString(ctaRecord, ["icon"]);
 
   return {
     label,
     url,
     style: style || null,
+    icon: icon || null,
   };
 }
 

@@ -32,6 +32,9 @@ export type SiteConfig = {
 export type MobileBookingCta = {
   href: string;
   label?: string;
+  secondaryHref?: string;
+  secondaryLabel?: string;
+  secondaryIcon?: string | null;
 } | null;
 
 export type LocaleSwitchPaths = {

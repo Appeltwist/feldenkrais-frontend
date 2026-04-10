@@ -8305,6 +8305,12 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
 
 /* CTA pill button */
 
+.forest-hero__cta-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .forest-hero__cta {
   align-items: center;
   background: linear-gradient(135deg, #ba5a55 0%, #9f3d3d 100%);
@@ -8326,6 +8332,20 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
 .forest-hero__cta:hover {
   box-shadow: 0 16px 40px rgba(99, 21, 21, 0.45);
   transform: translateY(-2px);
+}
+
+.forest-hero__cta--secondary {
+  width: 56px;
+  min-width: 56px;
+  padding: 0;
+  border-color: rgba(244, 213, 138, 0.24);
+  background: rgba(7, 33, 33, 0.72);
+  box-shadow: 0 12px 28px rgba(3, 14, 14, 0.32);
+}
+
+.forest-hero__cta--secondary svg {
+  width: 20px;
+  height: 20px;
 }
 
 /* price hint */
@@ -9731,6 +9751,51 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   margin-top: 0.5rem;
   width: 100%;
   text-align: center;
+}
+
+.forest-pricing-compact__cta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.forest-pricing-compact__cta-row .forest-pricing-compact__cta {
+  flex: 1 1 auto;
+  margin-top: 0;
+}
+
+.forest-pricing-compact__cta-secondary {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(244, 213, 138, 0.22);
+  color: #f4f2eb;
+  background: rgba(7, 33, 33, 0.72);
+  box-shadow: 0 10px 22px rgba(16, 8, 8, 0.18);
+  text-decoration: none;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.forest-pricing-compact__cta-secondary:hover,
+.forest-pricing-compact__cta-secondary:focus-visible {
+  background: rgba(12, 43, 43, 0.9);
+  border-color: rgba(244, 213, 138, 0.32);
+  box-shadow: 0 12px 26px rgba(16, 8, 8, 0.22);
+  transform: translateY(-1px);
+}
+
+.forest-pricing-compact__cta-secondary svg {
+  width: 19px;
+  height: 19px;
 }
 
 .forest-pricing-compact__row-cta {
@@ -11157,9 +11222,10 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   }
 
   /* Hide global inline book CTAs on mobile — structured pricing rows stay visible */
-  .forest-hero__cta,
+  .forest-hero__cta-group,
   .forest-journey__cta,
-  .forest-pricing-compact__cta {
+  .forest-pricing-compact__cta,
+  .forest-pricing-compact__cta-row {
     display: none !important;
   }
 

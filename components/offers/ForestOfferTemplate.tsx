@@ -47,6 +47,7 @@ import {
   getPricingPromos,
   getPrimaryCta,
   getQuickFacts,
+  getSecondaryCta,
   getFutureDisplayScheduleEntries,
   occurrenceToScheduleCard,
   getBenefits,
@@ -106,6 +107,24 @@ const FACT_LABELS: Record<string, { fr: string; en: string }> = {
 };
 
 /* ── helpers ── */
+
+function isDirectAnchorHref(href: string) {
+  return isExternalHref(href) || href.startsWith("tel:") || href.startsWith("mailto:");
+}
+
+function PhoneIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M22 16.9v3a2 2 0 0 1-2.2 2c-9.8-.9-17.7-8.8-18.6-18.6A2 2 0 0 1 3.1 1h3a2 2 0 0 1 2 1.7c.1 1 .3 2 .6 2.9a2 2 0 0 1-.4 2.1L7 9a16 16 0 0 0 8 8l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.9.5 2.9.6a2 2 0 0 1 1.7 2z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 function parseCompactDate(dateStr: string, locale: string, timezone?: string | null) {
   const d = new Date(dateStr);
@@ -447,6 +466,7 @@ export default function ForestOfferTemplate({
   const title = getOfferTitle(offer);
   const subtitle = getOfferSubtitle(offer);
   const rawPrimaryCta = getPrimaryCta(offer);
+  const secondaryCta = getSecondaryCta(offer);
   const allOccurrences = getOccurrences(offer);
   const upcomingClassOccurrences = offerType === "CLASS" ? getFutureOccurrences(offer) : [];
   const allDisplayScheduleEntries = offerType === "CLASS" ? [] : getDisplayScheduleEntries(offer);
@@ -683,6 +703,9 @@ export default function ForestOfferTemplate({
     ? {
         href: heroCta.url,
         label: heroCta.label || labels.book,
+        secondaryHref: secondaryCta?.url || undefined,
+        secondaryLabel: secondaryCta?.label || undefined,
+        secondaryIcon: secondaryCta?.icon || null,
       }
     : null;
   const firstCalendarEntry = asRecord(
@@ -752,26 +775,49 @@ export default function ForestOfferTemplate({
             />
 
             {heroCta ? (
-              isExternalHref(heroCta.url) ? (
-                <a
-                  className="forest-hero__cta"
-                  href={heroCta.url}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  {heroCta.label || labels.book}
-                </a>
-              ) : (
-                heroCta.url.startsWith("#") ? (
-                  <a className="forest-hero__cta" href={heroCta.url}>
+              <div className="forest-hero__cta-group">
+                {isExternalHref(heroCta.url) ? (
+                  <a
+                    className="forest-hero__cta"
+                    href={heroCta.url}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
                     {heroCta.label || labels.book}
                   </a>
                 ) : (
-                  <Link className="forest-hero__cta" href={heroCta.url}>
-                    {heroCta.label || labels.book}
-                  </Link>
-                )
-              )
+                  heroCta.url.startsWith("#") ? (
+                    <a className="forest-hero__cta" href={heroCta.url}>
+                      {heroCta.label || labels.book}
+                    </a>
+                  ) : (
+                    <Link className="forest-hero__cta" href={heroCta.url}>
+                      {heroCta.label || labels.book}
+                    </Link>
+                  )
+                )}
+                {secondaryCta?.url ? (
+                  isDirectAnchorHref(secondaryCta.url) ? (
+                    <a
+                      className="forest-hero__cta forest-hero__cta--secondary"
+                      href={secondaryCta.url}
+                      aria-label={secondaryCta.label || (localeCode === "fr" ? "Appeler" : "Call")}
+                    >
+                      <PhoneIcon />
+                      <span className="sr-only">{secondaryCta.label || (localeCode === "fr" ? "Appeler" : "Call")}</span>
+                    </a>
+                  ) : (
+                    <Link
+                      className="forest-hero__cta forest-hero__cta--secondary"
+                      href={secondaryCta.url}
+                      aria-label={secondaryCta.label || (localeCode === "fr" ? "Appeler" : "Call")}
+                    >
+                      <PhoneIcon />
+                      <span className="sr-only">{secondaryCta.label || (localeCode === "fr" ? "Appeler" : "Call")}</span>
+                    </Link>
+                  )
+                ) : null}
+              </div>
             ) : null}
 
             {priceHint ? (
@@ -1213,15 +1259,38 @@ export default function ForestOfferTemplate({
                 </div>
               )}
               {primaryCta && bookingOptions.length === 0 && !shouldRenderGroupedPricing ? (
-                isExternalHref(primaryCta.url) ? (
-                  <a className="fl-btn fl-btn--primary forest-pricing-compact__cta" href={primaryCta.url} rel="noreferrer" target="_blank">
-                    {primaryCta.label || labels.book}
-                  </a>
-                ) : (
-                  <Link className="fl-btn fl-btn--primary forest-pricing-compact__cta" href={primaryCta.url}>
-                    {primaryCta.label || labels.book}
-                  </Link>
-                )
+                <div className="forest-pricing-compact__cta-row">
+                  {isDirectAnchorHref(primaryCta.url) ? (
+                    <a className="fl-btn fl-btn--primary forest-pricing-compact__cta" href={primaryCta.url} rel={isExternalHref(primaryCta.url) ? "noreferrer" : undefined} target={isExternalHref(primaryCta.url) ? "_blank" : undefined}>
+                      {primaryCta.label || labels.book}
+                    </a>
+                  ) : (
+                    <Link className="fl-btn fl-btn--primary forest-pricing-compact__cta" href={primaryCta.url}>
+                      {primaryCta.label || labels.book}
+                    </Link>
+                  )}
+                  {secondaryCta?.url ? (
+                    isDirectAnchorHref(secondaryCta.url) ? (
+                      <a
+                        className="forest-pricing-compact__cta-secondary"
+                        href={secondaryCta.url}
+                        aria-label={secondaryCta.label || (localeCode === "fr" ? "Appeler" : "Call")}
+                      >
+                        <PhoneIcon />
+                        <span className="sr-only">{secondaryCta.label || (localeCode === "fr" ? "Appeler" : "Call")}</span>
+                      </a>
+                    ) : (
+                      <Link
+                        className="forest-pricing-compact__cta-secondary"
+                        href={secondaryCta.url}
+                        aria-label={secondaryCta.label || (localeCode === "fr" ? "Appeler" : "Call")}
+                      >
+                        <PhoneIcon />
+                        <span className="sr-only">{secondaryCta.label || (localeCode === "fr" ? "Appeler" : "Call")}</span>
+                      </Link>
+                    )
+                  ) : null}
+                </div>
               ) : null}
             </div>
           ) : null}
