@@ -8735,13 +8735,19 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   scroll-snap-align: center;
 }
 
-.forest-media-embed__slide img {
+.forest-media-embed__slide-image {
   border-radius: 18px;
   display: block;
   height: 100%;
   object-fit: contain;
   object-position: center;
   width: 100%;
+}
+
+.forest-media-embed__slide--portrait .forest-media-embed__slide-image,
+.forest-media-embed__slide-image--portrait {
+  object-fit: cover;
+  object-position: center;
 }
 
 .forest-media-embed__dots {

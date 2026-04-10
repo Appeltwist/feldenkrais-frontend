@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type SyntheticEvent } from "react";
 import {
   buildVimeoEmbedUrl,
   buildYouTubeEmbedUrl,
@@ -219,6 +219,7 @@ function VideoPosterButton({
 function ImageCarousel({ images, title }: { images: GalleryImage[]; title: string }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [portraitByIndex, setPortraitByIndex] = useState<Record<number, boolean>>({});
 
   const handleScroll = useCallback(() => {
     const track = trackRef.current;
@@ -241,14 +242,34 @@ function ImageCarousel({ images, title }: { images: GalleryImage[]; title: strin
     track.scrollTo({ left: index * track.offsetWidth, behavior: "smooth" });
   }
 
+  function handleImageLoad(index: number, event: SyntheticEvent<HTMLImageElement>) {
+    const image = event.currentTarget;
+    const isPortrait = image.naturalHeight > image.naturalWidth;
+
+    setPortraitByIndex((current) => {
+      if (current[index] === isPortrait) {
+        return current;
+      }
+      return {
+        ...current,
+        [index]: isPortrait,
+      };
+    });
+  }
+
   return (
     <div className="forest-media-embed forest-media-embed--carousel">
       <div className="forest-media-embed__track" ref={trackRef}>
         {images.map((img, i) => (
-          <div className="forest-media-embed__slide" key={`slide-${i}`}>
+          <div
+            className={`forest-media-embed__slide${portraitByIndex[i] ? " forest-media-embed__slide--portrait" : ""}`}
+            key={`slide-${i}`}
+          >
             <img
               alt={img.alt || `${title} – ${i + 1}`}
+              className={`forest-media-embed__slide-image${portraitByIndex[i] ? " forest-media-embed__slide-image--portrait" : ""}`}
               loading="lazy"
+              onLoad={(event) => handleImageLoad(i, event)}
               src={img.url}
             />
           </div>
