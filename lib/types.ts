@@ -1,6 +1,6 @@
 export type LocaleCode = "fr" | "en";
 
-export type OfferType = "WORKSHOP" | "CLASS" | "PRIVATE_SESSION" | "TRAINING_INFO";
+export type OfferType = "WORKSHOP" | "MASTERCLASS" | "CLASS" | "PRIVATE_SESSION" | "TRAINING_INFO";
 
 export type PrimaryCTA = {
   label: string;

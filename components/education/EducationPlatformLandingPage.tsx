@@ -67,7 +67,7 @@ function getPlatformLandingCopy(locale: string) {
       title: t(locale, "Masterclasses à la demande", "On Demand Masterclasses"),
       subtitle: t(locale, "Achat unique", "One-Time Purchase"),
       imageUrl: MASTERCLASSES_COLLAGE_IMAGE_URL,
-      href: localizePath(locale, "/workshops"),
+      href: localizePath(locale, "/masterclasses"),
     },
   ];
 
@@ -100,7 +100,7 @@ function getPlatformLandingCopy(locale: string) {
       t(locale, "Accès à vie à votre masterclass", "Lifetime access to your masterclass"),
     ],
     ctaLabel: t(locale, "Découvrir les masterclasses", "Check out the Masterclasses"),
-    ctaHref: localizePath(locale, "/workshops"),
+    ctaHref: localizePath(locale, "/masterclasses"),
   };
 
   const masterclassCards: PlatformMasterclassCard[] = [

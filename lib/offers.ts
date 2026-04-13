@@ -72,6 +72,7 @@ export function getOfferType(offer: OfferDetail | OfferSummary) {
 
   if (
     rawType === "WORKSHOP" ||
+    rawType === "MASTERCLASS" ||
     rawType === "CLASS" ||
     rawType === "PRIVATE_SESSION" ||
     rawType === "TRAINING_INFO"
@@ -87,6 +88,9 @@ export function getOfferTypeVariant(offerType: string) {
   if (normalized === "CLASS") {
     return "class" as const;
   }
+  if (normalized === "MASTERCLASS") {
+    return "workshop" as const;
+  }
   if (normalized === "PRIVATE_SESSION") {
     return "private-session" as const;
   }
@@ -100,6 +104,9 @@ export function getOfferCollectionPathByType(offerType: string) {
   const normalized = offerType.trim().toUpperCase();
   if (normalized === "CLASS") {
     return "/classes";
+  }
+  if (normalized === "MASTERCLASS") {
+    return "/masterclasses";
   }
   if (normalized === "PRIVATE_SESSION") {
     return "/private-sessions";

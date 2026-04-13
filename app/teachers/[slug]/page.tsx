@@ -35,6 +35,7 @@ import type { OfferType } from "@/lib/types";
 
 const TYPE_LABELS: Record<OfferType, { fr: string; en: string }> = {
   WORKSHOP: { fr: "Atelier", en: "Workshop" },
+  MASTERCLASS: { fr: "Masterclass", en: "Masterclass" },
   CLASS: { fr: "Cours", en: "Class" },
   PRIVATE_SESSION: { fr: "Séance individuelle", en: "Individual session" },
   TRAINING_INFO: { fr: "Formation", en: "Training" },
