@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import BlockRenderer from "@/components/blocks/BlockRenderer";
 import ForestNewsletterForm from "@/components/ForestNewsletterForm";
+import ForestImageGallery from "@/components/forest/ForestImageGallery";
 import { ForestPageShell } from "@/components/forest/ForestPageShell";
 import RevealObserver from "@/components/motion/RevealObserver";
 import ForestFacilitatorShowcase from "@/components/offers/ForestFacilitatorShowcase";
@@ -537,7 +538,14 @@ export default function ForestOfferTemplate({
   const afterApercu = apercuSection ? sections.slice(1) : sections;
 
   /* collect ALL gallery images across every gallery block */
+  const gallerySection = afterApercu.find((section) => section.type === "gallery") ?? null;
   const galleryImages = afterApercu.flatMap((section) => getGalleryImagesFromSection(section));
+  const galleryHeading = pickString(
+    (gallerySection?.value as Record<string, unknown> | undefined) ?? null,
+    ["heading"],
+    localeCode === "fr" ? "Galerie" : "Gallery",
+  );
+  const showBottomGallery = Boolean(mediaUrl) && galleryImages.length > 0;
   const hasMedia = Boolean(mediaUrl) || galleryImages.length > 0;
 
   /* hero image: prefer local override, then explicit hero_image_url, fall back to first gallery image */
@@ -1014,6 +1022,16 @@ export default function ForestOfferTemplate({
             }
             return <BlockRenderer blocks={group.blocks} locale={localeCode} key={`group-${gi}`} />;
           })}
+        </section>
+      ) : null}
+
+      {showBottomGallery ? (
+        <section className="forest-panel forest-offer-gallery" data-reveal="section">
+          {galleryHeading ? <h2>{galleryHeading}</h2> : null}
+          <ForestImageGallery
+            alt={title}
+            images={galleryImages.map((image) => image.url)}
+          />
         </section>
       ) : null}
 
