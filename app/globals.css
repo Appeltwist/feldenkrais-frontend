@@ -21707,6 +21707,608 @@ body:has(.neuro-platform-page) .education-main-shell {
   margin-top: 0.35rem;
 }
 
+.neuro-masterclass-page::before {
+  opacity: 0.18;
+}
+
+.neuro-masterclass-shell {
+  margin: 0 auto;
+  width: min(1320px, calc(100vw - clamp(2rem, 5vw, 5rem)));
+}
+
+.neuro-masterclass-section {
+  padding: clamp(4rem, 7vw, 6rem) 0;
+  position: relative;
+}
+
+.neuro-masterclass-hero {
+  background-position: center;
+  background-size: cover;
+  min-height: min(86vh, 920px);
+  padding: clamp(5rem, 8vw, 8rem) 0 clamp(4rem, 7vw, 6rem);
+}
+
+.neuro-masterclass-hero__content {
+  align-items: center;
+  display: grid;
+  justify-items: center;
+  margin: 0 auto;
+  max-width: 42rem;
+  padding-top: clamp(4rem, 10vh, 7rem);
+  text-align: center;
+}
+
+.neuro-masterclass-hero h1 {
+  color: #ffffff;
+  font-size: clamp(2.4rem, 4.8vw, 4.4rem);
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  line-height: 1.02;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.neuro-masterclass-hero__teacher {
+  color: #ffffff;
+  font-size: clamp(1.6rem, 2.4vw, 2.45rem);
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0.65rem 0 0;
+}
+
+.neuro-masterclass-hero__description {
+  color: rgba(247, 244, 237, 0.95);
+  font-size: clamp(1.1rem, 1.5vw, 1.45rem);
+  line-height: 1.5;
+  margin: 1.35rem auto 0;
+  max-width: 36rem;
+}
+
+.neuro-masterclass-hero__quick-links {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  justify-content: center;
+  margin-top: 1.9rem;
+}
+
+.neuro-masterclass-hero__quick-link {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: #ffffff;
+  cursor: pointer;
+  display: inline-grid;
+  gap: 0.45rem;
+  justify-items: center;
+  min-width: 82px;
+  padding: 0;
+  text-decoration: none;
+}
+
+.neuro-masterclass-hero__quick-link span:first-child {
+  align-items: center;
+  border: 1.5px solid rgba(255, 255, 255, 0.76);
+  border-radius: 18px;
+  display: inline-flex;
+  font-size: 1.2rem;
+  height: 52px;
+  justify-content: center;
+  width: 52px;
+}
+
+.neuro-masterclass-hero__quick-link span:last-child {
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.neuro-masterclass-hero__price {
+  color: #ffffff;
+  font-size: clamp(2rem, 2.4vw, 2.5rem);
+  font-weight: 800;
+  margin: 2rem 0 0;
+}
+
+.neuro-masterclass-hero__purchase,
+.neuro-masterclass-price-bar__purchase {
+  color: rgba(247, 244, 237, 0.94);
+  font-size: clamp(1.2rem, 1.65vw, 1.65rem);
+  margin: 0.45rem 0 0;
+}
+
+.neuro-masterclass-hero__actions,
+.neuro-masterclass-price-bar__actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.35rem;
+}
+
+.neuro-masterclass-hero__actions .neuro-platform-button,
+.neuro-masterclass-price-bar__actions .neuro-platform-button {
+  min-width: 172px;
+  padding-inline: 2rem;
+}
+
+.neuro-masterclass-hero__guarantee {
+  color: rgba(247, 244, 237, 0.78);
+  font-size: 1rem;
+  margin: 1rem 0 0;
+}
+
+.neuro-masterclass-support-list {
+  align-items: start;
+  display: grid;
+  gap: 0.85rem 2.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  justify-content: center;
+  margin: 0 auto 3rem;
+  max-width: 42rem;
+}
+
+.neuro-masterclass-support-list__item {
+  align-items: center;
+  color: rgba(247, 244, 237, 0.94);
+  display: flex;
+  gap: 0.85rem;
+  font-size: 1.12rem;
+  line-height: 1.45;
+}
+
+.neuro-masterclass-support-list__item span:first-child {
+  color: var(--neuro-line);
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.neuro-masterclass-faq {
+  display: grid;
+  gap: 1.65rem;
+}
+
+.neuro-masterclass-faq h2 {
+  color: #ffffff;
+  font-size: clamp(2.3rem, 3.2vw, 3.5rem);
+  margin: 0;
+  text-align: center;
+}
+
+.neuro-masterclass-faq__tabs {
+  display: grid;
+  gap: 1.2rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.neuro-masterclass-faq__tab {
+  background: transparent;
+  border: 0;
+  border-bottom: 3px solid rgba(255, 255, 255, 0.24);
+  color: rgba(247, 244, 237, 0.86);
+  cursor: pointer;
+  font-size: 1.12rem;
+  font-weight: 700;
+  padding: 0 0 0.95rem;
+  text-align: left;
+}
+
+.neuro-masterclass-faq__tab.is-active {
+  border-bottom-color: #ffffff;
+  color: #ffffff;
+}
+
+.neuro-masterclass-faq__panel {
+  background: rgba(75, 86, 118, 0.72);
+  border-radius: 24px;
+  padding: 1.5rem;
+}
+
+.neuro-masterclass-faq__item {
+  background: rgba(60, 70, 97, 0.86);
+  border-radius: 18px;
+  color: rgba(247, 244, 237, 0.94);
+  padding: 0 1.1rem;
+}
+
+.neuro-masterclass-faq__item + .neuro-masterclass-faq__item {
+  margin-top: 0.8rem;
+}
+
+.neuro-masterclass-faq__item summary {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  font-size: 1.08rem;
+  font-weight: 700;
+  gap: 0.85rem;
+  list-style: none;
+  padding: 1rem 0;
+}
+
+.neuro-masterclass-faq__item summary::-webkit-details-marker {
+  display: none;
+}
+
+.neuro-masterclass-faq__item summary::before {
+  color: var(--neuro-cta);
+  content: "›";
+  font-size: 1.55rem;
+  line-height: 1;
+  transition: transform 160ms ease;
+}
+
+.neuro-masterclass-faq__item[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.neuro-masterclass-faq__item p {
+  color: rgba(247, 244, 237, 0.84);
+  line-height: 1.6;
+  margin: 0;
+  padding: 0 0 1rem 2.25rem;
+}
+
+.neuro-masterclass-reasons {
+  align-items: stretch;
+  display: grid;
+  gap: clamp(1.4rem, 3vw, 2rem);
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 0.96fr);
+}
+
+.neuro-masterclass-reasons__media,
+.neuro-masterclass-reasons__card,
+.neuro-masterclass-content-card,
+.neuro-masterclass-sample__card,
+.neuro-masterclass-audience-card,
+.neuro-masterclass-price-bar {
+  background: rgba(75, 86, 118, 0.7);
+  border-radius: 26px;
+}
+
+.neuro-masterclass-reasons__media {
+  min-height: 420px;
+  overflow: hidden;
+}
+
+.neuro-masterclass-reasons__media img {
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.neuro-masterclass-gallery {
+  background: rgba(18, 24, 39, 0.45);
+  height: 100%;
+  min-height: 420px;
+  position: relative;
+}
+
+.neuro-masterclass-gallery__image {
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.neuro-masterclass-gallery__arrow {
+  align-items: center;
+  backdrop-filter: blur(10px);
+  background: rgba(10, 14, 24, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  color: #ffffff;
+  cursor: pointer;
+  display: grid;
+  font-size: 1.8rem;
+  height: 3rem;
+  justify-content: center;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: background-color 160ms ease, transform 160ms ease;
+  width: 3rem;
+  z-index: 1;
+}
+
+.neuro-masterclass-gallery__arrow:hover {
+  background: rgba(10, 14, 24, 0.78);
+  transform: translateY(-50%) scale(1.03);
+}
+
+.neuro-masterclass-gallery__arrow--prev {
+  left: 1rem;
+}
+
+.neuro-masterclass-gallery__arrow--next {
+  right: 1rem;
+}
+
+.neuro-masterclass-gallery__counter {
+  backdrop-filter: blur(10px);
+  background: rgba(10, 14, 24, 0.56);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  bottom: 1rem;
+  color: rgba(247, 244, 237, 0.92);
+  font-size: 0.92rem;
+  font-weight: 700;
+  left: 50%;
+  line-height: 1;
+  padding: 0.55rem 0.8rem;
+  position: absolute;
+  transform: translateX(-50%);
+  z-index: 1;
+}
+
+.neuro-masterclass-reasons__card {
+  padding: clamp(1.8rem, 3vw, 2.5rem);
+}
+
+.neuro-masterclass-reasons__card h2,
+.neuro-masterclass-section__heading h2 {
+  color: #ffffff;
+  font-size: clamp(2.2rem, 3.1vw, 3.35rem);
+  line-height: 1.08;
+  margin: 0;
+}
+
+.neuro-masterclass-reasons__card ul {
+  display: grid;
+  gap: 1.15rem;
+  list-style: none;
+  margin: 1.6rem 0 0;
+  padding: 0;
+}
+
+.neuro-masterclass-reasons__card li {
+  color: rgba(247, 244, 237, 0.88);
+  display: grid;
+  gap: 0.4rem;
+  padding-left: 2rem;
+  position: relative;
+}
+
+.neuro-masterclass-reasons__card li::before {
+  color: var(--neuro-line);
+  content: "✓";
+  font-size: 1.25rem;
+  font-weight: 800;
+  left: 0;
+  position: absolute;
+  top: 0.05rem;
+}
+
+.neuro-masterclass-reasons__card strong {
+  color: #ffffff;
+  font-size: 1.2rem;
+}
+
+.neuro-masterclass-reasons__card p {
+  color: rgba(247, 244, 237, 0.76);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.neuro-masterclass-price-bar {
+  align-items: center;
+  display: grid;
+  gap: 0.7rem;
+  justify-items: center;
+  margin-top: 1.35rem;
+  padding: 1.9rem 1.6rem;
+  text-align: center;
+}
+
+.neuro-masterclass-price-bar__price {
+  color: #ffffff;
+  font-size: clamp(2rem, 2.2vw, 2.4rem);
+  font-weight: 800;
+  margin: 0;
+}
+
+.neuro-masterclass-section__heading {
+  margin-bottom: 1.8rem;
+}
+
+.neuro-masterclass-audience-grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.neuro-masterclass-audience-card {
+  align-content: center;
+  display: grid;
+  gap: 1rem;
+  min-height: 220px;
+  padding: 2rem 1.6rem;
+  text-align: center;
+}
+
+.neuro-masterclass-audience-card h3 {
+  color: #ffffff;
+  font-size: 1.45rem;
+  line-height: 1.24;
+  margin: 0;
+}
+
+.neuro-masterclass-audience-card p {
+  color: rgba(247, 244, 237, 0.82);
+  font-size: 1.08rem;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.neuro-masterclass-overview,
+.neuro-masterclass-sample {
+  align-items: start;
+  display: grid;
+  gap: clamp(1.5rem, 3vw, 2.2rem);
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.82fr);
+}
+
+.neuro-masterclass-teacher__layout {
+  align-items: start;
+  display: grid;
+  gap: 1.4rem;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+}
+
+.neuro-masterclass-teacher__image,
+.neuro-masterclass-sample__media img,
+.neuro-masterclass-sample__media iframe {
+  border-radius: 22px;
+  display: block;
+  width: 100%;
+}
+
+.neuro-masterclass-teacher__image {
+  aspect-ratio: 0.9 / 1.18;
+  object-fit: cover;
+}
+
+.neuro-masterclass-teacher__label {
+  color: rgba(247, 244, 237, 0.78);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  margin: 0 0 0.45rem;
+  text-transform: uppercase;
+}
+
+.neuro-masterclass-teacher__copy h3,
+.neuro-masterclass-content-card h3,
+.neuro-masterclass-sample__card h3 {
+  color: #ffffff;
+  font-size: clamp(2rem, 2.6vw, 3rem);
+  line-height: 1.1;
+  margin: 0 0 1rem;
+}
+
+.neuro-masterclass-teacher__copy p,
+.neuro-masterclass-sample__card p {
+  color: rgba(247, 244, 237, 0.84);
+  font-size: 1.06rem;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.neuro-masterclass-teacher__copy p + p,
+.neuro-masterclass-sample__card p + p {
+  margin-top: 1rem;
+}
+
+.neuro-masterclass-content-card,
+.neuro-masterclass-sample__card {
+  padding: clamp(1.6rem, 2.7vw, 2.2rem);
+}
+
+.neuro-masterclass-content-card__list,
+.neuro-masterclass-sample__meta {
+  display: grid;
+  gap: 0.75rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.neuro-masterclass-content-card__item {
+  background: rgba(71, 128, 176, 0.34);
+  border-radius: 18px;
+  color: #edf0f6;
+  overflow: hidden;
+}
+
+.neuro-masterclass-content-card__item summary {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  font-size: 1.02rem;
+  font-weight: 700;
+  gap: 0.65rem;
+  line-height: 1.4;
+  list-style: none;
+  padding: 0.9rem 1rem;
+}
+
+.neuro-masterclass-content-card__item summary::-webkit-details-marker {
+  display: none;
+}
+
+.neuro-masterclass-content-card__item summary::before {
+  color: var(--neuro-line);
+  content: "›";
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1;
+  transition: transform 160ms ease;
+}
+
+.neuro-masterclass-content-card__item[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.neuro-masterclass-content-card__item p {
+  color: rgba(247, 244, 237, 0.84);
+  font-size: 0.98rem;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0 1rem 1rem 3rem;
+}
+
+.neuro-masterclass-sample__meta li {
+  align-items: center;
+  color: #edf0f6;
+  display: flex;
+  font-size: 1.02rem;
+  gap: 0.65rem;
+  line-height: 1.4;
+}
+
+.neuro-masterclass-sample__media {
+  overflow: hidden;
+}
+
+.neuro-masterclass-sample__media iframe {
+  aspect-ratio: 16 / 9;
+  background: #151a28;
+  border: 0;
+  min-height: 420px;
+}
+
+.neuro-masterclass-sample__card {
+  align-content: start;
+  display: grid;
+  gap: 1rem;
+}
+
+.neuro-masterclass-sample__meta li {
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+}
+
+.neuro-masterclass-sample__meta li::before {
+  color: var(--neuro-line);
+  content: "•";
+  font-size: 1.2rem;
+}
+
+@media (max-width: 1200px) {
+  .neuro-masterclass-reasons,
+  .neuro-masterclass-overview,
+  .neuro-masterclass-sample {
+    grid-template-columns: 1fr;
+  }
+
+  .neuro-masterclass-audience-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 1024px) {
   .neuro-platform-landing-options,
   .neuro-platform-landing-about__content {
@@ -21737,6 +22339,50 @@ body:has(.neuro-platform-page) .education-main-shell {
 }
 
 @media (max-width: 720px) {
+  .neuro-masterclass-shell {
+    width: min(100vw - 1.5rem, 100%);
+  }
+
+  .neuro-masterclass-hero {
+    min-height: auto;
+    padding-top: 4rem;
+  }
+
+  .neuro-masterclass-hero__content {
+    padding-top: 2rem;
+  }
+
+  .neuro-masterclass-hero__quick-links,
+  .neuro-masterclass-hero__actions,
+  .neuro-masterclass-price-bar__actions {
+    flex-direction: column;
+  }
+
+  .neuro-masterclass-support-list,
+  .neuro-masterclass-faq__tabs,
+  .neuro-masterclass-audience-grid,
+  .neuro-masterclass-teacher__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .neuro-masterclass-reasons__media,
+  .neuro-masterclass-sample__media iframe {
+    min-height: 260px;
+  }
+
+  .neuro-masterclass-gallery {
+    min-height: 260px;
+  }
+
+  .neuro-masterclass-gallery__arrow {
+    height: 2.6rem;
+    width: 2.6rem;
+  }
+
+  .neuro-masterclass-faq__tab {
+    font-size: 1rem;
+  }
+
   .neuro-masterclass-slider__slide {
     flex-basis: 88%;
     min-width: 88%;
