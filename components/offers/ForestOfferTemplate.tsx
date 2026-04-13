@@ -538,14 +538,7 @@ export default function ForestOfferTemplate({
   const afterApercu = apercuSection ? sections.slice(1) : sections;
 
   /* collect ALL gallery images across every gallery block */
-  const gallerySection = afterApercu.find((section) => section.type === "gallery") ?? null;
   const galleryImages = afterApercu.flatMap((section) => getGalleryImagesFromSection(section));
-  const galleryHeading = pickString(
-    (gallerySection?.value as Record<string, unknown> | undefined) ?? null,
-    ["heading"],
-    localeCode === "fr" ? "Galerie" : "Gallery",
-  );
-  const showBottomGallery = Boolean(mediaUrl) && galleryImages.length > 0;
   const hasMedia = Boolean(mediaUrl) || galleryImages.length > 0;
 
   /* hero image: prefer local override, then explicit hero_image_url, fall back to first gallery image */
@@ -626,6 +619,7 @@ export default function ForestOfferTemplate({
   /* section grouping for paired layout (remaining after Aperçu + journey) */
   const groupedSections = groupSectionsForLayout(remainingSections);
   const faqSections = siteFaqSections.filter((section) => section.items.length > 0);
+  const showGalleryInProgramPanel = Boolean(mediaUrl) && galleryImages.length > 0;
   const activePricingPromos = pricingPromos.filter((promo) => isActivePromo(promo as Record<string, unknown>));
   const totalPricingTiers = pricingGroups.reduce((count, group) => count + getPricingGroupTiers(group).length, 0);
   const shouldRenderGroupedPricing = pricingGroups.length > 0;
@@ -1025,16 +1019,6 @@ export default function ForestOfferTemplate({
         </section>
       ) : null}
 
-      {showBottomGallery ? (
-        <section className="forest-panel forest-offer-gallery" data-reveal="section">
-          {galleryHeading ? <h2>{galleryHeading}</h2> : null}
-          <ForestImageGallery
-            alt={title}
-            images={galleryImages.map((image) => image.url)}
-          />
-        </section>
-      ) : null}
-
       {/* ── FACILITATOR SHOWCASE ── */}
       {facilitatorSlides.length > 0 ? (
         <>
@@ -1115,11 +1099,18 @@ export default function ForestOfferTemplate({
       ) : null}
 
       {/* ── FEATURED IMAGE + EVENT FAQ ── */}
-      {(heroImageUrl || faqItems.length > 0) ? (
+      {showGalleryInProgramPanel || heroImageUrl || faqItems.length > 0 ? (
         <>
           <div aria-hidden="true" className="fl-separator fl-separator--subtle" role="separator" />
           <section className="forest-image-faq" data-reveal="section">
-            {heroImageUrl ? (
+            {showGalleryInProgramPanel ? (
+              <div className="forest-image-faq__media">
+                <ForestImageGallery
+                  alt={title}
+                  images={galleryImages.map((image) => image.url)}
+                />
+              </div>
+            ) : heroImageUrl ? (
               <div className="forest-image-faq__media">
                 <img
                   alt={title}

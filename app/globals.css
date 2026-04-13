@@ -8778,18 +8778,6 @@ body:has(.forest-site-shell--domains) .fl-mobile-footer {
   gap: 1rem;
 }
 
-.forest-offer-gallery {
-  display: grid;
-  gap: 1rem;
-}
-
-.forest-offer-gallery h2 {
-  color: #f4f2eb;
-  font-family: var(--fl-display);
-  font-size: clamp(1.4rem, 2.5vw, 1.8rem);
-  margin: 0;
-}
-
 .site-forest-lighthouse .content-block {
   gap: 1rem;
 }
