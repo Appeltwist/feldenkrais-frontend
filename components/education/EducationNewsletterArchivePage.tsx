@@ -5,6 +5,7 @@ import { localizePath } from "@/lib/locale-path";
 import type { NarrativePage } from "@/lib/site-config";
 
 import EducationContentPage from "./EducationContentPage";
+import EducationBetaReadOnlyNotice from "./EducationBetaReadOnly";
 
 type EducationNewsletterArchivePageProps = {
   page: NarrativePage;
@@ -65,15 +66,16 @@ export default function EducationNewsletterArchivePage({
       <section className="education-newsletter-signup">
         <div className="education-newsletter-signup__inner">
           <h1>{t(locale, "Abonnez-vous à la newsletter", "Subscribe to the newsletter")}</h1>
-          <form action={localizePath(locale, "/newsletter")} className="education-newsletter-signup__form" method="get">
-            <input
-              aria-label={t(locale, "Adresse e-mail", "Email address")}
-              name="email"
-              placeholder={t(locale, "Adresse e-mail", "Email Address")}
-              type="email"
-            />
-            <button type="submit">{t(locale, "S'abonner", "Subscribe")}</button>
-          </form>
+          <EducationBetaReadOnlyNotice
+            body={t(
+              locale,
+              "Les inscriptions restent fermées pendant la bêta. Vous pouvez consulter les anciennes éditions sans créer de nouvelle inscription.",
+              "Subscriptions stay closed during the beta. You can read the archive without creating a new signup.",
+            )}
+            className="education-newsletter-signup__form"
+            locale={locale}
+            title={t(locale, "Newsletter en pause", "Newsletter paused for beta")}
+          />
         </div>
       </section>
 

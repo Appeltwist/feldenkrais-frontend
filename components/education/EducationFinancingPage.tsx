@@ -229,8 +229,8 @@ export default function EducationFinancingPage({
                 <Link className="education-button" href={localizePath(locale, `/trainings/${cohort.slug}`)}>
                   {t(locale, "Voir cette cohorte", "View this cohort")}
                 </Link>
-                <a className="education-text-link" href={cohort.pdfRequestHref}>
-                  {t(locale, "Demander le PDF", "Request PDF")}
+                <a className="education-text-link" href={cohort.programPdfUrl} rel="noreferrer" target="_blank">
+                  {t(locale, "Télécharger le PDF", "Download PDF")}
                 </a>
               </div>
             </article>

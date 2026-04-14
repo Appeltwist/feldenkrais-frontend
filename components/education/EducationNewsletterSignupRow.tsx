@@ -1,4 +1,4 @@
-import { localizePath } from "@/lib/locale-path";
+import EducationBetaReadOnlyNotice from "./EducationBetaReadOnly";
 
 type EducationNewsletterSignupRowProps = {
   locale: string;
@@ -22,8 +22,6 @@ export default function EducationNewsletterSignupRow({
   className = "",
   content,
 }: EducationNewsletterSignupRowProps) {
-  const href = content?.href?.startsWith("/") ? localizePath(locale, content.href) : content?.href || localizePath(locale, "/newsletter");
-
   return (
     <section className={`education-promo-row education-promo-row--newsletter ${className}`.trim()}>
       <div className="education-promo-row__visual">
@@ -47,15 +45,17 @@ export default function EducationNewsletterSignupRow({
               "Sign up and get the bi-weekly newsletter with articles, book recommendations and Feldenkrais Opportunities.",
             )}
         </p>
-        <form action={href} className="education-promo-row__signup" method="get">
-          <input
-            aria-label={t(locale, "Adresse e-mail", "Email address")}
-            name="email"
-            placeholder={t(locale, "Adresse e-mail", "Email Address")}
-            type="email"
-          />
-          <button type="submit">{content?.buttonLabel || t(locale, "S’abonner", "Subscribe")}</button>
-        </form>
+        <EducationBetaReadOnlyNotice
+          body={t(
+            locale,
+            "L'inscription à la newsletter restera fermée pendant la bêta. Vous pouvez parcourir le contenu, mais les inscriptions ouvriront au lancement.",
+            "Newsletter signup stays closed during the beta. You can browse the content now, and subscriptions will open at launch.",
+          )}
+          className="education-promo-row__signup"
+          compact
+          locale={locale}
+          title={content?.buttonLabel || t(locale, "Newsletter en pause", "Newsletter paused for beta")}
+        />
       </div>
     </section>
   );

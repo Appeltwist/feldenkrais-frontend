@@ -18,6 +18,7 @@ import {
   fetchForestFeaturedWorkshops,
   type EducationWorkshopCollectionItem,
 } from "@/lib/education-workshops";
+import { EDUCATION_NEWSLETTER_SIGNUP_URL } from "@/lib/education-links";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
 import { resolveApiHostname } from "@/lib/hostname-routing";
@@ -434,7 +435,7 @@ export default async function HomePage() {
           subtitle: newsletterPage?.subtitle,
           body: newsletterPage?.hero.body || newsletterPage?.subtitle,
           imageUrl: newsletterPage?.hero.imageUrl,
-          href: newsletterPage?.primaryCta?.url || "/newsletter",
+          href: newsletterPage?.primaryCta?.url || EDUCATION_NEWSLETTER_SIGNUP_URL,
           buttonLabel: newsletterPage?.primaryCta?.label,
         }}
         locale={locale}

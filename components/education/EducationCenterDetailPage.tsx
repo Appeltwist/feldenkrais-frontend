@@ -13,6 +13,7 @@ import {
   extractLegacyYouTubeId,
 } from "@/lib/legacy-page-signals";
 
+import EducationBetaReadOnlyNotice, { EducationBetaReadOnlyButton } from "./EducationBetaReadOnly";
 import EducationCenterContactForm from "./EducationCenterContactForm";
 import EducationContentPage from "./EducationContentPage";
 import EducationVideoPreview from "./EducationVideoPreview";
@@ -181,19 +182,18 @@ export default function EducationCenterDetailPage({
           <p>{cmsHeroHeading?.subtitle || cmsCenter?.summary || content.hero.subtitle}</p>
           <div className="education-center-shell__hero-actions">
             {cohort || cmsPrimaryAction ? (
-              <a
+              <EducationBetaReadOnlyButton
                 className="education-button education-center-shell__primary-button"
-                href={cmsPrimaryAction?.href || cohort?.admissionsUrl || "#"}
-              >
-                {cmsPrimaryAction?.label || content.hero.enrollLabel}
-              </a>
+                label={cmsPrimaryAction?.label || content.hero.enrollLabel}
+                locale={locale}
+              />
             ) : null}
-            <a
+            <EducationBetaReadOnlyButton
               className="education-button education-center-shell__secondary-button"
-              href={cmsSecondaryAction?.href || content.hero.appointmentHref}
-            >
-              {cmsSecondaryAction?.label || content.hero.appointmentLabel}
-            </a>
+              label={cmsSecondaryAction?.label || content.hero.appointmentLabel}
+              locale={locale}
+              secondary
+            />
           </div>
         </div>
       </section>
@@ -265,9 +265,7 @@ export default function EducationCenterDetailPage({
             <div className="education-center-upcoming-grid__actions">
               {cohort ? (
                 <>
-                  <a className="education-button" href={cohort.admissionsUrl}>
-                    {content.upcoming.enrollLabel}
-                  </a>
+                  <EducationBetaReadOnlyButton label={content.upcoming.enrollLabel} locale={locale} />
                   <a className="education-button education-button--secondary" href={cohort.programPdfUrl}>
                     {content.upcoming.pdfLabel}
                   </a>
@@ -318,9 +316,7 @@ export default function EducationCenterDetailPage({
                   <a className="education-button education-button--secondary" href={cohort.programPdfUrl}>
                     {content.cohortDetails.pdfLabel}
                   </a>
-                  <a className="education-button" href={cohort.admissionsUrl}>
-                    {content.cohortDetails.enrollLabel}
-                  </a>
+                  <EducationBetaReadOnlyButton label={content.cohortDetails.enrollLabel} locale={locale} />
                 </>
               ) : null}
             </div>
@@ -336,10 +332,9 @@ export default function EducationCenterDetailPage({
             <p>{content.contact.intro}</p>
             <p className="education-center-contact-block__appointment">
               <strong>{content.contact.appointmentPrefix}</strong>{" "}
-              <a href={cmsSecondaryAction?.href || content.contact.appointmentHref}>
-                {cmsSecondaryAction?.label || content.contact.appointmentLabel}
-              </a>
+              <span>{cmsSecondaryAction?.label || content.contact.appointmentLabel}</span>
             </p>
+            <EducationBetaReadOnlyNotice compact locale={locale} />
           </div>
           <EducationCenterContactForm
             centerName={center.name}

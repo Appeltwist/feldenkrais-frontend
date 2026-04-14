@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { EducationIntroWorkshopDetail } from "@/lib/education-workshops";
 import { localizePath } from "@/lib/locale-path";
 
+import { EducationBetaReadOnlyButton } from "./EducationBetaReadOnly";
 import EducationContentPage from "./EducationContentPage";
 
 type EducationWorkshopIntroPageProps = {
@@ -46,9 +47,7 @@ export default function EducationWorkshopIntroPage({
             <Link className="education-button" href={localizePath(locale, "/trainings")}>
               {t(locale, "Voir la formation", "Explore the training")}
             </Link>
-            <Link className="education-button education-button--secondary" href={localizePath(locale, "/contact")}>
-              {t(locale, "Réserver un appel", "Book a call")}
-            </Link>
+            <EducationBetaReadOnlyButton label={t(locale, "Réserver un appel", "Book a call")} locale={locale} secondary />
           </div>
         </aside>
       </section>

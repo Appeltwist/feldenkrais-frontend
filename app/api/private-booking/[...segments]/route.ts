@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { isEducationBetaReadOnlyHostname } from "@/lib/education-beta-read-only";
 import { rewriteForestMediaPayload } from "@/lib/forest-media";
 import { getRequiredApiBase } from "@/lib/server-env";
 import { resolveHostname } from "@/lib/server-hostname";
@@ -14,6 +15,13 @@ async function proxy(request: Request, segments: string[]) {
 
   if (!hostname) {
     return NextResponse.json({ detail: "Missing required query param: hostname." }, { status: 400 });
+  }
+
+  if (isEducationBetaReadOnlyHostname(hostname)) {
+    return NextResponse.json(
+      { detail: "Feldenkrais Education beta is currently read-only. Booking flows are disabled until launch." },
+      { status: 403 },
+    );
   }
 
   const backendUrl = new URL(`${API_BASE}/private-booking/${segments.join("/")}`);

@@ -70,34 +70,23 @@ function normalizeText(value: string) {
 }
 
 function resolveArchiveDir() {
-  const candidateRoots = [
-    process.env.FE_CRAWL_ARCHIVE_DIR?.trim(),
-    path.resolve(process.cwd(), "../feldenkrais-education/data/legacy/feldenkrais-education"),
-    path.resolve(process.cwd(), "../feldenkrais-education-main/data/legacy/feldenkrais-education"),
-  ].filter((value): value is string => Boolean(value));
-
-  for (const root of candidateRoots) {
-    if (!existsSync(root)) {
-      continue;
-    }
-
-    const directIndex = path.join(root, "content_index.jsonl");
-    if (existsSync(directIndex)) {
-      return root;
-    }
-
-    const latestRun = readdirSync(root, { withFileTypes: true })
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => entry.name)
-      .sort((left, right) => right.localeCompare(left))
-      .find((dirname) => existsSync(path.join(root, dirname, "content_index.jsonl")));
-
-    if (latestRun) {
-      return path.join(root, latestRun);
-    }
+  const root = process.env.FE_CRAWL_ARCHIVE_DIR?.trim();
+  if (!root || !existsSync(root)) {
+    return null;
   }
 
-  return null;
+  const directIndex = path.join(root, "content_index.jsonl");
+  if (existsSync(directIndex)) {
+    return root;
+  }
+
+  const latestRun = readdirSync(root, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort((left, right) => right.localeCompare(left))
+    .find((dirname) => existsSync(path.join(root, dirname, "content_index.jsonl")));
+
+  return latestRun ? path.join(root, latestRun) : null;
 }
 
 function readArchiveRows() {

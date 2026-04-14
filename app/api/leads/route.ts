@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { isEducationBetaReadOnlyHostname } from "@/lib/education-beta-read-only";
 import { resolveApiHostname } from "@/lib/hostname-routing";
 import { getRequiredApiBase } from "@/lib/server-env";
 import { resolveHostname } from "@/lib/server-hostname";
@@ -14,6 +15,13 @@ export async function POST(request: Request) {
 
   if (!hostname) {
     return NextResponse.json({ detail: "Missing required query param: hostname." }, { status: 400 });
+  }
+
+  if (isEducationBetaReadOnlyHostname(hostname)) {
+    return NextResponse.json(
+      { detail: "Feldenkrais Education beta is currently read-only. Contact forms are disabled until launch." },
+      { status: 403 },
+    );
   }
 
   let payload: unknown = null;

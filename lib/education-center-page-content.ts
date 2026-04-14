@@ -1,4 +1,5 @@
 import type { EducationCenterProfile } from "@/lib/education-content";
+import { EDUCATION_BOOK_A_CALL_URL } from "@/lib/education-links";
 import type { EducationTrainingCohort } from "@/lib/education-training";
 import { resolveLocale } from "@/lib/i18n";
 import { localizePath } from "@/lib/locale-path";
@@ -78,14 +79,8 @@ function buildYouTubePoster(videoId: string) {
   return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
 }
 
-function buildAppointmentHref(locale: string, centerName: string) {
-  const subject = t(
-    locale,
-    `Prise de rendez-vous - ${centerName}`,
-    `Book an appointment - ${centerName}`,
-  );
-
-  return `mailto:info@feldenkrais-education.com?subject=${encodeURIComponent(subject)}`;
+function buildAppointmentHref() {
+  return EDUCATION_BOOK_A_CALL_URL;
 }
 
 function heroTitle(locale: string, slug: string) {
@@ -106,7 +101,7 @@ export function getEducationCenterPageContent(
   center: EducationCenterProfile,
   cohort: EducationTrainingCohort | null,
 ): EducationCenterPageContent {
-  const appointmentHref = buildAppointmentHref(locale, center.name);
+  const appointmentHref = buildAppointmentHref();
   const cohortName = cohort?.name ?? center.upcomingTraining.name;
 
   const shared = {

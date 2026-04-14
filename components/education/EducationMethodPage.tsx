@@ -8,6 +8,7 @@ import type { NarrativePage } from "@/lib/site-config";
 
 import EducationContentPage from "./EducationContentPage";
 import EducationMethodInsightSlider from "./EducationMethodInsightSlider";
+import EducationBetaReadOnlyNotice from "./EducationBetaReadOnly";
 import EducationScrollSequence from "./EducationScrollSequence";
 import EducationVideoPreview from "./EducationVideoPreview";
 
@@ -289,7 +290,6 @@ export default function EducationMethodPage({
     title: domainLookup.get(config.slug)?.title || t(locale, config.titleFr, config.titleEn),
   }));
   const practitionerProfiles = featuredTeachers.slice(0, PRACTITIONER_LAYOUT.length);
-  const newsletterHref = localizePath(locale, "/newsletter");
   const babyFrameUrls = buildFrames("/brands/feldenkrais-education/method/sequences/baby", 35);
   const deadbirdFrameUrls = buildFrames("/brands/feldenkrais-education/method/sequences/deadbird", 33);
 
@@ -367,15 +367,16 @@ export default function EducationMethodPage({
       <section className="education-method-section education-method-section--newsletter">
         <div className="education-method-section__inner education-method-newsletter">
           <h2>{copy.newsletterTitle}</h2>
-          <form action={newsletterHref} className="education-method-newsletter__form" method="get">
-            <input
-              aria-label={copy.newsletterPlaceholder}
-              name="email"
-              placeholder={copy.newsletterPlaceholder}
-              type="email"
-            />
-            <button type="submit">{copy.newsletterButton}</button>
-          </form>
+          <EducationBetaReadOnlyNotice
+            body={t(
+              locale,
+              "Cette bêta reste en lecture seule. L'inscription à la newsletter rouvrira avec le lancement public.",
+              "This beta stays read-only. Newsletter signup will reopen with the public launch.",
+            )}
+            className="education-method-newsletter__form"
+            locale={locale}
+            title={copy.newsletterButton}
+          />
         </div>
       </section>
 

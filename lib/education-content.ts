@@ -268,8 +268,8 @@ function buildAnnouncement(locale: string): SiteAnnouncement {
   return {
     enabled: false,
     text: t(locale, "Restez informé·e des prochaines sessions", "Stay informed about upcoming sessions"),
-    linkLabel: t(locale, "Infolettre", "Newsletter"),
-    url: localizePath(locale, "/newsletter"),
+    linkLabel: null,
+    url: null,
   };
 }
 

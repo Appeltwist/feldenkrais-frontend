@@ -4,6 +4,7 @@ import PrivateBookingPanel from "@/components/private-booking/PrivateBookingPane
 import { fetchSiteConfig } from "@/lib/api";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
+import { isForestSite } from "@/lib/site-config";
 import { fetchPrivateBookingConfig, PrivateBookingApiError } from "@/lib/private-booking-api";
 import type { PrivateBookingConfig as PanelPrivateBookingConfig } from "@/lib/types";
 
@@ -16,6 +17,10 @@ export default async function PrivateSessionBookingPage({ params }: PrivateSessi
   const hostname = await getHostname();
   const siteConfig = await fetchSiteConfig(hostname).catch(() => null);
   const locale = await getRequestLocale(siteConfig?.defaultLocale ?? "en");
+
+  if (siteConfig && !isForestSite(siteConfig.centerSlug)) {
+    notFound();
+  }
 
   try {
     const config = await fetchPrivateBookingConfig(hostname, slug, locale);

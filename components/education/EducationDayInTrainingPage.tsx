@@ -1,9 +1,9 @@
 import Image from "next/image";
-import Link from "next/link";
 
 import { getEducationDayInTrainingContent } from "@/lib/education-day-in-training";
 import type { NarrativePage } from "@/lib/site-config";
 
+import { EducationBetaReadOnlyButton } from "./EducationBetaReadOnly";
 import EducationContentPage from "./EducationContentPage";
 import EducationVideoPreview from "./EducationVideoPreview";
 
@@ -41,24 +41,27 @@ function SectionHeading({
 }
 
 function ActionRow({
+  locale,
   signUpLabel,
-  signUpUrl,
   meetingLabel,
-  meetingUrl,
 }: {
+  locale: string;
   signUpLabel: string;
-  signUpUrl: string;
   meetingLabel: string;
-  meetingUrl: string;
 }) {
   return (
     <div className="education-day-actions">
-      <a className="education-button education-day-button education-day-button--light" href={signUpUrl}>
-        {signUpLabel}
-      </a>
-      <Link className="education-button education-day-button education-day-button--outline" href={meetingUrl}>
-        {meetingLabel}
-      </Link>
+      <EducationBetaReadOnlyButton
+        className="education-day-button education-day-button--light"
+        label={signUpLabel}
+        locale={locale}
+      />
+      <EducationBetaReadOnlyButton
+        className="education-button education-day-button education-day-button--outline"
+        label={meetingLabel}
+        locale={locale}
+        secondary
+      />
     </div>
   );
 }
@@ -83,7 +86,6 @@ export default function EducationDayInTrainingPage({ locale, page }: EducationDa
   const heroTitle = resolvedPage.hero.title || resolvedPage.title || content.hero.title;
   const heroBody = resolvedPage.hero.body || resolvedPage.subtitle || content.hero.subtitle;
   const signUpLabel = resolvedPage.primaryCta?.label || content.actions.signUpLabel;
-  const signUpUrl = resolvedPage.primaryCta?.url || content.actions.signUpUrl;
 
   return (
     <EducationContentPage
@@ -102,10 +104,9 @@ export default function EducationDayInTrainingPage({ locale, page }: EducationDa
           <h1>{heroTitle}</h1>
           <p>{heroBody}</p>
           <ActionRow
+            locale={locale}
             meetingLabel={content.actions.meetingLabel}
-            meetingUrl={content.actions.meetingUrl}
             signUpLabel={signUpLabel}
-            signUpUrl={signUpUrl}
           />
         </div>
       </section>
@@ -288,10 +289,9 @@ export default function EducationDayInTrainingPage({ locale, page }: EducationDa
         </div>
 
         <ActionRow
+          locale={locale}
           meetingLabel={content.actions.meetingLabel}
-          meetingUrl={content.actions.meetingUrl}
           signUpLabel={signUpLabel}
-          signUpUrl={signUpUrl}
         />
       </section>
 

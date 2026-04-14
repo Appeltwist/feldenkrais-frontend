@@ -5,6 +5,8 @@ import BlockRenderer from "@/components/blocks/BlockRenderer";
 import type { NarrativePage } from "@/lib/site-config";
 import { resolveLocale } from "@/lib/i18n";
 
+import EducationBetaReadOnlyNotice from "./EducationBetaReadOnly";
+
 type EducationContentPageProps = {
   page: NarrativePage;
   children?: ReactNode;
@@ -41,11 +43,17 @@ export default function EducationContentPage({
             <h1>{page.hero.title || page.title}</h1>
             {intro ? <p className="education-page__subtitle">{intro}</p> : null}
             {page.primaryCta ? (
-              <div className="education-page__actions">
-                <Link className="education-button" href={page.primaryCta.url}>
-                  {page.primaryCta.label}
-                </Link>
-              </div>
+              page.primaryCta.url.startsWith("/") ? (
+                <div className="education-page__actions">
+                  <Link className="education-button" href={page.primaryCta.url}>
+                    {page.primaryCta.label}
+                  </Link>
+                </div>
+              ) : (
+                <div className="education-page__actions">
+                  <EducationBetaReadOnlyNotice compact locale={page.locale} />
+                </div>
+              )
             ) : null}
           </div>
         </header>

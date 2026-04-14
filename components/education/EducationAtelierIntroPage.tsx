@@ -5,6 +5,7 @@ import type { EducationTeacherProfile } from "@/lib/education-teachers";
 import type { EducationAtelierIntroContent } from "@/lib/education-workshops";
 import { localizePath } from "@/lib/locale-path";
 
+import { EducationBetaReadOnlyButton } from "./EducationBetaReadOnly";
 import EducationContentPage from "./EducationContentPage";
 
 type EducationAtelierIntroPageProps = {
@@ -72,15 +73,11 @@ export default function EducationAtelierIntroPage({
           </dl>
 
           <div className="education-atelier-intro__actions">
-            <a className="education-button" href={content.signUpUrl} rel="noreferrer" target="_blank">
-              {t(locale, "S’inscrire", "Sign up")}
-            </a>
+            <EducationBetaReadOnlyButton label={t(locale, "S’inscrire", "Sign up")} locale={locale} />
             <Link className="education-button education-button--secondary" href={localizePath(locale, "/trainings")}>
               {t(locale, "Voir la formation", "View the training")}
             </Link>
-            <Link className="education-text-link" href={localizePath(locale, "/contact")}>
-              {t(locale, "Réserver un appel", "Book a call")}
-            </Link>
+            <EducationBetaReadOnlyButton label={t(locale, "Réserver un appel", "Book a call")} locale={locale} secondary />
           </div>
         </div>
       </section>
@@ -186,9 +183,7 @@ export default function EducationAtelierIntroPage({
               </p>
               <p className="education-training-intro__note">{session.note}</p>
               <div className="education-offer-card__actions">
-                <a className="education-button" href={content.signUpUrl} rel="noreferrer" target="_blank">
-                  {t(locale, "S’inscrire", "Sign up")}
-                </a>
+                <EducationBetaReadOnlyButton label={t(locale, "S’inscrire", "Sign up")} locale={locale} />
               </div>
             </article>
           ))}

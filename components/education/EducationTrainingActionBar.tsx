@@ -1,6 +1,6 @@
 "use client";
 
-import { localizePath } from "@/lib/locale-path";
+import { EducationBetaReadOnlyButton } from "./EducationBetaReadOnly";
 
 export type TrainingActionCohortOption = {
   slug: string;
@@ -38,26 +38,14 @@ export default function EducationTrainingActionBar({
       <div className="education-training-action-bar__buttons">
         <a
           className="education-button"
-          href={selectedCohort.signupHref}
-          rel="noreferrer"
-          target="_blank"
-        >
-          {t(locale, "S'inscrire", "Sign Up")}
-        </a>
-        <a
-          className="education-button education-button--secondary"
           href={selectedCohort.pdfHref}
           rel="noreferrer"
           target="_blank"
         >
           {t(locale, "Télécharger le PDF", "Download the PDF")}
         </a>
-        <a
-          className="education-button education-button--secondary"
-          href={localizePath(locale, "/contact")}
-        >
-          {t(locale, "Réserver un appel", "Book a call")}
-        </a>
+        <EducationBetaReadOnlyButton label={t(locale, "S'inscrire", "Sign Up")} locale={locale} secondary />
+        <EducationBetaReadOnlyButton label={t(locale, "Réserver un appel", "Book a call")} locale={locale} secondary />
       </div>
     </div>
   );

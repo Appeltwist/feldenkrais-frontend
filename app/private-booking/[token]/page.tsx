@@ -5,6 +5,7 @@ import { fetchSiteConfig } from "@/lib/api";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
 import type { PrivateBookingPageEntity } from "@/lib/private-booking";
+import { isForestSite } from "@/lib/site-config";
 import {
   fetchPrivateBookingConfig,
   fetchPrivateBookingDetail,
@@ -33,6 +34,10 @@ export default async function PrivateBookingTokenPage({
   const siteConfig = await fetchSiteConfig(hostname).catch(() => null);
   const locale = await getRequestLocale(siteConfig?.defaultLocale ?? "en");
   const notice = readSingleValue(resolvedSearchParams.status);
+
+  if (siteConfig && !isForestSite(siteConfig.centerSlug)) {
+    notFound();
+  }
 
   let entity: PrivateBookingPageEntity | null = null;
 

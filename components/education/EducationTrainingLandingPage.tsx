@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import BlockRenderer from "@/components/blocks/BlockRenderer";
 import { cleanDisplayText } from "@/lib/content-cleanup";
 import type { ApiTrainingCohortSummary, ApiTrainingProgramDetail } from "@/lib/api";
 import { getEducationCenters } from "@/lib/education-content";
@@ -16,6 +15,7 @@ import { asRecord, pickString } from "@/lib/offers";
 import type { NarrativePage } from "@/lib/site-config";
 import type { SectionBlock } from "@/lib/types";
 
+import { EducationBetaReadOnlyButton } from "./EducationBetaReadOnly";
 import EducationScrollSequence from "./EducationScrollSequence";
 import EducationTrainingActionBar from "./EducationTrainingActionBar";
 import EducationTrainingYearSlider from "./EducationTrainingYearSlider";
@@ -245,10 +245,6 @@ export default function EducationTrainingLandingPage({
   const includedSection = findSection(program?.sections, "feature_stack", ["what else is included", "ce qui est inclus"]);
   const betweenSection = findSection(program?.sections, "feature_stack", ["between segments", "entre les segments"]);
   const enrollmentSection = findSection(program?.sections, "journey_steps", ["enrollment process", "processus d inscription", "processus d'inscription"]);
-  const consumedProgramSections = new Set(
-    [overviewSection, includedSection, betweenSection, enrollmentSection].filter(Boolean),
-  );
-  const remainingProgramSections = (program?.sections || []).filter((section) => !consumedProgramSections.has(section));
   const includedItems = getFeatureItems(includedSection, defaultIncludedItems);
   const betweenSegmentsItems = getFeatureItems(betweenSection, defaultIncludedItems.slice(3, 7));
   const includedLearningItems = includedItems.slice(0, 3);
@@ -444,9 +440,7 @@ export default function EducationTrainingLandingPage({
         </div>
 
         <div className="education-offer-card__actions">
-          <a className="education-button" href={localizePath(locale, "/contact")}>
-            {t(locale, "Réserver un appel", "Book a call")}
-          </a>
+          <EducationBetaReadOnlyButton label={t(locale, "Réserver un appel", "Book a call")} locale={locale} />
           <Link className="education-button education-button--secondary" href={localizePath(locale, "/centers")}>
             {t(locale, "Voir tous les centres", "See all centers")}
           </Link>
@@ -631,18 +625,6 @@ export default function EducationTrainingLandingPage({
           </div>
         </div>
       </section>
-
-      {page.sections.length > 0 ? (
-        <section className="education-training-section education-training-section--cms">
-          <BlockRenderer blocks={page.sections} locale={locale.toLowerCase().startsWith("fr") ? "fr" : "en"} />
-        </section>
-      ) : null}
-
-      {remainingProgramSections.length > 0 ? (
-        <section className="education-training-section education-training-section--cms">
-          <BlockRenderer blocks={remainingProgramSections} locale={locale.toLowerCase().startsWith("fr") ? "fr" : "en"} />
-        </section>
-      ) : null}
     </div>
   );
 }

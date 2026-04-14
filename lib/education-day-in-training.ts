@@ -1,5 +1,5 @@
+import { EDUCATION_BOOK_A_CALL_URL } from "@/lib/education-links";
 import { resolveLocale } from "@/lib/i18n";
-import { localizePath } from "@/lib/locale-path";
 
 export type EducationDayInTrainingVideo = {
   title: string;
@@ -83,7 +83,7 @@ export function getEducationDayInTrainingContent(locale: string): EducationDayIn
       signUpLabel: t(locale, "S’inscrire", "Sign up"),
       signUpUrl,
       meetingLabel: t(locale, "Réserver un appel", "Book a meeting"),
-      meetingUrl: localizePath(locale, "/contact"),
+      meetingUrl: EDUCATION_BOOK_A_CALL_URL,
     },
     intro: {
       title: t(locale, "Bien plus qu’une formation", "Much more than a training"),

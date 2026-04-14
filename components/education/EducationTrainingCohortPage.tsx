@@ -5,6 +5,7 @@ import { getEducationTeachersByCohort } from "@/lib/education-teachers";
 import type { EducationTrainingCohort } from "@/lib/education-training";
 import { localizePath } from "@/lib/locale-path";
 
+import EducationBetaReadOnlyNotice, { EducationBetaReadOnlyButton } from "./EducationBetaReadOnly";
 import EducationContentPage from "./EducationContentPage";
 
 type EducationTrainingCohortPageProps = {
@@ -63,19 +64,14 @@ export default function EducationTrainingCohortPage({
             </div>
           </dl>
           <div className="education-center-intro__actions">
+            <EducationBetaReadOnlyButton label={t(locale, "Commencer l’inscription", "Start application")} locale={locale} />
             <a
-              className="education-button"
-              href={cohort.admissionsUrl}
+              className="education-button education-button--secondary"
+              href={cohort.programPdfUrl}
               rel="noreferrer"
               target="_blank"
             >
-              {t(locale, "Commencer l’inscription", "Start application")}
-            </a>
-            <a
-              className="education-button education-button--secondary"
-              href={cohort.pdfRequestHref}
-            >
-              {t(locale, "Demander le programme PDF", "Request the program PDF")}
+              {t(locale, "Télécharger le programme PDF", "Download the program PDF")}
             </a>
             <Link className="education-text-link" href={localizePath(locale, `/centers/${cohort.centerSlug}`)}>
               {t(locale, "Voir le centre", "View the center")}
@@ -150,14 +146,7 @@ export default function EducationTrainingCohortPage({
           <Link className="education-button education-button--secondary" href={localizePath(locale, "/financing")}>
             {t(locale, "Voir le financement", "See financing")}
           </Link>
-          <a
-            className="education-text-link"
-            href={cohort.admissionsUrl}
-            rel="noreferrer"
-            target="_blank"
-          >
-            {t(locale, "Ouvrir l’inscription", "Open application")}
-          </a>
+          <EducationBetaReadOnlyNotice compact locale={locale} />
         </div>
       </section>
     </EducationContentPage>
