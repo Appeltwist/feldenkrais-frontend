@@ -6,7 +6,6 @@ import Link from "next/link";
 
 import { localizePath } from "@/lib/locale-path";
 
-export const NEUROSOMATIC_PLATFORM_URL = "https://neurosomatic.com";
 export const LESSON_LIBRARY_TRIAL_URL = "https://learn.feldenkrais-education.com/?lang=en";
 export const LESSON_LIBRARY_GIFT_URL = "https://client.felded.com/b/fZu9AU8Mq0IP7I6aQT73G0c";
 
@@ -30,9 +29,13 @@ export default function EducationNeurosomaticHeader({
   localePaths = null,
   routePath,
 }: EducationNeurosomaticHeaderProps) {
-  const currentLocale = locale.toLowerCase().startsWith("fr") ? "FR" : "EN";
+  const isFrenchLocale = locale.toLowerCase().startsWith("fr");
+  const currentLocale = isFrenchLocale ? "FR" : "EN";
   const enPath = localePaths?.en || localizePath("en", routePath);
   const frPath = localePaths?.fr || localizePath("fr", routePath);
+  const lessonLibraryLoginUrl = isFrenchLocale
+    ? "https://learn.feldenkrais-education.com/?lang=fr"
+    : LESSON_LIBRARY_TRIAL_URL;
   const [localeMenuOpen, setLocaleMenuOpen] = useState(false);
   const localeMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -104,7 +107,7 @@ export default function EducationNeurosomaticHeader({
 
           <a
             className="neuro-platform-header__login"
-            href={NEUROSOMATIC_PLATFORM_URL}
+            href={lessonLibraryLoginUrl}
             rel="noreferrer"
             target="_blank"
           >
