@@ -1,9 +1,10 @@
 import "server-only";
 
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { cache } from "react";
 
+import { resolveEducationArchiveDir } from "@/lib/education-archive";
 import { resolveLocale } from "@/lib/i18n";
 
 export type EducationNewsletterEntry = {
@@ -126,26 +127,6 @@ function resolveNewsletterImageUrl(rawHtml: string, seed: string, featuredMediaU
   return pickUsefulImage(genericMatches) ?? pickDefaultNewsletterThumbnail(seed);
 }
 
-function resolveArchiveDir() {
-  const root = process.env.FE_CRAWL_ARCHIVE_DIR?.trim();
-  if (!root || !existsSync(root)) {
-    return null;
-  }
-
-  const directIndex = path.join(root, "content_index.jsonl");
-  if (existsSync(directIndex)) {
-    return root;
-  }
-
-  const latestRun = readdirSync(root, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name)
-    .sort((a, b) => b.localeCompare(a))
-    .find((dirname) => existsSync(path.join(root, dirname, "content_index.jsonl")));
-
-  return latestRun ? path.join(root, latestRun) : null;
-}
-
 function extractNewsletterContent(rawHtml: string, title: string) {
   const beforeFooter = rawHtml.split("<footer", 1)[0] ?? rawHtml;
   const blocks = Array.from(beforeFooter.matchAll(NEWSLETTER_BLOCK_RE)).map((match) => match[1]);
@@ -213,7 +194,7 @@ function extractNewsletterContent(rawHtml: string, title: string) {
 }
 
 function parseArchiveRows(locale: string): EducationNewsletterEntry[] {
-  const archiveDir = resolveArchiveDir();
+  const archiveDir = resolveEducationArchiveDir();
   if (!archiveDir) {
     return [];
   }

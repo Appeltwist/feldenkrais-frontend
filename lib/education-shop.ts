@@ -1,9 +1,10 @@
 import "server-only";
 
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { cache } from "react";
 
+import { resolveEducationArchiveDir } from "@/lib/education-archive";
 import { resolveLocale } from "@/lib/i18n";
 import {
   EDUCATION_MASTERCLASS_COVER_MAP,
@@ -178,28 +179,8 @@ function stripTags(value: string) {
   );
 }
 
-function resolveArchiveDir() {
-  const root = process.env.FE_CRAWL_ARCHIVE_DIR?.trim();
-  if (!root || !existsSync(root)) {
-    return null;
-  }
-
-  const directIndex = path.join(root, "content_index.jsonl");
-  if (existsSync(directIndex)) {
-    return root;
-  }
-
-  const latestRun = readdirSync(root, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name)
-    .sort((a, b) => b.localeCompare(a))
-    .find((dirname) => existsSync(path.join(root, dirname, "content_index.jsonl")));
-
-  return latestRun ? path.join(root, latestRun) : null;
-}
-
 function readArchiveRows() {
-  const archiveDir = resolveArchiveDir();
+  const archiveDir = resolveEducationArchiveDir();
   if (!archiveDir) {
     return { archiveDir: null, rows: [] as ArchiveRow[] };
   }
