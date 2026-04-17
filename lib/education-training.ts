@@ -424,7 +424,7 @@ export function getEducationTrainingCohorts(locale: string): EducationTrainingCo
       centerName: brusselsCenter.name,
       location: brusselsCenter.location,
       periodLabel: t(locale, "Commence en janvier 2027", "Starts in January 2027"),
-      director: "Scott Clark / Yvo Mentens",
+      director: "Yvo Mentens",
       segments: "12",
       pricing: t(locale, "4200 € / an", "4200 € / year"),
       admissionsUrl: buildAdmissionsUrl(locale, "brussels"),
