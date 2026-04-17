@@ -2,7 +2,22 @@
 
 Standalone multi-site frontend for Feldenkrais Education.
 
-## Local setup
+## FE beta branch
+
+The `release/fe-beta-frontend` branch targets the live FE beta frontend.
+
+Use these values for local validation on this branch:
+
+```bash
+NEXT_PUBLIC_API_BASE=https://api.forest-lighthouse.be/api
+SITE_HOSTNAME_OVERRIDE=feldenkrais-education.com
+```
+
+Beta deploys go to the `feldenkrais-frontend-beta` Vercel project and serve `beta.feldenkrais-education.com`.
+
+The FE beta stays intentionally read-only: forms, contact requests, applications, and bookings remain disabled until launch.
+
+## Optional local backend setup
 
 1. Add local domains to `/etc/hosts`:
 
@@ -17,7 +32,7 @@ Standalone multi-site frontend for Feldenkrais Education.
 python manage.py runserver 8000
 ```
 
-3. In this frontend repo, ensure `.env.local` contains:
+3. If you explicitly want to work against a local backend, ensure `.env.local` contains:
 
 ```bash
 NEXT_PUBLIC_API_BASE=http://localhost:8000/api
@@ -61,7 +76,7 @@ If browser API requests fail with CORS errors, backend must allow frontend origi
 
 Backend CORS config is not managed in this repository.
 
-For production deployment on Vercel, set `NEXT_PUBLIC_API_BASE` in the project settings. Do not rely on any localhost fallback. If you are testing on a temporary `*.vercel.app` hostname before DNS is switched, also set `SITE_HOSTNAME_OVERRIDE=forest-lighthouse.be`.
+For FE beta deployments on Vercel, set `NEXT_PUBLIC_API_BASE=https://api.forest-lighthouse.be/api` and `SITE_HOSTNAME_OVERRIDE=feldenkrais-education.com` in the project settings. Do not rely on any localhost fallback.
 
 ## Manual verification (offer detail)
 

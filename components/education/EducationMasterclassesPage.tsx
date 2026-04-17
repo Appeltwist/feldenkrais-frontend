@@ -1,6 +1,12 @@
 import Link from "next/link";
 
 import type { OfferSummary } from "@/lib/api";
+import {
+  EDUCATION_MASTERCLASS_COVER_MAP,
+  EDUCATION_MASTERCLASS_ORDER,
+  type EducationMasterclassSlug,
+  resolveEducationMasterclassSlug,
+} from "@/lib/education-masterclass-media";
 import { localizePath } from "@/lib/locale-path";
 import { asRecord, getOfferSlug, getOfferTitle, pickString } from "@/lib/offers";
 
@@ -21,12 +27,9 @@ type MasterclassCard = {
   chips: string[];
 };
 
-const MASTERCLASS_ORDER = [
-  "the-singers-voice",
-  "the-skeletal-voice",
-  "unlearning-pain",
-  "feldenkrais-for-sports",
-] as const;
+type MasterclassCardWithCanonical = MasterclassCard & {
+  canonicalSlug: EducationMasterclassSlug | null;
+};
 
 function t(locale: string, fr: string, en: string) {
   return locale.toLowerCase().startsWith("fr") ? fr : en;
@@ -43,14 +46,17 @@ function truncateText(value: string, maxLength: number) {
 }
 
 function buildMasterclassCards(offers: OfferSummary[]): MasterclassCard[] {
-  const orderMap = new Map<string, number>(MASTERCLASS_ORDER.map((slug, index) => [slug, index]));
+  const orderMap = new Map<string, number>(
+    EDUCATION_MASTERCLASS_ORDER.map((slug, index) => [slug, index]),
+  );
 
   return offers
-    .map((offer) => {
+    .map((offer): MasterclassCardWithCanonical | null => {
       const slug = getOfferSlug(offer);
       if (!slug) {
         return null;
       }
+      const canonicalSlug = resolveEducationMasterclassSlug(slug);
 
       const record = asRecord(offer);
       const facilitators = Array.isArray(record?.facilitators)
@@ -81,22 +87,33 @@ function buildMasterclassCards(offers: OfferSummary[]): MasterclassCard[] {
         slug,
         title: getOfferTitle(offer, "Masterclass"),
         excerpt: truncateText(pickString(record, ["excerpt", "summary"]), 170),
-        imageUrl: pickString(record, ["hero_image_url", "heroImageUrl", "image_url", "imageUrl"]),
+        imageUrl:
+          (canonicalSlug ? EDUCATION_MASTERCLASS_COVER_MAP[canonicalSlug] : null) ||
+          pickString(record, ["hero_image_url", "heroImageUrl", "image_url", "imageUrl"]),
         facilitatorLabel: facilitators.join(" / "),
         chips: themes,
+        canonicalSlug,
       };
     })
-    .filter((offer): offer is MasterclassCard => offer !== null)
+    .filter((offer): offer is MasterclassCardWithCanonical => offer !== null)
     .sort((a, b) => {
-      const aIndex = orderMap.get(a.slug) ?? Number.MAX_SAFE_INTEGER;
-      const bIndex = orderMap.get(b.slug) ?? Number.MAX_SAFE_INTEGER;
+      const aIndex = orderMap.get(a.canonicalSlug || "") ?? Number.MAX_SAFE_INTEGER;
+      const bIndex = orderMap.get(b.canonicalSlug || "") ?? Number.MAX_SAFE_INTEGER;
 
       if (aIndex !== bIndex) {
         return aIndex - bIndex;
       }
 
       return a.title.localeCompare(b.title);
-    });
+    })
+    .map((card) => ({
+      slug: card.slug,
+      title: card.title,
+      excerpt: card.excerpt,
+      imageUrl: card.imageUrl,
+      facilitatorLabel: card.facilitatorLabel,
+      chips: card.chips,
+    }));
 }
 
 export default function EducationMasterclassesPage({

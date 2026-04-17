@@ -91,7 +91,7 @@ const VIDEO_PAGE_CONFIG: Record<"en" | "fr", LocaleConfig> = {
       {
         anchor: "moshe",
         heading: "About Moshe Feldenkrais",
-        href: "/moshe-feldenkrais",
+        href: "/what-is-feldenkrais#biography",
       },
       {
         anchor: "fe",
@@ -123,7 +123,7 @@ const VIDEO_PAGE_CONFIG: Record<"en" | "fr", LocaleConfig> = {
       {
         anchor: "moshe",
         heading: "À propos de Moshe Feldenkrais",
-        href: "/moshe-feldenkrais",
+        href: "/what-is-feldenkrais#biography",
       },
       {
         anchor: "fe",

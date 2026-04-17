@@ -1,6 +1,6 @@
 "use client";
 
-import { EducationBetaReadOnlyButton } from "./EducationBetaReadOnly";
+import EducationCenterActionModalButton from "./EducationCenterActionModalButton";
 
 export type TrainingActionCohortOption = {
   slug: string;
@@ -24,28 +24,30 @@ export default function EducationTrainingActionBar({
   cohorts,
   locale,
 }: EducationTrainingActionBarProps) {
-  const selectedCohort =
-    cohorts.find((cohort) => cohort.slug === "brussels-4") ??
-    cohorts[0] ??
-    null;
-
-  if (!selectedCohort) {
+  if (cohorts.length === 0) {
     return null;
   }
 
   return (
     <div className={`education-training-action-bar ${className}`.trim()}>
       <div className="education-training-action-bar__buttons">
-        <a
-          className="education-button"
-          href={selectedCohort.pdfHref}
-          rel="noreferrer"
-          target="_blank"
-        >
-          {t(locale, "Télécharger le PDF", "Download the PDF")}
-        </a>
-        <EducationBetaReadOnlyButton label={t(locale, "S'inscrire", "Sign Up")} locale={locale} secondary />
-        <EducationBetaReadOnlyButton label={t(locale, "Réserver un appel", "Book a call")} locale={locale} secondary />
+        <EducationCenterActionModalButton
+          label={t(locale, "Télécharger le PDF", "Download the PDF")}
+          locale={locale}
+          variant="download-pdf"
+        />
+        <EducationCenterActionModalButton
+          label={t(locale, "S'inscrire", "Sign Up")}
+          locale={locale}
+          secondary
+          variant="signup"
+        />
+        <EducationCenterActionModalButton
+          label={t(locale, "Réserver un appel", "Book a call")}
+          locale={locale}
+          secondary
+          variant="book-call"
+        />
       </div>
     </div>
   );

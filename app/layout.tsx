@@ -141,7 +141,7 @@ export default async function RootLayout({
               <p>
                 If you are testing on Vercel before the DNS switch, set{" "}
                 <code>SITE_HOSTNAME_OVERRIDE</code> to a hostname the CMS already knows, for
-                example <code>forest-lighthouse.be</code>.
+                example <code>feldenkrais-education.com</code>.
               </p>
             ) : null}
           </main>

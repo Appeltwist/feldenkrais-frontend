@@ -1500,7 +1500,10 @@ a {
 }
 
 .education-header__locale-picker {
+  margin-bottom: -0.35rem;
+  padding-bottom: 0.35rem;
   position: relative;
+  z-index: 90;
 }
 
 .education-header__locale-button {
@@ -1529,9 +1532,10 @@ a {
   pointer-events: none;
   position: absolute;
   right: 0;
-  top: calc(100% + 0.75rem);
+  top: calc(100% - 0.05rem);
   transform: translateY(6px);
   transition: opacity 180ms ease, transform 180ms ease;
+  z-index: 100;
 }
 
 .education-header__locale-picker.is-open .education-header__locale-menu {
@@ -2492,11 +2496,40 @@ a {
 
 .education-center-shell--hero {
   align-items: center;
+  background-color: #111827;
   background-position: center;
   background-size: cover;
   display: grid;
   min-height: 640px;
   padding: 2.2rem;
+}
+
+.education-center-shell__hero-video,
+.education-center-shell__hero-overlay {
+  inset: 0;
+  position: absolute;
+}
+
+.education-center-shell__hero-video {
+  overflow: hidden;
+}
+
+.education-center-shell__hero-video iframe {
+  border: 0;
+  height: max(100%, 56.25vw);
+  left: 50%;
+  min-height: 100%;
+  min-width: 100%;
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(1.18);
+  width: max(100%, 100vw);
+}
+
+.education-center-shell__hero-overlay {
+  background: linear-gradient(180deg, rgba(15, 18, 24, 0.22), rgba(15, 18, 24, 0.58));
+  z-index: 0;
 }
 
 .education-center-shell__hero-inner {
@@ -2659,6 +2692,13 @@ a {
 
 .education-center-video {
   box-shadow: 0 20px 42px rgba(10, 12, 18, 0.28);
+}
+
+.education-center-static-media {
+  background-repeat: no-repeat;
+  background-size: cover;
+  border-radius: 24px;
+  min-height: 420px;
 }
 
 .education-center-general-grid {
@@ -3332,6 +3372,62 @@ a {
 
 .education-shop-body {
   padding: 1.15rem;
+}
+
+.education-shop-product {
+  display: grid;
+  gap: 1.2rem;
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+}
+
+.education-shop-product__gallery,
+.education-shop-product__purchase {
+  padding: 1rem;
+}
+
+.education-shop-product__gallery .neuro-masterclass-gallery {
+  margin: 0;
+}
+
+.education-shop-product__gallery .neuro-masterclass-gallery__image {
+  aspect-ratio: 1.15;
+  border-radius: 18px;
+  object-fit: cover;
+}
+
+.education-shop-product__purchase {
+  align-content: start;
+  display: grid;
+  gap: 1rem;
+}
+
+.education-shop-product__purchase h2 {
+  font-size: clamp(1.7rem, 3vw, 2.25rem);
+  margin: 0;
+}
+
+.education-shop-product__purchase p {
+  line-height: 1.7;
+  margin: 0;
+}
+
+.education-shop-product__price {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.education-shop-product__price strong {
+  color: #1f2d40;
+  font-size: clamp(1.7rem, 3.4vw, 2.35rem);
+  line-height: 1;
+}
+
+.education-shop-product__price-original {
+  color: #8a847b;
+  font-size: 1rem;
+  text-decoration: line-through;
 }
 
 .education-domain-body,
@@ -4019,6 +4115,165 @@ a {
   min-width: 180px;
 }
 
+.education-center-modal {
+  align-items: center;
+  background: rgba(10, 14, 24, 0.6);
+  backdrop-filter: blur(12px);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 1.5rem;
+  position: fixed;
+  z-index: 1200;
+}
+
+.education-center-modal__dialog {
+  background:
+    radial-gradient(circle at top left, rgba(155, 192, 222, 0.14), transparent 32%),
+    linear-gradient(180deg, #1f2635 0%, #111827 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 24px;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.34);
+  color: #f6f7fb;
+  max-width: 38rem;
+  padding: 2rem;
+  position: relative;
+  width: min(100%, 38rem);
+}
+
+.education-center-modal__close {
+  align-items: center;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.08);
+  border: 0;
+  border-radius: 999px;
+  color: #ffffff;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 1.5rem;
+  height: 2.5rem;
+  justify-content: center;
+  line-height: 1;
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  transition: background-color 180ms ease;
+  width: 2.5rem;
+}
+
+.education-center-modal__close:hover,
+.education-center-modal__close:focus-visible {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.education-center-modal__eyebrow {
+  color: rgba(244, 242, 235, 0.62);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  margin: 0 0 0.8rem;
+  text-transform: uppercase;
+}
+
+.education-center-modal__dialog h3 {
+  color: #ffffff;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(2rem, 4vw, 2.55rem);
+  line-height: 0.95;
+  margin: 0 0 0.9rem;
+  max-width: 12ch;
+}
+
+.education-center-modal__body {
+  color: rgba(244, 242, 235, 0.76);
+  font-size: 1rem;
+  line-height: 1.65;
+  margin: 0 0 1.5rem;
+  max-width: 42ch;
+}
+
+.education-center-modal__options,
+.education-center-modal__option-grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.education-center-modal__options {
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
+.education-center-modal__option {
+  align-items: flex-start;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  font: inherit;
+  gap: 0.25rem;
+  min-height: 4.75rem;
+  padding: 1rem 1.05rem;
+  text-align: left;
+  text-decoration: none;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    transform 180ms ease;
+}
+
+.education-center-modal__option strong {
+  font-size: 1.02rem;
+  font-weight: 700;
+}
+
+.education-center-modal__option span {
+  color: rgba(244, 242, 235, 0.68);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.education-center-modal__option:hover,
+.education-center-modal__option:focus-visible,
+.education-center-modal__option.is-selected {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(244, 213, 138, 0.44);
+  transform: translateY(-1px);
+}
+
+.education-center-modal__form {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 1.2rem;
+}
+
+.education-center-modal__form label {
+  color: rgba(244, 242, 235, 0.82);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.education-center-modal__form input[type="email"] {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  color: #ffffff;
+  font: inherit;
+  min-height: 3rem;
+  padding: 0.85rem 1rem;
+}
+
+.education-center-modal__form input[type="email"]::placeholder {
+  color: rgba(244, 242, 235, 0.46);
+}
+
+.education-center-modal__honeypot {
+  left: -9999px;
+  position: absolute;
+}
+
 .education-training-section--intro {
   align-items: center;
   display: grid;
@@ -4626,6 +4881,24 @@ a {
   .education-training-support-card .education-button,
   .education-training-support-card .education-button--secondary {
     width: 100%;
+  }
+
+  .education-center-modal {
+    padding: 1rem;
+  }
+
+  .education-center-modal__dialog {
+    border-radius: 20px;
+    padding: 1.5rem;
+  }
+
+  .education-center-modal__dialog h3 {
+    max-width: none;
+  }
+
+  .education-center-modal__options,
+  .education-center-modal__option-grid {
+    grid-template-columns: 1fr;
   }
 
   .education-training-centers-grid,
@@ -22467,5 +22740,412 @@ body:has(.neuro-platform-page) .education-main-shell {
 
   .neuro-platform-landing-about__body p + p {
     margin-top: 1.4rem;
+  }
+}
+
+/* FE beta frontend refinements */
+.education-nav__item.has-children::after {
+  content: "";
+  height: 0.9rem;
+  left: -0.5rem;
+  position: absolute;
+  right: -0.5rem;
+  top: 100%;
+}
+
+.education-nav__dropdown {
+  top: calc(100% + 0.22rem);
+  transform: translateY(6px);
+}
+
+.site-education .education-promo-row__signup {
+  gap: 0.65rem;
+}
+
+.site-education .education-promo-row__signup .education-button {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  min-height: 46px;
+  padding: 0 1.25rem;
+  text-decoration: none;
+}
+
+.education-newsletter-signup__form {
+  gap: 0.75rem;
+}
+
+.education-newsletter-signup__form a.education-button {
+  align-items: center;
+  background: #30364a;
+  border-radius: 0;
+  color: #ffffff;
+  display: inline-flex;
+  font-size: 1rem;
+  font-weight: 700;
+  justify-content: center;
+  min-height: 64px;
+  padding: 0 1.45rem;
+  text-decoration: none;
+}
+
+.education-center-address-card {
+  align-items: center;
+  background:
+    radial-gradient(circle at top left, rgba(186, 96, 40, 0.08), transparent 42%),
+    linear-gradient(180deg, #fffdf9 0%, #f7efe5 100%);
+  border: 1px solid #ead9c8;
+  border-radius: 24px;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: auto 1fr;
+  margin: 0 auto;
+  max-width: 52rem;
+  padding: 1.15rem 1.35rem;
+}
+
+.education-center-address-card__icon {
+  align-items: center;
+  background: rgba(186, 96, 40, 0.14);
+  border-radius: 18px;
+  color: #a55b2d;
+  display: inline-flex;
+  height: 3.3rem;
+  justify-content: center;
+  width: 3.3rem;
+}
+
+.education-center-address-card__icon svg {
+  height: 1.4rem;
+  width: 1.4rem;
+}
+
+.education-center-address-card p {
+  color: #6b635c;
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin: 0 0 0.2rem;
+  text-transform: uppercase;
+}
+
+.education-center-address-card strong {
+  color: #2f3540;
+  font-size: clamp(1.1rem, 2.1vw, 1.5rem);
+  line-height: 1.25;
+}
+
+.education-center-progress-panel {
+  display: grid;
+  gap: 1.45rem;
+}
+
+.education-center-progress-panel__note {
+  color: #596172;
+  line-height: 1.68;
+  margin: 0;
+  max-width: 48rem;
+}
+
+.education-center-progress-panel__grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.education-center-progress-card {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(135, 148, 178, 0.24);
+  border-radius: 24px;
+  box-shadow: 0 18px 34px rgba(41, 52, 75, 0.08);
+  display: grid;
+  gap: 0.8rem;
+  justify-items: center;
+  min-height: 260px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.education-center-progress-card__ring {
+  align-items: center;
+  background: conic-gradient(#ba6028 calc(var(--progress, 0) * 1%), rgba(48, 54, 74, 0.14) 0);
+  border-radius: 999px;
+  display: grid;
+  height: 112px;
+  justify-items: center;
+  position: relative;
+  width: 112px;
+}
+
+.education-center-progress-card__ring::after {
+  background: #f7f9fc;
+  border-radius: inherit;
+  content: "";
+  inset: 11px;
+  position: absolute;
+}
+
+.education-center-progress-card__ring span {
+  color: #2f3540;
+  font-size: 1.35rem;
+  font-weight: 700;
+  position: relative;
+  z-index: 1;
+}
+
+.education-center-progress-card h3 {
+  color: #2f3540;
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.education-center-progress-card p {
+  color: #596172;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.education-practitioner-guilds {
+  display: grid;
+  gap: 1.1rem;
+  margin: 0 auto clamp(3rem, 6vw, 5rem);
+  max-width: 1320px;
+  padding: clamp(1.5rem, 3vw, 2rem);
+}
+
+.education-practitioner-guilds h2 {
+  font-size: clamp(1.55rem, 2.8vw, 2.25rem);
+  margin: 0;
+}
+
+.education-practitioner-guilds__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.education-practitioner-guilds__links a {
+  align-items: center;
+  background: rgba(186, 96, 40, 0.08);
+  border: 1px solid rgba(186, 96, 40, 0.18);
+  border-radius: 999px;
+  color: #934d1f;
+  display: inline-flex;
+  font-weight: 700;
+  min-height: 2.8rem;
+  padding: 0 1rem;
+  text-decoration: none;
+}
+
+.education-practitioner-guilds__links a:hover {
+  background: rgba(186, 96, 40, 0.14);
+}
+
+.education-workshops-page__pathways {
+  background:
+    linear-gradient(135deg, rgba(33, 86, 133, 0.96), rgba(14, 53, 92, 0.98));
+  border-radius: 28px;
+  color: #ffffff;
+  padding: clamp(2rem, 4vw, 3rem);
+}
+
+.education-workshops-page__pathways .home-section-kicker,
+.education-workshops-page__pathways h2,
+.education-workshops-page__pathways .home-section__intro {
+  color: #ffffff;
+}
+
+.education-workshops-page__pathways .home-section__intro {
+  max-width: 48rem;
+}
+
+.education-workshops-page__pathways .neuro-platform-landing-options {
+  margin-top: 1.5rem;
+}
+
+.education-workshops-page__pathways .neuro-platform-landing-option {
+  box-shadow: 0 24px 48px rgba(7, 24, 49, 0.22);
+}
+
+.neuro-platform-header__locale {
+  margin-bottom: -0.35rem;
+  padding-bottom: 0.35rem;
+  position: relative;
+  z-index: 80;
+}
+
+.neuro-platform-header__locale-button,
+.neuro-platform-header__login {
+  align-items: center;
+  background: transparent;
+  border: 1.5px solid rgba(255, 255, 255, 0.68);
+  border-radius: 16px;
+  color: #ffffff;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 1.05rem;
+  font-weight: 700;
+  justify-content: center;
+  min-height: 52px;
+  min-width: 116px;
+  padding: 0.75rem 1.1rem;
+  text-decoration: none;
+}
+
+.neuro-platform-header__locale-button:hover,
+.neuro-platform-header__login:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.neuro-platform-header__locale-menu {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px);
+  transition: opacity 180ms ease, transform 180ms ease;
+  z-index: 90;
+}
+
+.neuro-platform-header__locale.is-open .neuro-platform-header__locale-menu {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.neuro-platform-landing-masterclass-card__copy h3,
+.neuro-platform-landing-masterclass-card__copy p {
+  color: #ffffff;
+}
+
+.neuro-platform-landing-masterclass-card__copy p {
+  text-shadow: 0 6px 18px rgba(7, 16, 29, 0.34);
+}
+
+.neuro-platform-included-slide__art.is-contained {
+  background:
+    radial-gradient(circle at top, rgba(214, 144, 79, 0.12), transparent 48%),
+    rgba(255, 255, 255, 0.04);
+}
+
+.neuro-platform-included-slide__art.is-contained img {
+  height: auto;
+  max-height: 58%;
+  max-width: 58%;
+  width: clamp(180px, 52%, 320px);
+}
+
+.neuro-platform-membership__pricing {
+  justify-items: stretch;
+}
+
+.neuro-platform-membership__pricing .neuro-platform-button {
+  justify-content: center;
+  width: min(100%, 340px);
+}
+
+.neuro-platform-landing-library-carousel {
+  margin: clamp(2rem, 3vw, 2.5rem) 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.neuro-platform-landing-library-carousel::before,
+.neuro-platform-landing-library-carousel::after {
+  bottom: 0;
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  width: clamp(2rem, 6vw, 5rem);
+  z-index: 1;
+}
+
+.neuro-platform-landing-library-carousel::before {
+  background: linear-gradient(90deg, #495472 0%, rgba(73, 84, 114, 0) 100%);
+  left: 0;
+}
+
+.neuro-platform-landing-library-carousel::after {
+  background: linear-gradient(270deg, #495472 0%, rgba(73, 84, 114, 0) 100%);
+  right: 0;
+}
+
+.neuro-platform-landing-library-carousel__track {
+  display: flex;
+  gap: 1rem;
+  width: max-content;
+  animation: neuro-platform-landing-library-scroll 34s linear infinite;
+}
+
+.neuro-platform-landing-library-carousel:hover .neuro-platform-landing-library-carousel__track {
+  animation-play-state: paused;
+}
+
+.neuro-platform-landing-library-carousel .neuro-platform-landing-library-rail__item {
+  aspect-ratio: 0.82;
+  flex: 0 0 clamp(170px, 19vw, 240px);
+  min-height: 0;
+}
+
+.neuro-platform-landing-library-carousel__track--masterclasses {
+  gap: 1.15rem;
+  animation-duration: 38s;
+}
+
+.neuro-platform-landing-library-carousel--masterclasses .neuro-platform-landing-masterclass-card {
+  aspect-ratio: 0.84;
+  flex: 0 0 clamp(210px, 23vw, 300px);
+  min-height: 0;
+}
+
+@media (max-width: 760px) {
+  .site-education .education-promo-row__signup .education-button,
+  .education-newsletter-signup__form a.education-button {
+    width: 100%;
+  }
+
+  .education-center-address-card {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+
+  .education-center-progress-card {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .neuro-platform-landing-library-carousel__track {
+    gap: 0.75rem;
+  }
+
+  .neuro-platform-landing-library-carousel .neuro-platform-landing-library-rail__item {
+    flex-basis: 150px;
+  }
+
+  .neuro-platform-landing-library-carousel--masterclasses .neuro-platform-landing-masterclass-card {
+    flex-basis: 190px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .neuro-platform-landing-library-carousel__track {
+    animation: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .education-shop-product {
+    grid-template-columns: 1fr;
+  }
+}
+
+@keyframes neuro-platform-landing-library-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(calc(-50% - 0.5rem));
   }
 }

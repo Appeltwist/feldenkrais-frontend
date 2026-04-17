@@ -34,6 +34,12 @@ type ArchiveRow = {
 
 const NEWSLETTER_BLOCK_RE =
   /(<h([12]) class="fl-heading">[\s\S]*?<\/h\2>|<div class="fl-rich-text">[\s\S]*?<\/div>)/g;
+const DEFAULT_NEWSLETTER_THUMBNAILS = [
+  "https://feldenkrais-education.com/wp-content/uploads/sites/15/2024/10/1085_11201349_S321.jpg",
+  "https://feldenkrais-education.com/wp-content/uploads/sites/15/2024/09/1085_11201251_S070.jpg",
+  "https://feldenkrais-education.com/wp-content/uploads/sites/15/2024/09/1085_11201351_S338.jpg",
+  "https://feldenkrais-education.com/wp-content/uploads/sites/15/2024/09/1085_11201249_S056.jpg",
+] as const;
 
 function decodeEntities(value: string) {
   return value
@@ -92,7 +98,32 @@ function isUsefulImage(url: string | undefined) {
     return false;
   }
 
-  return !/\/LOGO(?:[-_.]|\.png|\.jpe?g|\.webp)/i.test(url);
+  return !/\/LOGO(?:[-_.]|\.png|\.jpe?g|\.webp)|Asset-1@4x|spinner|gravatar|icon|logo/i.test(url);
+}
+
+function pickUsefulImage(urls: string[]) {
+  return urls.find((url) => isUsefulImage(url)) ?? null;
+}
+
+function pickDefaultNewsletterThumbnail(seed: string) {
+  const total = Array.from(seed).reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return DEFAULT_NEWSLETTER_THUMBNAILS[total % DEFAULT_NEWSLETTER_THUMBNAILS.length];
+}
+
+function resolveNewsletterImageUrl(rawHtml: string, seed: string, featuredMediaUrl?: string) {
+  const preferredMatches =
+    rawHtml.match(/https?:\/\/[^"' )>]*1085_[^"' )>]*\.(?:jpe?g|png|webp)/gi) ?? [];
+  const preferredImage = pickUsefulImage(preferredMatches);
+  if (preferredImage) {
+    return preferredImage;
+  }
+
+  if (isUsefulImage(featuredMediaUrl)) {
+    return featuredMediaUrl ?? null;
+  }
+
+  const genericMatches = rawHtml.match(/https?:\/\/[^"' )>]*\.(?:jpe?g|png|webp)/gi) ?? [];
+  return pickUsefulImage(genericMatches) ?? pickDefaultNewsletterThumbnail(seed);
 }
 
 function resolveArchiveDir() {
@@ -222,7 +253,7 @@ function parseArchiveRows(locale: string): EducationNewsletterEntry[] {
         contentHtml: extracted.contentHtml,
         publishedAt: row.last_modified?.trim() || "",
         publishedLabel: extracted.publishedLabel,
-        imageUrl: isUsefulImage(row.featured_media_url) ? row.featured_media_url ?? null : null,
+        imageUrl: resolveNewsletterImageUrl(rawHtml, row.slug?.trim() || title, row.featured_media_url),
         sourceUrl: row.url?.trim() || "",
       };
     })

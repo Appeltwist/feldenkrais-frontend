@@ -99,7 +99,8 @@ type HomePageReferences = {
   workshopsPage: NarrativePage | null;
 };
 
-const HOME_METHOD_CARD_IMAGE_URL = "/brands/forest-lighthouse/feldenkrais-session.jpg";
+const HOME_METHOD_CARD_IMAGE_URL =
+  "/brands/feldenkrais-education/media-library/079A23510.jpg";
 const HOME_METHOD_VIDEO_POSTER_URL = "https://i.ytimg.com/vi/voC0aWkl3f8/maxresdefault.jpg";
 const HOME_LESSON_CARD_IMAGE_URL = "/brands/feldenkrais-education/training/year-1.jpeg";
 const HOME_TRAINING_VISUAL_URL =
@@ -169,8 +170,8 @@ function buildHomeEntryOptions(locale: string, refs: HomePageReferences): HomeEn
         (isFr
           ? "Comprendre les bases de la méthode Feldenkrais, ses principes, et les différentes façons d’y entrer."
           : "Understand the foundations of the Feldenkrais Method, its principles, and the different ways to begin."),
-      href: resolveCmsHref(locale, refs.methodPage?.primaryCta?.url, "/what-is-feldenkrais"),
-      imageUrl: refs.methodPage?.hero.imageUrl || HOME_METHOD_CARD_IMAGE_URL,
+      href: localizePath(locale, "/what-is-feldenkrais"),
+      imageUrl: HOME_METHOD_CARD_IMAGE_URL,
       imageAlt: refs.methodPage?.hero.title || (isFr ? "Personne en séance Feldenkrais" : "Person in a Feldenkrais session"),
     },
   ];
@@ -303,11 +304,9 @@ function HomeWhatsOnPreview({
   const isFr = locale.toLowerCase().startsWith("fr");
   const title = workshopsPage?.title || (isFr ? "Tous les workshops" : "All workshops");
   const intro =
-    workshopsPage?.hero.body ||
-    workshopsPage?.subtitle ||
-    (isFr
-      ? "Les workshops sont l’une des portes d’entrée les plus claires vers Feldenkrais Education. Ils permettent de rencontrer la méthode à travers un thème, un enseignant, ou une question pratique avant de s’engager dans un parcours plus long."
-      : "Workshops are one of the clearest FE entry points. They let people meet the method through a theme, a teacher, or a practical question before committing to a longer path.");
+    isFr
+      ? "Découvrez les workshops de cette année, depuis des formations avancées ancrées dans des domaines spécifiques jusqu’aux workshops d’introduction qui donnent un aperçu des stratégies d’apprentissage neurosomatiques propres à FE."
+      : "Discover this year's workshops, from advanced domain-specific trainings to introductory workshops that give you a taste of the unique neurosomatic learning strategies.";
 
   if (upcomingWorkshops.length === 0) {
     return (
@@ -431,12 +430,14 @@ export default async function HomePage() {
       <HomeIntroVideo locale={locale} methodPage={methodPage} />
       <EducationNewsletterSignupRow
         content={{
-          title: newsletterPage?.hero.title || newsletterPage?.title,
-          subtitle: newsletterPage?.subtitle,
-          body: newsletterPage?.hero.body || newsletterPage?.subtitle,
+          title: "Newsletter",
+          subtitle: "",
+          body: "",
           imageUrl: newsletterPage?.hero.imageUrl,
-          href: newsletterPage?.primaryCta?.url || EDUCATION_NEWSLETTER_SIGNUP_URL,
-          buttonLabel: newsletterPage?.primaryCta?.label,
+          href: EDUCATION_NEWSLETTER_SIGNUP_URL,
+          buttonLabel: locale.toLowerCase().startsWith("fr")
+            ? "S’inscrire à la newsletter"
+            : "Sign up to the newsletter",
         }}
         locale={locale}
       />
@@ -444,8 +445,10 @@ export default async function HomePage() {
       <EducationPlatformPromoRow
         content={{
           title: platformPage?.hero.title || platformPage?.title,
-          subtitle: platformPage?.subtitle,
-          body: platformPage?.hero.body || platformPage?.subtitle,
+          subtitle: "",
+          body: locale.toLowerCase().startsWith("fr")
+            ? "La plateforme prolonge les workshops et formations en présence. C’est l’endroit où l’étude en ligne devient accessible à travers des leçons audio ou des documentaires innovants."
+            : "The platform extends beyond in-person workshops and trainings. It is where online study become accessible through audio lessons or innovative documentaries",
           imageUrl: platformPage?.hero.imageUrl,
           href: platformPage?.primaryCta?.url || "/platform",
           buttonLabel: platformPage?.primaryCta?.label,

@@ -11,7 +11,6 @@ import EducationWorkshopSlider from "./EducationWorkshopSlider";
 type EducationWorkshopArchivePageProps = {
   locale: string;
   page: NarrativePage;
-  platformPage?: NarrativePage | null;
   upcomingWorkshops: EducationWorkshopCollectionItem[];
 };
 
@@ -22,7 +21,6 @@ function t(locale: string, fr: string, en: string) {
 export default function EducationWorkshopArchivePage({
   locale,
   page,
-  platformPage,
   upcomingWorkshops,
 }: EducationWorkshopArchivePageProps) {
   const resolvedPage: NarrativePage = {
@@ -58,12 +56,11 @@ export default function EducationWorkshopArchivePage({
           <div>
             <h2>{resolvedPage.title || t(locale, "Workshops à venir", "Upcoming workshops")}</h2>
             <p className="home-section__intro">
-              {resolvedPage.hero.body ||
-                t(
-                  locale,
-                  "Les introductions FE à la formation apparaissent ici avec trois workshops Feldenkrais proposés par Forest Lighthouse.",
-                  "The FE introductions to the training appear here alongside three Feldenkrais-related workshops offered by Forest Lighthouse.",
-                )}
+              {t(
+                locale,
+                "Découvrez les workshops de cette année, des formations spécialisées avancées aux workshops d’introduction qui donnent un aperçu des stratégies d’apprentissage neurosomatique uniques.",
+                "Discover this year's workshops, from advanced domain-specific trainings to introductory workshops that give you a taste of the unique neurosomatic learning strategies.",
+              )}
             </p>
           </div>
         </div>
@@ -83,43 +80,49 @@ export default function EducationWorkshopArchivePage({
         )}
       </section>
 
-      <section className="education-promo-row education-promo-row--platform education-workshops-page__platform">
-        <div className="education-promo-row__copy education-promo-row__copy--dark">
-          <h2>
-            <span>{platformPage?.hero.title || platformPage?.title || t(locale, "Masterclasses en ligne", "Online Masterclasses")}</span>
-          </h2>
-          <div className="education-promo-row__rule" />
-          <p>
-            {platformPage?.hero.body ||
-              platformPage?.subtitle ||
-              t(
+      <section className="home-section education-workshops-page__pathways">
+        <div className="home-section-head">
+          <div>
+            <p className="home-section-kicker">
+              {t(locale, "Ressources numériques", "Digital resources")}
+            </p>
+            <h2>{t(locale, "Deux parcours d’étude", "Two learning pathways")}</h2>
+            <p className="home-section__intro">
+              {t(
                 locale,
-                "Découvrez nos ressources en ligne: workshops publics, masterclasses et contenus d’approfondissement pour prolonger l’apprentissage.",
-                "Check out our online resources: public workshops, masterclasses, and deeper study material to continue the learning.",
+                "Prolongez l’apprentissage en ligne avec un accès annuel à la bibliothèque de leçons, ou approfondissez un sujet précis grâce aux masterclasses à la demande.",
+                "Continue the learning online with annual lesson-library access, or go deeper into one topic with on-demand masterclasses.",
               )}
-          </p>
-          <div className="education-promo-row__actions">
-            <Link
-              className="education-button"
-              href={
-                platformPage?.primaryCta?.url?.startsWith("/")
-                  ? localizePath(locale, platformPage.primaryCta.url)
-                  : platformPage?.primaryCta?.url || localizePath(locale, "/platform")
-              }
-            >
-              {platformPage?.primaryCta?.label || t(locale, "En savoir plus", "Learn more")}
-            </Link>
+            </p>
           </div>
         </div>
 
-        <div className="education-promo-row__visual">
-          <img
-            alt={platformPage?.hero.title || t(locale, "Aperçu des masterclasses en ligne", "Preview of online masterclasses")}
-            height={653}
-            loading="lazy"
-            src={platformPage?.hero.imageUrl || "/brands/feldenkrais-education/workshops/group-23942.png"}
-            width={1154}
-          />
+        <div className="neuro-platform-landing-options">
+          <Link className="neuro-platform-landing-option" href={localizePath(locale, "/lesson-library-access")}>
+            <img
+              alt={t(locale, "Accès à la bibliothèque de leçons", "Lesson Library Access")}
+              loading="lazy"
+              src="/brands/feldenkrais-education/platform/group-23935.png"
+            />
+            <div className="neuro-platform-landing-option__overlay" />
+            <div className="neuro-platform-landing-option__copy">
+              <strong>{t(locale, "Accès à la bibliothèque de leçons", "Lesson Library Access")}</strong>
+              <span>{t(locale, "Abonnement annuel", "Yearly membership")}</span>
+            </div>
+          </Link>
+
+          <Link className="neuro-platform-landing-option" href={localizePath(locale, "/masterclasses")}>
+            <img
+              alt={t(locale, "Masterclasses à la demande", "On-demand masterclasses")}
+              loading="lazy"
+              src="/brands/feldenkrais-education/platform/group-23939.png"
+            />
+            <div className="neuro-platform-landing-option__overlay" />
+            <div className="neuro-platform-landing-option__copy">
+              <strong>{t(locale, "Masterclasses à la demande", "On-demand masterclasses")}</strong>
+              <span>{t(locale, "Achat unique", "One-time purchase")}</span>
+            </div>
+          </Link>
         </div>
       </section>
     </EducationContentPage>

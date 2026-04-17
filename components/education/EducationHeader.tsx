@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { isExternalHref, localizePath } from "@/lib/locale-path";
 import type { SiteNavItem } from "@/lib/site-config";
@@ -103,6 +103,7 @@ export default function EducationHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [openDesktopItem, setOpenDesktopItem] = useState<string | null>(null);
   const [localeMenuOpen, setLocaleMenuOpen] = useState(false);
+  const localeMenuRef = useRef<HTMLDivElement | null>(null);
 
   const enPath = localeSwitchPaths?.en || switchLocaleInPath(pathname, "en");
   const frPath = localeSwitchPaths?.fr || switchLocaleInPath(pathname, "fr");
@@ -117,6 +118,17 @@ export default function EducationHeader() {
       document.body.style.overflow = "";
     };
   }, [menuOpen]);
+
+  useEffect(() => {
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!localeMenuRef.current?.contains(event.target as Node)) {
+        setLocaleMenuOpen(false);
+      }
+    };
+
+    window.addEventListener("mousedown", handlePointerDown);
+    return () => window.removeEventListener("mousedown", handlePointerDown);
+  }, []);
 
   return (
     <header className="education-header" role="banner">
@@ -187,7 +199,15 @@ export default function EducationHeader() {
         <div className="education-header__actions">
           <div
             className={`education-header__locale-picker${localeMenuOpen ? " is-open" : ""}`}
+            onBlur={(event) => {
+              if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                setLocaleMenuOpen(false);
+              }
+            }}
+            onFocus={() => setLocaleMenuOpen(true)}
+            onMouseEnter={() => setLocaleMenuOpen(true)}
             onMouseLeave={() => setLocaleMenuOpen(false)}
+            ref={localeMenuRef}
           >
             <button
               aria-expanded={localeMenuOpen}
@@ -200,12 +220,12 @@ export default function EducationHeader() {
               <span className="education-nav__caret">▾</span>
             </button>
             <div className="education-header__locale-menu">
-              <a className={locale === "fr" ? "is-active" : ""} href={frPath}>
+              <Link className={locale === "fr" ? "is-active" : ""} href={frPath} onClick={() => setLocaleMenuOpen(false)}>
                 FR
-              </a>
-              <a className={locale === "en" ? "is-active" : ""} href={enPath}>
+              </Link>
+              <Link className={locale === "en" ? "is-active" : ""} href={enPath} onClick={() => setLocaleMenuOpen(false)}>
                 EN
-              </a>
+              </Link>
             </div>
           </div>
 

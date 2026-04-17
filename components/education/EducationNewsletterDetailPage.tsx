@@ -60,30 +60,14 @@ export default function EducationNewsletterDetailPage({
 
   return (
     <EducationContentPage className="education-newsletter-page" eyebrow="Newsletter" page={page}>
-      <section className="education-center-intro education-card">
-        <article className="education-center-intro__story">
-          <p className="home-section-kicker">{t(locale, "Archive éditoriale", "Editorial archive")}</p>
-          <h2>{t(locale, "Une newsletter FE remise en circulation", "An FE newsletter brought back into circulation")}</h2>
-          <p>{entry.excerpt}</p>
-        </article>
-        <aside className="education-center-intro__facts">
+      {rewrittenContentHtml ? (
+        <section className="education-newsletter-body education-card">
           <p className="education-page__date-range">{formatDate(locale, entry.publishedAt, entry.publishedLabel)}</p>
-          <h2>{t(locale, "Repères utiles", "Useful markers")}</h2>
-          <dl className="education-center-facts">
-            <div>
-              <dt>{t(locale, "Archive", "Archive")}</dt>
-              <dd>{t(locale, "Infolettre FE", "FE newsletter")}</dd>
-            </div>
-            <div>
-              <dt>{t(locale, "Langue", "Language")}</dt>
-              <dd>{locale.toLowerCase().startsWith("fr") ? "Français" : "English"}</dd>
-            </div>
-            <div>
-              <dt>{t(locale, "Source", "Source")}</dt>
-              <dd>{t(locale, "Archive WordPress FE", "FE WordPress archive")}</dd>
-            </div>
-          </dl>
-          <div className="education-center-intro__actions">
+          <div
+            className="legacy-html-block rich-text"
+            dangerouslySetInnerHTML={{ __html: rewrittenContentHtml }}
+          />
+          <div className="education-offer-card__actions">
             <Link className="education-button" href={localizePath(locale, "/newsletter")}>
               {t(locale, "Retour à l’archive", "Back to archive")}
             </Link>
@@ -98,15 +82,6 @@ export default function EducationNewsletterDetailPage({
               </a>
             ) : null}
           </div>
-        </aside>
-      </section>
-
-      {rewrittenContentHtml ? (
-        <section className="education-newsletter-body education-card">
-          <div
-            className="legacy-html-block rich-text"
-            dangerouslySetInnerHTML={{ __html: rewrittenContentHtml }}
-          />
         </section>
       ) : null}
 

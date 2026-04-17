@@ -4,6 +4,7 @@ import { fetchSiteConfig } from "@/lib/api";
 import { rewriteForestMediaPayload } from "@/lib/forest-media";
 import { resolveRuntimeHost } from "@/lib/get-hostname";
 import { resolveApiHostname } from "@/lib/hostname-routing";
+import { getRequiredApiBase } from "@/lib/server-env";
 import type {
   PrivateBookingAvailability,
   PrivateBookingConfig,
@@ -11,7 +12,7 @@ import type {
   PrivateBookingSummary,
 } from "@/lib/private-booking";
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000/api").replace(/\/+$/, "");
+const API_BASE = getRequiredApiBase();
 
 export class PrivateBookingApiError extends Error {
   status: number;

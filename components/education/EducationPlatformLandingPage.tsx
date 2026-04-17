@@ -1,6 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import {
+  EDUCATION_MASTERCLASS_COVER_MAP,
+  EDUCATION_MASTERCLASS_ORDER,
+} from "@/lib/education-masterclass-media";
 import { localizePath } from "@/lib/locale-path";
 
 import EducationNeurosomaticHeader from "./EducationNeurosomaticHeader";
@@ -36,18 +40,17 @@ const DEVICE_IMAGE_URL = "/brands/feldenkrais-education/training/platform-device
 const LESSONS_COLLAGE_IMAGE_URL = "/brands/feldenkrais-education/platform/group-23935.png";
 const MASTERCLASSES_COLLAGE_IMAGE_URL = "/brands/feldenkrais-education/platform/group-23939.png";
 const LESSON_LIBRARY_THUMBNAILS = [
-  "/brands/feldenkrais-education/platform/3lesson.png",
-  "/brands/feldenkrais-education/platform/albums-1.png",
-  "/brands/feldenkrais-education/platform/12-weeks-scaled.jpg",
-  "/brands/feldenkrais-education/platform/group-23932-scaled.png",
-  "/brands/feldenkrais-education/platform/3lesson.png",
+  "/brands/feldenkrais-education/media-library/rocket-2.jpg-9f6cc.png",
+  "/brands/feldenkrais-education/media-library/wb-2-adbac.png",
+  "/brands/feldenkrais-education/media-library/spine_language-2-94821.png",
+  "/brands/feldenkrais-education/media-library/wb-1.png",
+  "/brands/feldenkrais-education/media-library/earth.jpg-660a0.png",
+  "/brands/feldenkrais-education/media-library/drop-49cc8.png",
+  "/brands/feldenkrais-education/media-library/chatgpt_image_nov_21_2025_11_08_32_pm-c5156.png",
 ] as const;
-const MASTERCLASS_CARD_IMAGES = [
-  "/brands/feldenkrais-education/platform/howard-masterclass.jpeg",
-  "/brands/feldenkrais-education/platform/robert-masterclass.jpeg",
-  "/brands/feldenkrais-education/platform/sport-masterclass.jpeg",
-  "/brands/feldenkrais-education/platform/howard-masterclass.jpeg",
-] as const;
+const MASTERCLASS_CARD_IMAGES = EDUCATION_MASTERCLASS_ORDER.map(
+  (slug) => EDUCATION_MASTERCLASS_COVER_MAP[slug],
+) as readonly string[];
 
 function t(locale: string, fr: string, en: string) {
   return locale.toLowerCase().startsWith("fr") ? fr : en;
@@ -105,23 +108,23 @@ function getPlatformLandingCopy(locale: string) {
 
   const masterclassCards: PlatformMasterclassCard[] = [
     {
-      title: t(locale, "Unlearning Pain", "Unlearning Pain"),
-      speaker: "Dr Howard Schubiner",
+      title: t(locale, "The Singer's Voice", "The Singer's Voice"),
+      speaker: "Robert Sussuma",
       imageUrl: MASTERCLASS_CARD_IMAGES[0],
     },
     {
-      title: t(locale, "Skeletal Voice", "Skeletal Voice"),
+      title: t(locale, "The Skeletal Voice", "The Skeletal Voice"),
       speaker: "Robert Sussuma",
       imageUrl: MASTERCLASS_CARD_IMAGES[1],
     },
     {
-      title: t(locale, "Feldenkrais & Sport", "Feldenkrais & Sport"),
-      speaker: "Choune Ostorero",
+      title: t(locale, "Unlearning Pain", "Unlearning Pain"),
+      speaker: "Dr Howard Schubiner",
       imageUrl: MASTERCLASS_CARD_IMAGES[2],
     },
     {
-      title: t(locale, "Unlearning Pain", "Unlearning Pain"),
-      speaker: "Dr Howard Schubiner",
+      title: t(locale, "Feldenkrais for Sports", "Feldenkrais for Sports"),
+      speaker: "Choune Ostorero",
       imageUrl: MASTERCLASS_CARD_IMAGES[3],
     },
   ];
@@ -171,6 +174,7 @@ export default function EducationPlatformLandingPage({
   locale,
 }: EducationPlatformLandingPageProps) {
   const copy = getPlatformLandingCopy(locale);
+  const masterclassCarouselCards = [...copy.masterclassCards, ...copy.masterclassCards];
 
   return (
     <div className="neuro-platform-page neuro-platform-page--landing">
@@ -229,15 +233,17 @@ export default function EducationPlatformLandingPage({
               <p>{copy.lessonLibrary.subtitle}</p>
             </header>
 
-            <div className="neuro-platform-landing-library-rail">
-              {LESSON_LIBRARY_THUMBNAILS.map((imageUrl, index) => (
-                <div
-                  className={`neuro-platform-landing-library-rail__item${index === 0 || index === LESSON_LIBRARY_THUMBNAILS.length - 1 ? " is-cropped" : ""}`}
-                  key={`${imageUrl}-${index}`}
-                >
-                  <Image alt="" fill sizes="240px" src={imageUrl} />
-                </div>
-              ))}
+            <div className="neuro-platform-landing-library-carousel" aria-hidden="true">
+              <div className="neuro-platform-landing-library-carousel__track">
+                {[...LESSON_LIBRARY_THUMBNAILS, ...LESSON_LIBRARY_THUMBNAILS].map((imageUrl, index) => (
+                  <div
+                    className="neuro-platform-landing-library-rail__item"
+                    key={`${imageUrl}-${index}`}
+                  >
+                    <Image alt="" fill sizes="240px" src={imageUrl} />
+                  </div>
+                ))}
+              </div>
             </div>
 
             <ProductBullets
@@ -265,10 +271,14 @@ export default function EducationPlatformLandingPage({
               <p>{copy.masterclasses.subtitle}</p>
             </header>
 
-            <div className="neuro-platform-landing-masterclass-rail">
-              {copy.masterclassCards.map((card, index) => (
+            <div
+              className="neuro-platform-landing-library-carousel neuro-platform-landing-library-carousel--masterclasses"
+              aria-hidden="true"
+            >
+              <div className="neuro-platform-landing-library-carousel__track neuro-platform-landing-library-carousel__track--masterclasses">
+                {masterclassCarouselCards.map((card, index) => (
                 <article
-                  className={`neuro-platform-landing-masterclass-card${index === 0 || index === copy.masterclassCards.length - 1 ? " is-cropped" : ""}`}
+                  className="neuro-platform-landing-masterclass-card"
                   key={`${card.title}-${card.speaker}-${index}`}
                 >
                   <Image alt={card.title} fill sizes="220px" src={card.imageUrl} />
@@ -278,7 +288,8 @@ export default function EducationPlatformLandingPage({
                     <p>{card.speaker}</p>
                   </div>
                 </article>
-              ))}
+                ))}
+              </div>
             </div>
 
             <ProductBullets

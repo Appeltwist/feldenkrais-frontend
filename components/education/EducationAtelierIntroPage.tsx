@@ -18,6 +18,20 @@ function t(locale: string, fr: string, en: string) {
   return locale.toLowerCase().startsWith("fr") ? fr : en;
 }
 
+function AtelierSignupLink({
+  href,
+  label,
+}: {
+  href: string;
+  label: string;
+}) {
+  return (
+    <a className="education-button" href={href} rel="noreferrer">
+      {label}
+    </a>
+  );
+}
+
 export default function EducationAtelierIntroPage({
   locale,
   content,
@@ -73,7 +87,13 @@ export default function EducationAtelierIntroPage({
           </dl>
 
           <div className="education-atelier-intro__actions">
-            <EducationBetaReadOnlyButton label={t(locale, "S’inscrire", "Sign up")} locale={locale} />
+            {content.sessions.map((session) => (
+              <AtelierSignupLink
+                href={session.signUpUrl}
+                key={session.city}
+                label={t(locale, `S’inscrire à ${session.city}`, `Sign up in ${session.city}`)}
+              />
+            ))}
             <Link className="education-button education-button--secondary" href={localizePath(locale, "/trainings")}>
               {t(locale, "Voir la formation", "View the training")}
             </Link>
@@ -183,7 +203,7 @@ export default function EducationAtelierIntroPage({
               </p>
               <p className="education-training-intro__note">{session.note}</p>
               <div className="education-offer-card__actions">
-                <EducationBetaReadOnlyButton label={t(locale, "S’inscrire", "Sign up")} locale={locale} />
+                <AtelierSignupLink href={session.signUpUrl} label={t(locale, "S’inscrire", "Sign up")} />
               </div>
             </article>
           ))}

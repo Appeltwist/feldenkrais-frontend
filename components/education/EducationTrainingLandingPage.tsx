@@ -15,7 +15,7 @@ import { asRecord, pickString } from "@/lib/offers";
 import type { NarrativePage } from "@/lib/site-config";
 import type { SectionBlock } from "@/lib/types";
 
-import { EducationBetaReadOnlyButton } from "./EducationBetaReadOnly";
+import EducationCenterActionModalButton from "./EducationCenterActionModalButton";
 import EducationScrollSequence from "./EducationScrollSequence";
 import EducationTrainingActionBar from "./EducationTrainingActionBar";
 import EducationTrainingYearSlider from "./EducationTrainingYearSlider";
@@ -38,6 +38,10 @@ const TRAINING_YEAR_IMAGE_URLS = [
   "/brands/feldenkrais-education/training/year-3.jpg",
   "/brands/feldenkrais-education/training/year-4.jpeg",
 ];
+const TRAINING_CANTAL_CARD_IMAGE_URL =
+  "/brands/feldenkrais-education/media-library/Untitled_1.337.1.jpg";
+const TRAINING_PARIS_CARD_IMAGE_URL =
+  "/brands/feldenkrais-education/media-library/paris1.jpeg";
 
 function buildSequenceFrameUrls(sequenceName: "hands" | "step" | "walk", frameCount: number) {
   return Array.from({ length: frameCount }, (_, index) => (
@@ -51,6 +55,18 @@ const TRAINING_WALK_FRAME_URLS = buildSequenceFrameUrls("walk", 29);
 
 function t(locale: string, fr: string, en: string) {
   return locale.toLowerCase().startsWith("fr") ? fr : en;
+}
+
+function getTrainingCenterCardImage(centerSlug: string, fallbackImageUrl: string) {
+  if (centerSlug === "cantal") {
+    return TRAINING_CANTAL_CARD_IMAGE_URL;
+  }
+
+  if (centerSlug === "paris") {
+    return TRAINING_PARIS_CARD_IMAGE_URL;
+  }
+
+  return fallbackImageUrl;
 }
 
 function stripHtmlToText(value: string | null | undefined) {
@@ -88,11 +104,6 @@ function findSection(
 function getSectionHeading(block: SectionBlock | undefined, fallback: string) {
   const value = asRecord(block?.value);
   return pickString(value, ["heading", "title"]) || fallback;
-}
-
-function getRichSectionBody(block: SectionBlock | undefined, fallback: string) {
-  const value = asRecord(block?.value);
-  return stripHtmlToText(pickString(value, ["body", "description"])) || fallback;
 }
 
 function getFeatureItems(
@@ -241,7 +252,6 @@ export default function EducationTrainingLandingPage({
   const curriculum = getEducationTrainingCurriculum(locale);
   const defaultIncludedItems = getEducationTrainingIncludedItems(locale);
   const programStats = getEducationTrainingProgramStats(locale);
-  const overviewSection = findSection(program?.sections, "rich_section", ["overview", "aperçu", "apercu"]);
   const includedSection = findSection(program?.sections, "feature_stack", ["what else is included", "ce qui est inclus"]);
   const betweenSection = findSection(program?.sections, "feature_stack", ["between segments", "entre les segments"]);
   const enrollmentSection = findSection(program?.sections, "journey_steps", ["enrollment process", "processus d inscription", "processus d'inscription"]);
@@ -285,11 +295,11 @@ export default function EducationTrainingLandingPage({
       title: "Step 2",
     },
     {
-      label: t(locale, "Nous planifions un échange", "We'll schedule a meeting"),
+      label: t(locale, "Planifier un échange", "Schedule a conversation"),
       title: "Step 3",
     },
     {
-      label: t(locale, "Nous vous confirmons l'admission", "We'll notify you about your acceptance"),
+      label: t(locale, "Recevoir la confirmation d’admission", "Receive your admission decision"),
       title: "Step 4",
     },
     {
@@ -299,17 +309,13 @@ export default function EducationTrainingLandingPage({
     ];
   const enrollmentSteps = getJourneySteps(enrollmentSection, defaultEnrollmentSteps);
   const heroTitle = page.hero.title || program?.title || t(locale, "Formation Feldenkrais", "Feldenkrais Training");
-  const heroSubtitle = program?.subtitle || page.subtitle || t(locale, "Vivre l'inhabituel", "Living the inhabitual");
+  const heroSubtitle = t(locale, "Vivre l'inhabituel", "Living the inhabitual");
   const heroImageUrl = page.hero.imageUrl || program?.heroImageUrl || HERO_IMAGE_URL;
-  const introLead =
-    getRichSectionBody(overviewSection, "") ||
-    program?.excerpt ||
-    page.hero.body ||
-    t(
-      locale,
-      "C'est plus qu'un métier. Feldenkrais Education propose une formation professionnelle sur quatre ans pour devenir praticien certifié. Ce parcours vous permettra non seulement d'enseigner la méthode, mais aussi de transformer en profondeur votre manière de vivre et d'apprendre.",
-      "It's more than just a profession. Feldenkrais Education proposes a 4-year professional training program to become a certified Feldenkrais practitioner. The training will allow you not only to teach the method, but also to profoundly change the quality of your life.",
-    );
+  const introLead = t(
+    locale,
+    "C’est plus qu’une profession… Feldenkrais Education propose une formation professionnelle de 4 ans pour devenir praticien certifié Feldenkrais. La formation vous permettra non seulement d’enseigner la méthode, mais aussi de changer profondément la qualité de votre vie.",
+    "It’s more than just a profession… Feldenkrais Education proposes a 4-year professional training program to become a certified Feldenkrais practitioner. The training will allow you not only to teach the method, but also to profoundly change the quality of your life.",
+  );
 
   return (
     <div
@@ -335,8 +341,11 @@ export default function EducationTrainingLandingPage({
         <div className="education-training-video-copy">
           <SectionHeading
             align="left"
-            subtitle={t(locale, "Devenir praticien Feldenkrais", "A Feldenkrais Practitioner")}
-            title={t(locale, "Envisagez de le devenir", "Consider Becoming")}
+            title={t(
+              locale,
+              "Envisagez de devenir praticien Feldenkrais",
+              "Consider Becoming A Feldenkrais Practitioner",
+            )}
           />
           <p>{introLead}</p>
         </div>
@@ -374,7 +383,7 @@ export default function EducationTrainingLandingPage({
                 <h3>{center.name}</h3>
                 <div
                   className="education-training-center-card__image"
-                  style={{ backgroundImage: `url(${center.heroImageUrl})` }}
+                  style={{ backgroundImage: `url(${getTrainingCenterCardImage(center.slug, center.heroImageUrl)})` }}
                 />
 
                 <div className="education-training-center-card__facts">
@@ -440,7 +449,11 @@ export default function EducationTrainingLandingPage({
         </div>
 
         <div className="education-offer-card__actions">
-          <EducationBetaReadOnlyButton label={t(locale, "Réserver un appel", "Book a call")} locale={locale} />
+          <EducationCenterActionModalButton
+            label={t(locale, "Réserver un appel", "Book a call")}
+            locale={locale}
+            variant="book-call"
+          />
           <Link className="education-button education-button--secondary" href={localizePath(locale, "/centers")}>
             {t(locale, "Voir tous les centres", "See all centers")}
           </Link>

@@ -313,7 +313,7 @@ export default function EducationMethodPage({
         </div>
       </section>
 
-      <section className="education-method-section">
+      <section className="education-method-section" id="12domains">
         <div className="education-method-section__inner education-method-split education-method-split--domains">
           <div className="education-method-copy">
             <h2>
@@ -331,7 +331,7 @@ export default function EducationMethodPage({
         </div>
       </section>
 
-      <section className="education-method-section">
+      <section className="education-method-section" id="biography">
         <div className="education-method-section__inner education-method-split education-method-split--method">
           <div className="education-method-animation education-method-animation--deadbird">
             <EducationScrollSequence

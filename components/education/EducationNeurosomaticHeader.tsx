@@ -1,9 +1,14 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
 import { localizePath } from "@/lib/locale-path";
 
 export const NEUROSOMATIC_PLATFORM_URL = "https://neurosomatic.com";
+export const LESSON_LIBRARY_TRIAL_URL = "https://learn.feldenkrais-education.com/?lang=en";
+export const LESSON_LIBRARY_GIFT_URL = "https://client.felded.com/b/fZu9AU8Mq0IP7I6aQT73G0c";
 
 const LOGO_IMAGE_URL = "/brands/feldenkrais-education/logo/feldenkrais-education-logo.png";
 
@@ -21,6 +26,19 @@ export default function EducationNeurosomaticHeader({
   routePath,
 }: EducationNeurosomaticHeaderProps) {
   const currentLocale = locale.toLowerCase().startsWith("fr") ? "FR" : "EN";
+  const [localeMenuOpen, setLocaleMenuOpen] = useState(false);
+  const localeMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!localeMenuRef.current?.contains(event.target as Node)) {
+        setLocaleMenuOpen(false);
+      }
+    };
+
+    window.addEventListener("mousedown", handlePointerDown);
+    return () => window.removeEventListener("mousedown", handlePointerDown);
+  }, []);
 
   return (
     <header className="neuro-platform-header">
@@ -38,13 +56,32 @@ export default function EducationNeurosomaticHeader({
         <p className="neuro-platform-header__title">{title}</p>
 
         <div className="neuro-platform-header__actions">
-          <details className="neuro-platform-header__locale">
-            <summary>{currentLocale} ▾</summary>
+          <div
+            className={`neuro-platform-header__locale${localeMenuOpen ? " is-open" : ""}`}
+            onBlur={(event) => {
+              if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                setLocaleMenuOpen(false);
+              }
+            }}
+            onFocus={() => setLocaleMenuOpen(true)}
+            onMouseEnter={() => setLocaleMenuOpen(true)}
+            onMouseLeave={() => setLocaleMenuOpen(false)}
+            ref={localeMenuRef}
+          >
+            <button
+              aria-expanded={localeMenuOpen}
+              aria-haspopup="true"
+              className="neuro-platform-header__locale-button"
+              onClick={() => setLocaleMenuOpen((current) => !current)}
+              type="button"
+            >
+              {currentLocale} ▾
+            </button>
             <div className="neuro-platform-header__locale-menu">
-              <Link href={localizePath("en", routePath)}>EN</Link>
-              <Link href={localizePath("fr", routePath)}>FR</Link>
+              <Link href={localizePath("en", routePath)} onClick={() => setLocaleMenuOpen(false)}>EN</Link>
+              <Link href={localizePath("fr", routePath)} onClick={() => setLocaleMenuOpen(false)}>FR</Link>
             </div>
-          </details>
+          </div>
 
           <a
             className="neuro-platform-header__login"

@@ -3,7 +3,7 @@ import Image from "next/image";
 import { getEducationDayInTrainingContent } from "@/lib/education-day-in-training";
 import type { NarrativePage } from "@/lib/site-config";
 
-import { EducationBetaReadOnlyButton } from "./EducationBetaReadOnly";
+import EducationCenterActionModalButton from "./EducationCenterActionModalButton";
 import EducationContentPage from "./EducationContentPage";
 import EducationVideoPreview from "./EducationVideoPreview";
 
@@ -51,16 +51,18 @@ function ActionRow({
 }) {
   return (
     <div className="education-day-actions">
-      <EducationBetaReadOnlyButton
+      <EducationCenterActionModalButton
         className="education-day-button education-day-button--light"
         label={signUpLabel}
         locale={locale}
+        variant="signup"
       />
-      <EducationBetaReadOnlyButton
+      <EducationCenterActionModalButton
         className="education-button education-day-button education-day-button--outline"
         label={meetingLabel}
         locale={locale}
         secondary
+        variant="book-call"
       />
     </div>
   );
@@ -71,21 +73,22 @@ export default function EducationDayInTrainingPage({ locale, page }: EducationDa
   const resolvedPage: NarrativePage = {
     ...page,
     title: page.title || content.hero.title,
-    subtitle: page.subtitle || content.hero.subtitle,
+    subtitle: content.hero.subtitle,
     hero: {
       ...page.hero,
       title: page.hero.title || page.title || content.hero.title,
-      body: page.hero.body || page.subtitle || content.hero.subtitle,
+      body: content.hero.subtitle,
       imageUrl: page.hero.imageUrl || content.hero.backgroundImageUrl,
     },
-    primaryCta: page.primaryCta ?? {
+    sections: [],
+    primaryCta: {
       label: content.actions.signUpLabel,
       url: content.actions.signUpUrl,
     },
   };
   const heroTitle = resolvedPage.hero.title || resolvedPage.title || content.hero.title;
-  const heroBody = resolvedPage.hero.body || resolvedPage.subtitle || content.hero.subtitle;
-  const signUpLabel = resolvedPage.primaryCta?.label || content.actions.signUpLabel;
+  const heroBody = resolvedPage.hero.body || content.hero.subtitle;
+  const signUpLabel = content.actions.signUpLabel;
 
   return (
     <EducationContentPage
@@ -108,6 +111,27 @@ export default function EducationDayInTrainingPage({ locale, page }: EducationDa
             meetingLabel={content.actions.meetingLabel}
             signUpLabel={signUpLabel}
           />
+        </div>
+      </section>
+
+      <section className="education-day-section education-day-section--light">
+        <div className="education-day-split">
+          {content.dayOff.video ? (
+            <EducationVideoPreview
+              className="education-day-video-card"
+              playLabel={locale.toLowerCase().startsWith("fr") ? "Lire la vidéo" : "Play video"}
+              posterUrl={content.dayOff.video.posterUrl}
+              title={content.dayOff.video.title}
+              videoId={content.dayOff.video.videoId}
+            />
+          ) : null}
+
+          <div className="education-day-copy">
+            <SectionHeading subtitle={content.dayOff.subtitle} title={content.dayOff.title} />
+            {content.dayOff.paragraphs.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -227,78 +251,12 @@ export default function EducationDayInTrainingPage({ locale, page }: EducationDa
       </section>
 
       <section className="education-day-section education-day-section--dark">
-        <div className="education-day-split">
-          <div className="education-day-copy">
-            <SectionHeading inverted subtitle={content.platform.subtitle} title={content.platform.title} />
-            {content.platform.paragraphs.map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
-            ))}
-          </div>
-
-          {content.platform.video ? (
-            <EducationVideoPreview
-              className="education-day-video-card"
-              playLabel={locale.toLowerCase().startsWith("fr") ? "Lire la vidéo" : "Play video"}
-              posterUrl={content.platform.video.posterUrl}
-              title={content.platform.video.title}
-              videoId={content.platform.video.videoId}
-            />
-          ) : null}
-        </div>
-      </section>
-
-      <section className="education-day-section education-day-section--light">
-        <div className="education-day-split">
-          {content.evening.video ? (
-            <EducationVideoPreview
-              className="education-day-video-card"
-              playLabel={locale.toLowerCase().startsWith("fr") ? "Lire la vidéo" : "Play video"}
-              posterUrl={content.evening.video.posterUrl}
-              title={content.evening.video.title}
-              videoId={content.evening.video.videoId}
-            />
-          ) : null}
-
-          <div className="education-day-copy">
-            <SectionHeading subtitle={content.evening.subtitle} title={content.evening.title} />
-            {content.evening.paragraphs.map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="education-day-section education-day-section--dark">
-        <div className="education-day-split">
-          <div className="education-day-copy">
-            <SectionHeading inverted subtitle={content.dayOff.subtitle} title={content.dayOff.title} />
-            {content.dayOff.paragraphs.map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
-            ))}
-          </div>
-
-          {content.dayOff.video ? (
-            <EducationVideoPreview
-              className="education-day-video-card"
-              playLabel={locale.toLowerCase().startsWith("fr") ? "Lire la vidéo" : "Play video"}
-              posterUrl={content.dayOff.video.posterUrl}
-              title={content.dayOff.video.title}
-              videoId={content.dayOff.video.videoId}
-            />
-          ) : null}
-        </div>
-
-        <ActionRow
-          locale={locale}
-          meetingLabel={content.actions.meetingLabel}
-          signUpLabel={signUpLabel}
+        <SectionHeading
+          align="center"
+          inverted
+          title={content.testimonials.title}
         />
-      </section>
-
-      <section className="education-day-section education-day-section--light">
-        <SectionHeading align="center" title={content.testimonials.title} />
         <EducationVideoPreview
-          aspectRatio="16 / 8.6"
           className="education-day-video-card education-day-video-card--wide"
           playLabel={locale.toLowerCase().startsWith("fr") ? "Lire la vidéo" : "Play video"}
           posterUrl={content.testimonials.video.posterUrl}

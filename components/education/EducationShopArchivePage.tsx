@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import type { EducationShopData } from "@/lib/education-shop";
-import { localizePath } from "@/lib/locale-path";
+import { isExternalHref, localizePath } from "@/lib/locale-path";
 import type { NarrativePage } from "@/lib/site-config";
 
 import EducationContentPage from "./EducationContentPage";
@@ -36,7 +36,8 @@ export default function EducationShopArchivePage({
           <div className="education-card-grid education-card-grid--shop">
             {data.highlights.map((item) => {
               const isPlatformCard = /lesson-library|platform/i.test(item.href) || /lesson library/i.test(item.title);
-              const ctaHref = isPlatformCard ? "https://neurosomatic.com" : item.href;
+              const ctaHref = item.href;
+              const isExternal = isExternalHref(ctaHref);
 
               return (
                 <article className="education-card education-shop-card" key={item.title}>
@@ -61,9 +62,15 @@ export default function EducationShopArchivePage({
                       </div>
                     ) : null}
                     <div className="education-offer-card__actions">
-                      <a className="education-button" href={ctaHref} rel="noreferrer" target="_blank">
-                        {isPlatformCard ? t(locale, "Ouvrir Neurosomatic", "Open Neurosomatic") : t(locale, "Voir l’offre", "View offer")}
-                      </a>
+                      {isExternal ? (
+                        <a className="education-button" href={ctaHref} rel="noreferrer" target="_blank">
+                          {isPlatformCard ? t(locale, "Ouvrir l’accès", "Open access") : t(locale, "Voir l’offre", "View offer")}
+                        </a>
+                      ) : (
+                        <Link className="education-button" href={ctaHref}>
+                          {isPlatformCard ? t(locale, "Voir l’accès", "View access") : t(locale, "Voir l’offre", "View offer")}
+                        </Link>
+                      )}
                     </div>
                   </div>
                 </article>

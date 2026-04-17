@@ -26,10 +26,7 @@ export default async function WorkshopsPage() {
 
   if (siteConfig?.siteSlug === "feldenkrais-education") {
     const locale = await getRequestLocale(siteConfig.defaultLocale);
-    const [page, platformPage] = await Promise.all([
-      resolveEducationNarrativePage(hostname, "workshops", locale),
-      resolveEducationNarrativePage(hostname, "platform", locale),
-    ]);
+    const page = await resolveEducationNarrativePage(hostname, "workshops", locale);
     const resolvedPage =
       page ?? {
         routeKey: "workshops",
@@ -58,7 +55,6 @@ export default async function WorkshopsPage() {
       <EducationWorkshopArchivePage
         locale={locale}
         page={resolvedPage}
-        platformPage={platformPage}
         upcomingWorkshops={upcomingWorkshops}
       />
     );

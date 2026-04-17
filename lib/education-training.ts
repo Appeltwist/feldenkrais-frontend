@@ -73,14 +73,12 @@ function buildCohortNarrativePage(
 }
 
 function buildAdmissionsUrl(locale: string, key: "cantal" | "brussels" | "paris") {
-  const language = resolveLocale(locale);
-
   if (key === "cantal") {
-    return `https://learn.feldenkrais-education.com/?page=inscription&id_promo=169/&lang=${language}`;
+    return "https://neurosomatic.cloud/intake/cantal-6/";
   }
 
   if (key === "brussels") {
-    return `https://learn.feldenkrais-education.com/?page=inscription&id_promo=113/&lang=${language}`;
+    return "https://neurosomatic.cloud/intake/bruxelles-5/";
   }
 
   return "https://docs.google.com/forms/d/e/1FAIpQLSdEDM7IlmDW4UAxr1OHogGWTNSl4dN0fn7EdMqOdxkvY3BlRQ/viewform";
@@ -420,24 +418,24 @@ export function getEducationTrainingCohorts(locale: string): EducationTrainingCo
       }),
     },
     {
-      slug: "brussels-4",
-      name: t(locale, "Bruxelles 4", "Brussels 4"),
+      slug: "brussels-5",
+      name: t(locale, "Bruxelles 5", "Brussels 5"),
       centerSlug: "brussels",
       centerName: brusselsCenter.name,
       location: brusselsCenter.location,
-      periodLabel: "2025 - 2029",
+      periodLabel: t(locale, "Commence en janvier 2027", "Starts in January 2027"),
       director: "Scott Clark / Yvo Mentens",
       segments: "12",
       pricing: t(locale, "4200 € / an", "4200 € / year"),
       admissionsUrl: buildAdmissionsUrl(locale, "brussels"),
       programPdfUrl: buildProgramPdfUrl("brussels"),
-      pdfRequestHref: buildPdfRequestHref(locale, t(locale, "Bruxelles 4", "Brussels 4")),
+      pdfRequestHref: buildPdfRequestHref(locale, t(locale, "Bruxelles 5", "Brussels 5")),
       legacyTitle: t(locale, "Un refuge dans la ville", "A haven in the city"),
       overviewParagraphs: [
         t(
           locale,
-          "Bruxelles 4 s’adresse aux personnes qui veulent étudier la méthode dans un contexte urbain, vivant et international. La cohorte s’appuie sur l’écosystème de Forest Lighthouse, où Feldenkrais rencontre d’autres pratiques somatiques et artistiques.",
-          "Brussels 4 is for people who want to study the method in an urban, lively, and international context. The cohort is anchored in the Forest Lighthouse ecosystem, where Feldenkrais meets other somatic and artistic practices.",
+          "Bruxelles 5 s’adresse aux personnes qui veulent étudier la méthode dans un contexte urbain, vivant et international. La cohorte s’appuie sur l’écosystème de Forest Lighthouse, où Feldenkrais rencontre d’autres pratiques somatiques et artistiques.",
+          "Brussels 5 is for people who want to study the method in an urban, lively, and international context. The cohort is anchored in the Forest Lighthouse ecosystem, where Feldenkrais meets other somatic and artistic practices.",
         ),
         t(
           locale,
@@ -510,8 +508,8 @@ export function getEducationTrainingCohorts(locale: string): EducationTrainingCo
         "La cohorte répond aux exigences imposées par EuroTAB.",
         "The cohort meets the requirements imposed by EuroTAB.",
       ),
-      page: buildCohortNarrativePage(locale, "training-brussels-4", {
-        title: t(locale, "Bruxelles 4", "Brussels 4"),
+      page: buildCohortNarrativePage(locale, "training-brussels-5", {
+        title: t(locale, "Bruxelles 5", "Brussels 5"),
         subtitle: t(
           locale,
           "Une cohorte de formation professionnelle portée par Forest Lighthouse à Bruxelles.",
@@ -625,7 +623,8 @@ export function getEducationTrainingCohorts(locale: string): EducationTrainingCo
 }
 
 export function getEducationTrainingCohort(locale: string, slug: string) {
-  return getEducationTrainingCohorts(locale).find((cohort) => cohort.slug === slug) ?? null;
+  const normalizedSlug = slug === "brussels-4" ? "brussels-5" : slug;
+  return getEducationTrainingCohorts(locale).find((cohort) => cohort.slug === normalizedSlug) ?? null;
 }
 
 export function getEducationTrainingCohortByCenter(locale: string, centerSlug: string) {

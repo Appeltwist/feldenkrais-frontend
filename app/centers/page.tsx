@@ -71,11 +71,11 @@ function CenterFactIcon({ kind }: { kind: "cohort" | "director" | "segments" | "
 
 function getCenterCardImage(slug: string, fallbackUrl: string) {
   if (slug === "cantal") {
-    return "/brands/feldenkrais-education/centers/cantal-room.jpeg";
+    return "/brands/feldenkrais-education/media-library/Untitled_1.337.1.jpg";
   }
 
   if (slug === "paris") {
-    return "/brands/feldenkrais-education/training/hero-room.jpeg";
+    return "/brands/feldenkrais-education/media-library/paris1.jpeg";
   }
 
   return fallbackUrl;

@@ -11,6 +11,7 @@ import {
   readNextOccurrence,
 } from "@/lib/offers";
 import type { NarrativePage } from "@/lib/site-config";
+import type { LocaleCode } from "@/lib/types";
 
 export type EducationWorkshopCollectionItem = {
   id: string;
@@ -42,6 +43,7 @@ export type EducationIntroWorkshopSession = {
   hours: string;
   price: string;
   note: string;
+  signUpUrl: string;
 };
 
 export type EducationAtelierIntroContent = {
@@ -64,24 +66,40 @@ export type EducationAtelierIntroContent = {
 const FOREST_FEATURED_WORKSHOP_SLUGS = [
   "the-practitioners-vocal-toolkit",
   "feldenkrais-for-musicians",
-  "making-smaller-circles",
 ] as const;
 
 const FOREST_FEATURED_WORKSHOP_META: Record<
   (typeof FOREST_FEATURED_WORKSHOP_SLUGS)[number],
-  { location: { en: string; fr: string }; audience: "practitioners" | "public" }
+  {
+    location: { en: string; fr: string };
+    audience: "practitioners" | "public";
+    localizedCopy?: {
+      fr?: {
+        title: string;
+        summary: string;
+      };
+    };
+  }
 > = {
   "the-practitioners-vocal-toolkit": {
     location: { en: "Brussels", fr: "Bruxelles" },
     audience: "practitioners",
+    localizedCopy: {
+      fr: {
+        title: "La boîte à outils vocale du praticien",
+        summary: "10 leçons pour travailler avec les chanteurs et les voix du point de vue Feldenkrais.",
+      },
+    },
   },
   "feldenkrais-for-musicians": {
     location: { en: "Brussels", fr: "Bruxelles" },
     audience: "public",
-  },
-  "making-smaller-circles": {
-    location: { en: "Brussels", fr: "Bruxelles" },
-    audience: "public",
+    localizedCopy: {
+      fr: {
+        title: "Feldenkrais pour les musiciens",
+        summary: "Un workshop hybride pour musiciens et praticien·nes certifié·es.",
+      },
+    },
   },
 };
 
@@ -359,6 +377,7 @@ export function getEducationAtelierIntroContent(
         location: "ESPACE ALLEGRIA, 110 Rue Achille Viadieu, 31400 Toulouse",
         hours: t(locale, "10h00 à 16h00", "10:00 to 16:00"),
         price: "210 €",
+        signUpUrl: "https://api.forest-lighthouse.be/events/signup/3/",
         note: t(
           locale,
           "Ces quatre jours peuvent être validés si vous décidez ensuite de poursuivre le cursus de 4 ans.",
@@ -371,6 +390,7 @@ export function getEducationAtelierIntroContent(
         location: "53 Rue Camélinat, 94400 Vitry-sur-Seine, France",
         hours: t(locale, "10h00 à 16h00", "10:00 to 16:00"),
         price: "210 €",
+        signUpUrl: "https://api.forest-lighthouse.be/events/signup/4/",
         note: t(
           locale,
           "Ces quatre jours peuvent être validés si vous décidez ensuite de poursuivre le cursus de 4 ans.",
@@ -529,36 +549,53 @@ export function buildEducationWorkshopCollection(
 export async function fetchForestFeaturedWorkshops(locale: string): Promise<EducationWorkshopCollectionItem[]> {
   const workshopResults = await Promise.all(
     FOREST_FEATURED_WORKSHOP_SLUGS.map(async (slug) => {
-      const response = await fetch(
-        `https://api.forest-lighthouse.be/api/offers/${slug}?domain=forest-lighthouse.be&locale=${resolveLocale(locale)}`,
-        { next: { revalidate: 1800 } },
-      ).catch(() => null);
+      const requestedLocale = resolveLocale(locale);
+      const candidateLocales: LocaleCode[] = requestedLocale === "fr" ? ["fr", "en"] : [requestedLocale];
+      let item: Record<string, unknown> | null = null;
+      let resolvedLocale = requestedLocale;
 
-      if (!response?.ok) {
-        return null;
+      for (const candidateLocale of candidateLocales) {
+        const response = await fetch(
+          `https://api.forest-lighthouse.be/api/offers/${slug}?domain=forest-lighthouse.be&locale=${candidateLocale}`,
+          { next: { revalidate: 1800 } },
+        ).catch(() => null);
+
+        if (!response?.ok) {
+          continue;
+        }
+
+        const payload = (await response.json().catch(() => null)) as unknown;
+        item = asRecord(payload);
+        if (item) {
+          resolvedLocale = candidateLocale;
+          break;
+        }
       }
 
-      const payload = (await response.json().catch(() => null)) as unknown;
-      const item = asRecord(payload);
       if (!item) {
         return null;
       }
 
       const firstOccurrenceStart = readFirstOccurrenceStart(item);
       const featuredMeta = FOREST_FEATURED_WORKSHOP_META[slug];
+      const localizedCopy =
+        resolvedLocale !== requestedLocale
+          ? featuredMeta.localizedCopy?.[requestedLocale as "fr"]
+          : undefined;
 
       return {
         id: `forest:${slug}`,
-        title: pickString(item, ["title", "name"], "Forest Lighthouse workshop"),
+        title: localizedCopy?.title || pickString(item, ["title", "name"], "Forest Lighthouse workshop"),
         summary: truncateText(
-          pickString(item, ["excerpt", "summary", "subtitle", "short_description"]) ||
+          localizedCopy?.summary ||
+            pickString(item, ["excerpt", "summary", "subtitle", "short_description"]) ||
             t(locale, "Workshop invité depuis Forest Lighthouse.", "Guest workshop from Forest Lighthouse."),
           60,
         ),
-        href: `https://www.forest-lighthouse.be/${resolveLocale(locale)}/workshops/${slug}`,
+        href: `https://www.forest-lighthouse.be/${resolvedLocale}/workshops/${slug}`,
         imageUrl: pickString(item, ["hero_image_url", "heroImageUrl", "image_url", "imageUrl"]) || null,
         sourceLabel: "Forest Lighthouse",
-        locationLabel: featuredMeta.location[resolveLocale(locale) === "fr" ? "fr" : "en"],
+        locationLabel: featuredMeta.location[requestedLocale === "fr" ? "fr" : "en"],
         monthLabel: firstOccurrenceStart ? formatMonthLabel(firstOccurrenceStart, locale) : null,
         audienceLabel:
           featuredMeta.audience === "practitioners"

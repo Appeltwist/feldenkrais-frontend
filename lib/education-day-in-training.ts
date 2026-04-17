@@ -1,4 +1,3 @@
-import { EDUCATION_BOOK_A_CALL_URL } from "@/lib/education-links";
 import { resolveLocale } from "@/lib/i18n";
 
 export type EducationDayInTrainingVideo = {
@@ -76,14 +75,18 @@ export function getEducationDayInTrainingContent(locale: string): EducationDayIn
   return {
     hero: {
       title: t(locale, "La formation Feldenkrais", "The Feldenkrais Training"),
-      subtitle: t(locale, "Une journée type", "A Typical Day"),
+      subtitle: t(
+        locale,
+        "La force du parcours Feldenkrais Education vient du rythme quotidien, de la qualité d’attention, du temps d’intégration, et de ce qui continue entre les segments.",
+        "The strength of the Feldenkrais Education pathway comes from the daily rhythm, the quality of attention, the time for integration, and what continues between segments.",
+      ),
       backgroundImageUrl: "/brands/feldenkrais-education/day-in-training/headerbanner-cantal.jpg",
     },
     actions: {
       signUpLabel: t(locale, "S’inscrire", "Sign up"),
       signUpUrl,
-      meetingLabel: t(locale, "Réserver un appel", "Book a meeting"),
-      meetingUrl: EDUCATION_BOOK_A_CALL_URL,
+      meetingLabel: t(locale, "Réserver un appel", "Book a call"),
+      meetingUrl: "",
     },
     intro: {
       title: t(locale, "Bien plus qu’une formation", "Much more than a training"),
@@ -182,12 +185,12 @@ export function getEducationDayInTrainingContent(locale: string): EducationDayIn
         {
           title: t(locale, "Démonstration FI 1", "Functional Integration demo 1"),
           videoId: "Jacm1xKa2kk",
-          posterUrl: "/brands/feldenkrais-education/day-in-training/functional-integration-1.jpg",
+          posterUrl: "https://feldenkrais-education.com/wp-content/uploads/sites/15/2024/09/1085_11201251_S070.jpg",
         },
         {
           title: t(locale, "Démonstration FI 2", "Functional Integration demo 2"),
           videoId: "7LQBvpQdBzY",
-          posterUrl: "/brands/feldenkrais-education/day-in-training/functional-integration-2.jpg",
+          posterUrl: "https://feldenkrais-education.com/wp-content/uploads/sites/15/2024/09/1085_11201351_S338.jpg",
           posterPosition: "center 36%",
         },
       ],
@@ -246,8 +249,8 @@ export function getEducationDayInTrainingContent(locale: string): EducationDayIn
       paragraphs: [
         t(
           locale,
-          "Le Cantal est une destination singulière avec ses paysages volcaniques, ses vallées verdoyantes et ses villages. Dans cette vidéo, nous avons essayé de vous donner une expérience en temps réel d’une balade dans ses montagnes.",
-          "The Cantal is a unique destination with its impressive volcanic landscapes, verdant valleys, and picturesque villages. In this video, we tried to give you a real-time experience of a walk in the mountains of Cantal.",
+          "Le Cantal est une destination singulière avec ses paysages volcaniques impressionnants, ses vallées verdoyantes et ses villages pittoresques. Dans cette vidéo, nous avons essayé de vous donner une expérience en temps réel d’une balade dans les montagnes du Cantal !",
+          "The Cantal is a unique destination with its impressive volcanic landscapes, verdant valleys, and picturesque villages. In this video, we tried to give you a real-time experience of a walk in the mountains of Cantal!",
         ),
         t(
           locale,

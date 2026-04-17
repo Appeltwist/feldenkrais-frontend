@@ -4,7 +4,8 @@ import type { ReactNode } from "react";
 import { getEducationVideosData } from "@/lib/education-videos";
 
 import EducationNeurosomaticHeader, {
-  NEUROSOMATIC_PLATFORM_URL,
+  LESSON_LIBRARY_GIFT_URL,
+  LESSON_LIBRARY_TRIAL_URL,
 } from "./EducationNeurosomaticHeader";
 import EducationPlatformSlider from "./EducationPlatformSlider";
 import EducationScrollSequence from "./EducationScrollSequence";
@@ -31,6 +32,7 @@ type IncludedSlide = {
   title: string;
   description: string;
   imageUrl: string;
+  imageMode?: "cover" | "contain";
 };
 
 type CuratedSlide = {
@@ -241,7 +243,7 @@ function getPlatformCopy(locale: string): PlatformCopy {
       t(locale, "Déjà 26 documentaires en profondeur", "Already 26 deep dive documentaries"),
     ],
     heroTrialLine: t(locale, "7 jours illimités", "7 Days Unlimited"),
-    heroPrimaryCta: t(locale, "Commencer", "Start"),
+    heroPrimaryCta: t(locale, "Essayer gratuitement", "Try it for free"),
     heroSecondaryCta: t(locale, "L’offrir à quelqu’un", "Gift it to someone"),
     benefitsTitle: t(locale, "Bénéfices", "Benefits"),
     benefits: [
@@ -419,7 +421,7 @@ function getPlatformCopy(locale: string): PlatformCopy {
       t(locale, "Une leçon live chaque semaine", "Join live lessons once a week"),
       t(locale, "Accès à toutes les conférences et documentaires", "Access to all conferences and documentaries"),
     ],
-    trialPrimaryCta: t(locale, "Essayer 7 jours gratuitement", "Try 7 days for free"),
+    trialPrimaryCta: t(locale, "Essayer gratuitement", "Try it for free"),
     trialSecondaryCta: t(locale, "L’offrir à quelqu’un", "Gift it to someone"),
     includedTitle: t(locale, "Qu’est-ce qui est inclus ?", "What's included ?"),
     includedSlides: [
@@ -467,6 +469,7 @@ function getPlatformCopy(locale: string): PlatformCopy {
           "A regular weekly rendezvous to stay engaged, ask questions, and keep refining your attention with live guidance.",
         ),
         imageUrl: "/brands/feldenkrais-education/platform/live-lessons.png",
+        imageMode: "contain",
       },
       {
         title: t(locale, "Plus de 40 enseignants", "Over 40 Teachers"),
@@ -487,7 +490,7 @@ function getPlatformCopy(locale: string): PlatformCopy {
     ),
     lessonAccessTrial: t(locale, "7 jours gratuits", "7 days for free"),
     lessonAccessAnnual: t(locale, "Abonnement annuel 240€ / an", "Annual 240€ / year"),
-    lessonAccessPrimaryCta: t(locale, "Essayer gratuitement", "Try for free"),
+    lessonAccessPrimaryCta: t(locale, "Essayer gratuitement", "Try it for free"),
     lessonAccessSecondaryCta: t(locale, "L’offrir à quelqu’un", "Gift it to someone"),
     lessonAccessFootnote: t(
       locale,
@@ -552,12 +555,12 @@ export default function EducationPlatformPage({
                 <div className="neuro-platform-membership__pricing-card">
                   <p>{copy.lessonAccessTrial}</p>
                   <strong>{copy.lessonAccessAnnual}</strong>
-                  <a className="neuro-platform-button neuro-platform-button--primary" href={NEUROSOMATIC_PLATFORM_URL} rel="noreferrer" target="_blank">
+                  <a className="neuro-platform-button neuro-platform-button--primary" href={LESSON_LIBRARY_TRIAL_URL} rel="noreferrer" target="_blank">
                     {copy.lessonAccessPrimaryCta}
                   </a>
                 </div>
 
-                <a className="neuro-platform-button neuro-platform-button--ghost" href={NEUROSOMATIC_PLATFORM_URL} rel="noreferrer" target="_blank">
+                <a className="neuro-platform-button neuro-platform-button--ghost" href={LESSON_LIBRARY_GIFT_URL} rel="noreferrer" target="_blank">
                   <GiftIcon />
                   <span>{copy.lessonAccessSecondaryCta}</span>
                 </a>
@@ -596,7 +599,7 @@ export default function EducationPlatformPage({
           >
             {copy.includedSlides.map((slide) => (
               <article className="neuro-platform-included-slide" key={slide.title}>
-                <div className="neuro-platform-included-slide__art">
+                <div className={`neuro-platform-included-slide__art${slide.imageMode === "contain" ? " is-contained" : ""}`}>
                   <Image alt={slide.title} height={900} src={slide.imageUrl} width={900} />
                 </div>
 
@@ -618,10 +621,10 @@ export default function EducationPlatformPage({
               <li key={feature}>{feature}</li>
             ))}
           </ul>
-          <a className="neuro-platform-button neuro-platform-button--light" href={NEUROSOMATIC_PLATFORM_URL} rel="noreferrer" target="_blank">
+          <a className="neuro-platform-button neuro-platform-button--light" href={LESSON_LIBRARY_TRIAL_URL} rel="noreferrer" target="_blank">
             {copy.trialPrimaryCta}
           </a>
-          <a className="neuro-platform-button neuro-platform-button--ghost" href={NEUROSOMATIC_PLATFORM_URL} rel="noreferrer" target="_blank">
+          <a className="neuro-platform-button neuro-platform-button--ghost" href={LESSON_LIBRARY_GIFT_URL} rel="noreferrer" target="_blank">
             <GiftIcon />
             <span>{copy.trialSecondaryCta}</span>
           </a>
@@ -792,10 +795,10 @@ export default function EducationPlatformPage({
               <strong>{copy.heroTrialLine}</strong>
             </div>
 
-            <a className="neuro-platform-button neuro-platform-button--primary" href={NEUROSOMATIC_PLATFORM_URL} rel="noreferrer" target="_blank">
+            <a className="neuro-platform-button neuro-platform-button--primary" href={LESSON_LIBRARY_TRIAL_URL} rel="noreferrer" target="_blank">
               {copy.heroPrimaryCta}
             </a>
-            <a className="neuro-platform-button neuro-platform-button--ghost" href={NEUROSOMATIC_PLATFORM_URL} rel="noreferrer" target="_blank">
+            <a className="neuro-platform-button neuro-platform-button--ghost" href={LESSON_LIBRARY_GIFT_URL} rel="noreferrer" target="_blank">
               <GiftIcon />
               <span>{copy.heroSecondaryCta}</span>
             </a>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import EducationContentPage from "@/components/education/EducationContentPage";
 import EducationDomainsArchivePage from "@/components/education/EducationDomainsArchivePage";
@@ -88,6 +89,10 @@ export default async function DomainsPage() {
   const payload = await fetchDomainsPayload(hostname, locale);
 
   const isForest = Boolean(siteConfig && isForestCenter(siteConfig.centerSlug));
+
+  if (!isForest && siteConfig?.siteSlug === "feldenkrais-education") {
+    redirect(localizePath(locale, "/what-is-feldenkrais#12domains"));
+  }
 
   if (!isForest && siteConfig?.siteSlug === "feldenkrais-education") {
     const archiveEntries = getEducationDomainArchive(locale);

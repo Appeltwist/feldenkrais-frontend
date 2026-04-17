@@ -1,20 +1,22 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import type { ApiCenterDetail } from "@/lib/api";
+import { getEducationCenterActionOption } from "@/lib/education-center-actions";
 import type { EducationCenterProfile } from "@/lib/education-content";
 import { getEducationCenterPageContent } from "@/lib/education-center-page-content";
 import { getEducationTeacherProfiles } from "@/lib/education-teachers";
 import { getEducationTrainingCohortByCenter } from "@/lib/education-training";
 import {
-  extractLegacyDualButtonLinks,
   extractLegacyDualHeading,
   extractLegacyImageUrl,
   extractLegacyParagraphs,
   extractLegacyYouTubeId,
 } from "@/lib/legacy-page-signals";
+import { isExternalHref } from "@/lib/locale-path";
 
-import EducationBetaReadOnlyNotice, { EducationBetaReadOnlyButton } from "./EducationBetaReadOnly";
 import EducationCenterContactForm from "./EducationCenterContactForm";
+import EducationCenterActionModalButton from "./EducationCenterActionModalButton";
 import EducationContentPage from "./EducationContentPage";
 import EducationVideoPreview from "./EducationVideoPreview";
 
@@ -110,6 +112,56 @@ function t(locale: string, fr: string, en: string) {
   return locale.toLowerCase().startsWith("fr") ? fr : en;
 }
 
+function ActionLink({
+  href,
+  children,
+  className,
+}: {
+  href: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  if (isExternalHref(href)) {
+    return (
+      <a className={className} href={href} rel="noreferrer" target="_blank">
+        {children}
+      </a>
+    );
+  }
+
+  return (
+    <Link className={className} href={href}>
+      {children}
+    </Link>
+  );
+}
+
+function ProgressRing({
+  label,
+  progress,
+  detail,
+}: {
+  label: string;
+  progress: number;
+  detail: string;
+}) {
+  const boundedProgress = Math.max(0, Math.min(100, progress));
+
+  return (
+    <article className="education-center-progress-card">
+      <div
+        aria-hidden="true"
+        className="education-center-progress-card__ring"
+        style={{ ["--progress" as string]: `${boundedProgress}` }}
+      >
+        <span>{`${boundedProgress}%`}</span>
+      </div>
+      <h3>{label}</h3>
+      <p>{detail}</p>
+    </article>
+  );
+}
+
 export default function EducationCenterDetailPage({
   center,
   cmsCenter,
@@ -117,16 +169,20 @@ export default function EducationCenterDetailPage({
 }: EducationCenterDetailPageProps) {
   const cohort = getEducationTrainingCohortByCenter(locale, center.slug);
   const content = getEducationCenterPageContent(locale, center, cohort);
+  const centerAction = getEducationCenterActionOption(locale, center.slug as "cantal" | "brussels" | "paris");
   const cmsParagraphs = extractLegacyParagraphs(cmsCenter?.body, 5);
   const cmsHeroHeading = extractLegacyDualHeading(cmsCenter?.body);
-  const cmsHeroButtons = extractLegacyDualButtonLinks(cmsCenter?.body);
   const cmsImageUrl = extractLegacyImageUrl(cmsCenter?.body);
   const cmsVideoId = extractLegacyYouTubeId(cmsCenter?.body);
-  const cmsPrimaryAction = cmsHeroButtons[0] || null;
-  const cmsSecondaryAction = cmsHeroButtons[1] || null;
   const teacherLookup = new Map(
     getEducationTeacherProfiles(locale).map((teacher) => [teacher.displayName, teacher]),
   );
+  const introParagraphs =
+    center.slug === "cantal"
+      ? content.intro.paragraphs
+      : cmsParagraphs.length > 0
+        ? cmsParagraphs
+        : content.intro.paragraphs;
   const featuredTeachers = center.teachers
     .map((teacher) => {
       const profile = teacherLookup.get(teacher.name);
@@ -137,6 +193,9 @@ export default function EducationCenterDetailPage({
       };
     })
     .slice(0, 2);
+  const heroBackgroundImageUrl = cmsImageUrl || content.hero.backgroundImageUrl;
+  const heroTitle = cmsHeroHeading?.title || content.hero.title;
+  const heroSubtitle = cmsHeroHeading?.subtitle || cmsCenter?.summary || content.hero.subtitle;
 
   const cohortFacts = cohort
     ? [
@@ -173,27 +232,49 @@ export default function EducationCenterDetailPage({
       <section
         className="education-center-shell education-center-shell--hero"
         style={{
-          backgroundImage: `linear-gradient(180deg, rgba(15, 18, 24, 0.28), rgba(15, 18, 24, 0.56)), url(${cmsImageUrl || content.hero.backgroundImageUrl})`,
+          backgroundImage: `url(${heroBackgroundImageUrl})`,
         }}
       >
+        {content.hero.backgroundVideoUrl ? (
+          <div className="education-center-shell__hero-video" aria-hidden="true">
+            <iframe
+              allow="autoplay; encrypted-media; picture-in-picture"
+              referrerPolicy="strict-origin-when-cross-origin"
+              src={content.hero.backgroundVideoUrl}
+              tabIndex={-1}
+              title={`${content.hero.title} background video`}
+            />
+          </div>
+        ) : null}
+        <div className="education-center-shell__hero-overlay" aria-hidden="true" />
         <div className="education-center-shell__hero-inner">
           <ScopeBadge>{content.labels.center}</ScopeBadge>
-          <h1>{cmsHeroHeading?.title || content.hero.title}</h1>
-          <p>{cmsHeroHeading?.subtitle || cmsCenter?.summary || content.hero.subtitle}</p>
+          <h1>{heroTitle}</h1>
+          <p>{heroSubtitle}</p>
           <div className="education-center-shell__hero-actions">
-            {cohort || cmsPrimaryAction ? (
-              <EducationBetaReadOnlyButton
-                className="education-button education-center-shell__primary-button"
-                label={cmsPrimaryAction?.label || content.hero.enrollLabel}
+            {centerAction?.signupHref ? (
+              <EducationCenterActionModalButton
+                centers={[center.slug as "cantal" | "brussels" | "paris"]}
+                className="education-center-shell__primary-button"
+                label={content.hero.enrollLabel}
                 locale={locale}
+                variant="signup"
+              />
+            ) : (
+              <ActionLink className="education-button education-center-shell__primary-button" href={content.contact.appointmentHref}>
+                {t(locale, "Nous contacter", "Contact us")}
+              </ActionLink>
+            )}
+            {centerAction?.bookCallHref ? (
+              <EducationCenterActionModalButton
+                centers={[center.slug as "cantal" | "brussels" | "paris"]}
+                className="education-button education-center-shell__secondary-button"
+                label={content.hero.appointmentLabel}
+                locale={locale}
+                secondary
+                variant="book-call"
               />
             ) : null}
-            <EducationBetaReadOnlyButton
-              className="education-button education-center-shell__secondary-button"
-              label={cmsSecondaryAction?.label || content.hero.appointmentLabel}
-              locale={locale}
-              secondary
-            />
           </div>
         </div>
       </section>
@@ -203,21 +284,56 @@ export default function EducationCenterDetailPage({
           <div className="education-center-section-copy">
             <ScopeBadge>{content.labels.center}</ScopeBadge>
             <SectionHeading subtitle={content.intro.subtitle} title={content.intro.title} />
-            {(cmsParagraphs.length > 0 ? cmsParagraphs : content.intro.paragraphs).map((paragraph) => (
+            {introParagraphs.map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>
             ))}
           </div>
 
-          <EducationVideoPreview
-            className="education-center-video"
-            playLabel={t(locale, "Lire la vidéo", "Play video")}
-            posterPosition={content.intro.video.posterPosition}
-            posterUrl={cmsImageUrl || content.intro.video.posterUrl}
-            title={content.intro.video.title}
-            videoId={cmsVideoId || content.intro.video.videoId}
-          />
+          {content.intro.video.imageOnly ? (
+            <div
+              aria-label={content.intro.video.title}
+              className="education-center-video education-center-static-media"
+              role="img"
+              style={{
+                backgroundImage: `url(${content.intro.video.posterUrl})`,
+                backgroundPosition: content.intro.video.posterPosition || "center",
+              }}
+            />
+          ) : (
+            <EducationVideoPreview
+              className="education-center-video"
+              playLabel={t(locale, "Lire la vidéo", "Play video")}
+              posterPosition={content.intro.video.posterPosition}
+              posterUrl={cmsImageUrl || content.intro.video.posterUrl}
+              title={content.intro.video.title}
+              videoId={cmsVideoId || content.intro.video.videoId}
+            />
+          )}
         </div>
       </section>
+
+      {content.address?.value ? (
+        <section className="education-center-shell education-center-shell--light">
+          <div className="education-center-address-card">
+            <span className="education-center-address-card__icon" aria-hidden="true">
+              <svg fill="none" viewBox="0 0 24 24">
+                <path
+                  d="M12 20s6-4.35 6-10a6 6 0 1 0-12 0c0 5.65 6 10 6 10Z"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.8"
+                />
+                <circle cx="12" cy="10" fill="currentColor" r="2.2" />
+              </svg>
+            </span>
+            <div>
+              <p>{content.address.title}</p>
+              <strong>{content.address.value}</strong>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <section className="education-center-shell education-center-shell--light">
         <div className="education-center-general-grid">
@@ -244,8 +360,8 @@ export default function EducationCenterDetailPage({
           </div>
 
           <aside className="education-center-general-grid__links">
-            <Link href={content.centerLife.classLink.href}>{content.centerLife.classLink.label}</Link>
-            <Link href={content.centerLife.privateLink.href}>{content.centerLife.privateLink.label}</Link>
+            <ActionLink href={content.centerLife.classLink.href}>{content.centerLife.classLink.label}</ActionLink>
+            <ActionLink href={content.centerLife.privateLink.href}>{content.centerLife.privateLink.label}</ActionLink>
           </aside>
         </div>
       </section>
@@ -263,12 +379,27 @@ export default function EducationCenterDetailPage({
               <p className="education-center-upcoming-grid__note">{content.upcoming.note}</p>
             ) : null}
             <div className="education-center-upcoming-grid__actions">
-              {cohort ? (
+              {cohort || center.slug === "paris" ? (
                 <>
-                  <EducationBetaReadOnlyButton label={content.upcoming.enrollLabel} locale={locale} />
-                  <a className="education-button education-button--secondary" href={cohort.programPdfUrl}>
-                    {content.upcoming.pdfLabel}
-                  </a>
+                  {centerAction?.signupHref ? (
+                    <EducationCenterActionModalButton
+                      centers={[center.slug as "cantal" | "brussels" | "paris"]}
+                      label={content.upcoming.enrollLabel}
+                      locale={locale}
+                      variant="signup"
+                    />
+                  ) : (
+                    <ActionLink className="education-button" href={content.contact.appointmentHref}>
+                      {t(locale, "Nous contacter", "Contact us")}
+                    </ActionLink>
+                  )}
+                  <EducationCenterActionModalButton
+                    centers={[center.slug as "cantal" | "brussels" | "paris"]}
+                    label={t(locale, "Télécharger le PDF", "Download the PDF")}
+                    locale={locale}
+                    secondary
+                    variant="download-pdf"
+                  />
                 </>
               ) : null}
             </div>
@@ -287,42 +418,71 @@ export default function EducationCenterDetailPage({
         </div>
       </section>
 
-      <section className="education-center-shell education-center-shell--light">
-        <div className="education-center-cohort-card">
-          <div
-            className="education-center-cohort-card__preview"
-            style={{ backgroundImage: `url(${content.cohortDetails.programPreviewUrl})` }}
-          />
+      {content.hideCohortDetailsSection ? null : (
+        <section className="education-center-shell education-center-shell--light">
+          {content.cohortProgress ? (
+            <div className="education-center-progress-panel">
+              <ScopeBadge variant="cohort">{content.labels.cohort}</ScopeBadge>
+              <h2>{content.cohortProgress.title}</h2>
+              <p className="education-center-progress-panel__note">{content.cohortProgress.note}</p>
+              <div className="education-center-progress-panel__grid">
+                {content.cohortProgress.items.map((item) => (
+                  <ProgressRing
+                    detail={item.detail}
+                    key={item.label}
+                    label={item.label}
+                    progress={item.progress}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="education-center-cohort-card">
+              <div
+                className="education-center-cohort-card__preview"
+                style={{ backgroundImage: `url(${content.cohortDetails.programPreviewUrl})` }}
+              />
 
-          <div className="education-center-cohort-card__facts">
-            <ScopeBadge variant="cohort">{content.labels.cohort}</ScopeBadge>
-            <h2>{content.cohortDetails.title}</h2>
-            <div className="education-center-cohort-card__fact-list">
-              {cohortFacts.map((fact) => (
-                <div className="education-center-cohort-card__fact" key={`${fact.key}-${fact.label}`}>
-                  <span className="education-center-cohort-card__icon" aria-hidden="true">
-                    <DetailIcon kind={fact.key} />
-                  </span>
-                  <div>
-                    <strong>{fact.label}</strong>
-                    <span>{fact.value}</span>
-                  </div>
+              <div className="education-center-cohort-card__facts">
+                <ScopeBadge variant="cohort">{content.labels.cohort}</ScopeBadge>
+                <h2>{content.cohortDetails.title}</h2>
+                <div className="education-center-cohort-card__fact-list">
+                  {cohortFacts.map((fact) => (
+                    <div className="education-center-cohort-card__fact" key={`${fact.key}-${fact.label}`}>
+                      <span className="education-center-cohort-card__icon" aria-hidden="true">
+                        <DetailIcon kind={fact.key} />
+                      </span>
+                      <div>
+                        <strong>{fact.label}</strong>
+                        <span>{fact.value}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+                <div className="education-center-cohort-card__actions">
+                  {centerAction?.signupHref ? (
+                    <>
+                      <EducationCenterActionModalButton
+                        centers={[center.slug as "cantal" | "brussels" | "paris"]}
+                        label={t(locale, "Télécharger le PDF", "Download the PDF")}
+                        locale={locale}
+                        secondary
+                        variant="download-pdf"
+                      />
+                      <EducationCenterActionModalButton
+                        centers={[center.slug as "cantal" | "brussels" | "paris"]}
+                        label={content.cohortDetails.enrollLabel}
+                        locale={locale}
+                        variant="signup"
+                      />
+                    </>
+                  ) : null}
+                </div>
+              </div>
             </div>
-            <div className="education-center-cohort-card__actions">
-              {cohort ? (
-                <>
-                  <a className="education-button education-button--secondary" href={cohort.programPdfUrl}>
-                    {content.cohortDetails.pdfLabel}
-                  </a>
-                  <EducationBetaReadOnlyButton label={content.cohortDetails.enrollLabel} locale={locale} />
-                </>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      </section>
+          )}
+        </section>
+      )}
 
       <section className="education-center-shell education-center-shell--light">
         <div className="education-center-contact-block">
@@ -332,9 +492,8 @@ export default function EducationCenterDetailPage({
             <p>{content.contact.intro}</p>
             <p className="education-center-contact-block__appointment">
               <strong>{content.contact.appointmentPrefix}</strong>{" "}
-              <span>{cmsSecondaryAction?.label || content.contact.appointmentLabel}</span>
+              <ActionLink href={content.contact.appointmentHref}>{content.contact.appointmentLabel}</ActionLink>
             </p>
-            <EducationBetaReadOnlyNotice compact locale={locale} />
           </div>
           <EducationCenterContactForm
             centerName={center.name}

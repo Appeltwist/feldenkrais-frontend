@@ -5,6 +5,11 @@ import path from "node:path";
 import { cache } from "react";
 
 import { resolveLocale } from "@/lib/i18n";
+import {
+  EDUCATION_MASTERCLASS_COVER_MAP,
+  EDUCATION_MASTERCLASS_ORDER,
+} from "@/lib/education-masterclass-media";
+import { localizePath } from "@/lib/locale-path";
 
 export type EducationShopHighlight = {
   title: string;
@@ -23,6 +28,10 @@ export type EducationShopProduct = {
   imageUrl: string | null;
   bodyHtml: string;
   priceLabel: string | null;
+  currentPrice: number | null;
+  originalPrice: number | null;
+  purchaseUrl: string;
+  galleryImageUrls: string[];
   sourceUrl: string;
 };
 
@@ -42,6 +51,102 @@ export type EducationShopData = {
   highlights: EducationShopHighlight[];
   products: EducationShopProduct[];
 };
+
+type CuratedPhysicalProduct = {
+  currentPrice: number;
+  galleryFileNames: string[];
+  key: "light-kit" | "table" | "full-kit";
+  originalPrice: number;
+  purchaseUrl: string;
+  slugs: {
+    en: string;
+    fr: string;
+  };
+  titles: {
+    en: string;
+    fr: string;
+  };
+};
+
+const SHOP_PRODUCT_IMAGE_BASE = "/brands/feldenkrais-education/media-library/shop-products";
+
+const CURATED_PHYSICAL_PRODUCTS: CuratedPhysicalProduct[] = [
+  {
+    key: "light-kit",
+    slugs: {
+      en: "light-feldenkrais-practitioner-kit",
+      fr: "kit-leger-du-praticien-feldenkrais",
+    },
+    titles: {
+      en: '"Light" Feldenkrais practitioner Kit',
+      fr: 'Kit "Léger" du Praticien Feldenkrais',
+    },
+    purchaseUrl: "https://client.felded.com/b/9B65kE7Im3V17I6e3573G0i",
+    currentPrice: 242,
+    originalPrice: 302.5,
+    galleryFileNames: [
+      "DSC02632.jpeg",
+      "DSC02629.jpeg",
+      "IMG_1955-scaled.jpeg",
+      "DSC02619-Moyenne.jpeg",
+      "DSC02631-Moyenne.jpeg",
+      "DSC02455-Moyenne.jpeg",
+      "DSC02616.jpeg",
+      "DSC02625.jpeg",
+      "WhatsApp-Image-2025-11-06-at-17.52.054.jpeg",
+      "WhatsApp-Image-2025-11-06-at-17.52.06.jpeg",
+      "WhatsApp-Image-2025-11-06-at-17.52.04.jpeg",
+    ],
+  },
+  {
+    key: "table",
+    slugs: {
+      en: "feldenkrais-table",
+      fr: "table-de-feldenkrais",
+    },
+    titles: {
+      en: "Feldenkrais Table",
+      fr: "Table de Feldenkrais",
+    },
+    purchaseUrl: "https://client.felded.com/b/eVq6oI7Im9fl7I60cf73G0k",
+    currentPrice: 665.5,
+    originalPrice: 863.82,
+    galleryFileNames: [
+      "DSC02645.jpg",
+      "DSC02644.jpg",
+      "DSC02643.jpg",
+      "DSC02641.jpg",
+      "DSC02639.jpg",
+      "DSC02638.jpg",
+      "DSC02637.jpg",
+    ],
+  },
+  {
+    key: "full-kit",
+    slugs: {
+      en: "full-feldenkrais-practitioner-kit",
+      fr: "kit-complet",
+    },
+    titles: {
+      en: "Full Feldenkrais Practitioner Kit",
+      fr: "Kit complet du Praticien Feldenkrais",
+    },
+    purchaseUrl: "https://client.felded.com/b/8x23cwbYCfDJbYm2kn73G0j",
+    currentPrice: 459.8,
+    originalPrice: 508.2,
+    galleryFileNames: [
+      "DSC02455-Moyenne.jpeg",
+      "DSC02611-Moyenne.jpeg",
+      "DSC02631-Moyenne.jpeg",
+      "DSC02617-Moyenne.jpeg",
+      "DSC02614.jpeg",
+      "DSC02619.jpeg",
+      "DSC02625.jpeg",
+      "DSC02629.jpeg",
+      "DSC02292.jpeg",
+    ],
+  },
+];
 
 function decodeEntities(value: string) {
   return value
@@ -113,12 +218,48 @@ function readArchiveRows() {
   return { archiveDir, rows };
 }
 
-function extractProductPriceLabel(html: string) {
-  const match =
-    html.match(/Price\s*:\s*([^<\n]+)/i) ??
-    html.match(/Prix\s*:\s*([^<\n]+)/i);
+function formatProductPrice(locale: string, amount: number) {
+  return new Intl.NumberFormat(resolveLocale(locale), {
+    currency: "EUR",
+    style: "currency",
+  }).format(amount);
+}
 
-  return match?.[1]?.trim() ?? null;
+function buildCuratedPhysicalProducts(locale: string, rows: ArchiveRow[], archiveDir: string): EducationShopProduct[] {
+  const targetLocale = resolveLocale(locale);
+  const rowsBySlug = new Map(
+    rows
+      .filter((row) => row.source_type === "product" && row.slug)
+      .map((row) => [row.slug?.trim().toLowerCase() || "", row]),
+  );
+
+  return CURATED_PHYSICAL_PRODUCTS.map((product) => {
+    const slug = product.slugs[targetLocale as "en" | "fr"] || product.slugs.en;
+    const archiveRow =
+      rowsBySlug.get(slug.toLowerCase()) ??
+      rowsBySlug.get(product.slugs.en.toLowerCase()) ??
+      rowsBySlug.get(product.slugs.fr.toLowerCase()) ??
+      null;
+    const bodyHtmlPath = archiveRow?.body_html_path ? path.join(archiveDir, archiveRow.body_html_path) : "";
+    const bodyHtml = bodyHtmlPath && existsSync(bodyHtmlPath) ? readFileSync(bodyHtmlPath, "utf8") : "";
+    const excerpt = stripTags(archiveRow?.excerpt?.trim() || "").slice(0, 420);
+    const galleryImageUrls = product.galleryFileNames.map((filename) => `${SHOP_PRODUCT_IMAGE_BASE}/${filename}`);
+
+    return {
+      slug,
+      title: product.titles[targetLocale as "en" | "fr"] || product.titles.en,
+      locale: targetLocale,
+      excerpt,
+      imageUrl: galleryImageUrls[0] || archiveRow?.featured_media_url?.trim() || null,
+      bodyHtml,
+      priceLabel: formatProductPrice(locale, product.currentPrice),
+      currentPrice: product.currentPrice,
+      originalPrice: product.originalPrice,
+      purchaseUrl: product.purchaseUrl,
+      galleryImageUrls,
+      sourceUrl: archiveRow?.url?.trim() || "",
+    } satisfies EducationShopProduct;
+  });
 }
 
 function extractDigitalHighlights(shopHtml: string): EducationShopHighlight[] {
@@ -156,6 +297,43 @@ function extractDigitalHighlights(shopHtml: string): EducationShopHighlight[] {
     .filter((item) => Boolean(item.title && item.href));
 }
 
+function buildCuratedDigitalHighlights(locale: string): EducationShopHighlight[] {
+  const entries: EducationShopHighlight[] = [
+    {
+      title: "Lesson Library Access",
+      href: localizePath(locale, "/lesson-library-access"),
+      imageUrl: "/brands/feldenkrais-education/platform/lesson-library-scaled.jpeg",
+      priceLabel: resolveLocale(locale) === "fr" ? "Abonnement annuel" : "Yearly Membership",
+      metaLabels: [
+        resolveLocale(locale) === "fr" ? "Leçons & documentaires" : "Lessons & documentaries",
+      ],
+      sourceType: "digital",
+    },
+    ...EDUCATION_MASTERCLASS_ORDER.map((slug) => ({
+      title:
+        slug === "the-singers-voice"
+          ? "The Singer's Voice"
+          : slug === "the-skeletal-voice"
+            ? "The Skeletal Voice"
+            : slug === "unlearning-pain"
+              ? "Unlearning Pain"
+              : "Feldenkrais for Sports",
+      href: localizePath(locale, `/masterclasses/${slug}`),
+      imageUrl: EDUCATION_MASTERCLASS_COVER_MAP[slug],
+      priceLabel: resolveLocale(locale) === "fr" ? "Masterclass à la demande" : "On-demand masterclass",
+      metaLabels:
+        slug === "feldenkrais-for-sports"
+          ? ["Sports", "Performance"]
+          : slug === "unlearning-pain"
+            ? ["Pain", "Recovery"]
+            : ["Voice", "Embodied performance"],
+      sourceType: "digital" as const,
+    })),
+  ];
+
+  return entries;
+}
+
 function buildShopData(locale: string): EducationShopData {
   const { archiveDir, rows } = readArchiveRows();
   if (!archiveDir) {
@@ -167,6 +345,7 @@ function buildShopData(locale: string): EducationShopData {
   const shopRow = localeRows.find((row) => row.source_type === "product" && (row.slug === "shop-en" || row.slug === "shop"));
 
   let highlights: EducationShopHighlight[] = [];
+  const curatedHighlights = buildCuratedDigitalHighlights(locale);
   if (shopRow?.html_snapshot_path) {
     const shopHtmlPath = path.join(archiveDir, shopRow.html_snapshot_path);
     if (existsSync(shopHtmlPath)) {
@@ -174,28 +353,11 @@ function buildShopData(locale: string): EducationShopData {
       highlights = extractDigitalHighlights(shopHtml);
     }
   }
+  if (curatedHighlights.length > 0) {
+    highlights = curatedHighlights;
+  }
 
-  const products = localeRows
-    .filter((row) => row.source_type === "product" && row.slug && row.slug !== "shop" && row.slug !== "shop-en")
-    .map((row) => {
-      const bodyHtmlPath = row.body_html_path ? path.join(archiveDir, row.body_html_path) : "";
-      const bodyHtml = bodyHtmlPath && existsSync(bodyHtmlPath) ? readFileSync(bodyHtmlPath, "utf8") : "";
-
-      return {
-        slug: row.slug?.trim() || "",
-        title: (row.title?.trim() || "Product").replace(/\s*-\s*Feldenkrais Education$/i, ""),
-        locale: targetLocale,
-        excerpt: stripTags(row.excerpt?.trim() || "").slice(0, 420),
-        imageUrl: row.featured_media_url?.trim() || null,
-        bodyHtml,
-        priceLabel: extractProductPriceLabel(bodyHtml),
-        sourceUrl: row.url?.trim() || "",
-      };
-    })
-    .filter((item) => Boolean(item.slug))
-    .sort((left, right) => left.title.localeCompare(right.title));
-
-  return { highlights, products };
+  return { highlights, products: buildCuratedPhysicalProducts(locale, rows, archiveDir) };
 }
 
 const readEducationShopData = cache((locale: string) => buildShopData(locale));

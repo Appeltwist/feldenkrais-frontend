@@ -13,6 +13,7 @@ import { getEducationTrainingCohort } from "@/lib/education-training";
 import { buildOfferMetadata, loadOfferRouteData } from "@/lib/offer-page";
 import { buildOfferLocaleSwitchPaths } from "@/lib/offer-locale-paths";
 import { getCanonicalOfferPath, getDomains, getOfferType } from "@/lib/offers";
+import { localizePath } from "@/lib/locale-path";
 
 type OfferPageProps = {
   params: Promise<{ slug: string }>;
@@ -66,6 +67,10 @@ export default async function TrainingDetailPage({ params }: OfferPageProps) {
   const isForest = isForestCenter(siteConfig.centerSlug);
 
   if (!isForest) {
+    if (slug === "brussels-4") {
+      permanentRedirect(localizePath(requestLocale, "/trainings/brussels-5"));
+    }
+
     const cohort = getEducationTrainingCohort(requestLocale, slug);
 
     if (cohort) {

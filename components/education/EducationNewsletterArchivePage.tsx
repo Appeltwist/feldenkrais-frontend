@@ -1,11 +1,11 @@
 import Link from "next/link";
 
 import type { EducationNewsletterEntry } from "@/lib/education-newsletters";
+import { EDUCATION_NEWSLETTER_SIGNUP_URL } from "@/lib/education-links";
 import { localizePath } from "@/lib/locale-path";
 import type { NarrativePage } from "@/lib/site-config";
 
 import EducationContentPage from "./EducationContentPage";
-import EducationBetaReadOnlyNotice from "./EducationBetaReadOnly";
 
 type EducationNewsletterArchivePageProps = {
   page: NarrativePage;
@@ -66,22 +66,17 @@ export default function EducationNewsletterArchivePage({
       <section className="education-newsletter-signup">
         <div className="education-newsletter-signup__inner">
           <h1>{t(locale, "Abonnez-vous à la newsletter", "Subscribe to the newsletter")}</h1>
-          <EducationBetaReadOnlyNotice
-            body={t(
-              locale,
-              "Les inscriptions restent fermées pendant la bêta. Vous pouvez consulter les anciennes éditions sans créer de nouvelle inscription.",
-              "Subscriptions stay closed during the beta. You can read the archive without creating a new signup.",
-            )}
-            className="education-newsletter-signup__form"
-            locale={locale}
-            title={t(locale, "Newsletter en pause", "Newsletter paused for beta")}
-          />
+          <div className="education-newsletter-signup__form">
+            <a className="education-button" href={EDUCATION_NEWSLETTER_SIGNUP_URL} rel="noreferrer" target="_blank">
+              {t(locale, "S’inscrire à la newsletter", "Sign up to the newsletter")}
+            </a>
+          </div>
         </div>
       </section>
 
       <section className="education-newsletter-archive">
         <div className="education-newsletter-archive__heading">
-          <h2>{t(locale, "Archive des numéros", "Issue archive")}</h2>
+          <h2>{t(locale, "Archive de la newsletter", "Newsletter archive")}</h2>
           <p>
             {t(
               locale,

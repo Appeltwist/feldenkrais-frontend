@@ -116,7 +116,7 @@ export function getEducationTeacherProfiles(locale: string): EducationTeacherPro
       ],
       photoUrl: "https://feldenkrais-education.com/wp-content/uploads/sites/15/2022/07/DSC02109-Large-e1731345495503.jpeg",
       centerSlugs: ["brussels"],
-      cohortSlugs: ["brussels-4"],
+      cohortSlugs: ["brussels-5"],
       focusAreas: [
         t(locale, "Artistes de scène", "Performing artists"),
         t(locale, "Leçons collectives", "Group lessons"),
@@ -202,7 +202,7 @@ export function getEducationTeacherProfiles(locale: string): EducationTeacherPro
       ],
       photoUrl: "https://feldenkrais-education.com/wp-content/uploads/sites/15/2022/07/2057_08021809_S066-copie.jpeg",
       centerSlugs: ["cantal", "brussels"],
-      cohortSlugs: ["cantal-6", "brussels-4"],
+      cohortSlugs: ["cantal-6", "brussels-5"],
       focusAreas: [
         t(locale, "Pédagogie créative", "Creative pedagogy"),
         t(locale, "Environnements d’apprentissage", "Learning environments"),
@@ -417,7 +417,7 @@ export function getEducationTeacherProfiles(locale: string): EducationTeacherPro
       ],
       photoUrl: "https://feldenkrais-education.com/wp-content/uploads/sites/15/2022/05/079A0516.jpg",
       centerSlugs: ["brussels"],
-      cohortSlugs: ["brussels-4"],
+      cohortSlugs: ["brussels-5"],
       focusAreas: [
         t(locale, "Organisation", "Organization"),
         t(locale, "Traduction", "Translation"),
@@ -460,7 +460,7 @@ export function getEducationTeacherProfiles(locale: string): EducationTeacherPro
       ],
       photoUrl: "https://feldenkrais-education.com/wp-content/uploads/sites/15/2022/11/IMG_3814.jpeg",
       centerSlugs: ["brussels"],
-      cohortSlugs: ["brussels-4"],
+      cohortSlugs: ["brussels-5"],
       focusAreas: [
         t(locale, "Enfance et développement", "Children and development"),
         t(locale, "Danse et présence", "Dance and presence"),

@@ -1,6 +1,12 @@
 import type { OfferDetail } from "@/lib/types";
 import { buildVimeoEmbedUrl, parseVimeoVideo } from "@/lib/video-embed";
 import { getFacilitatorName, getFacilitators } from "@/lib/offers";
+import {
+  EDUCATION_MASTERCLASS_COVER_MAP,
+  EDUCATION_MASTERCLASS_TEACHER_IMAGE_MAP,
+  resolveEducationMasterclassSlug,
+  type EducationMasterclassSlug,
+} from "@/lib/education-masterclass-media";
 
 export type MasterclassFaqItem = {
   question: string;
@@ -61,24 +67,18 @@ export type MasterclassLandingData = {
   faqTabs: MasterclassFaqTab[];
 };
 
-const MASTERCLASS_ASSET_MAP: Record<string, { heroImageUrl: string; teacherImageUrl: string }> = {
-  "the-skeletal-voice": {
-    heroImageUrl: "/brands/feldenkrais-education/masterclasses/the-skeletal-voice-hero.jpeg",
-    teacherImageUrl: "/brands/feldenkrais-education/masterclasses/robert-sussuma.jpeg",
-  },
-  "the-singers-voice": {
-    heroImageUrl: "/brands/feldenkrais-education/masterclasses/the-singers-voice-hero.jpeg",
-    teacherImageUrl: "/brands/feldenkrais-education/masterclasses/robert-sussuma.jpeg",
-  },
-  "unlearning-pain": {
-    heroImageUrl: "/brands/feldenkrais-education/masterclasses/unlearning-pain-hero.jpeg",
-    teacherImageUrl: "/brands/feldenkrais-education/masterclasses/howard-schubiner.jpeg",
-  },
-  "feldenkrais-for-sports": {
-    heroImageUrl: "/brands/feldenkrais-education/masterclasses/feldenkrais-for-sports-hero.jpeg",
-    teacherImageUrl: "/brands/feldenkrais-education/masterclasses/choune-osterero.jpg",
-  },
-};
+const MASTERCLASS_ASSET_MAP = Object.fromEntries(
+  Object.entries(EDUCATION_MASTERCLASS_COVER_MAP).map(([slug, heroImageUrl]) => [
+    slug,
+    {
+      heroImageUrl,
+      teacherImageUrl:
+        EDUCATION_MASTERCLASS_TEACHER_IMAGE_MAP[
+          slug as EducationMasterclassSlug
+        ],
+    },
+  ]),
+) as Record<string, { heroImageUrl: string; teacherImageUrl: string }>;
 
 function buildGalleryUrls(slug: string, filenames: string[]) {
   return filenames.map((filename) => `/brands/feldenkrais-education/masterclasses/galleries/${slug}/${filename}`);
@@ -176,7 +176,10 @@ function decodeHtmlEntities(value: string) {
 }
 
 function stripTags(value: string) {
-  return value.replace(/<[^>]+>/g, " ");
+  return value
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<[^>]+>/g, " ");
 }
 
 function normalizeText(value: string) {
@@ -377,13 +380,14 @@ export function getMasterclassSupportFeatures(locale: string) {
 
 export function buildMasterclassLandingData(offer: OfferDetail, locale: string): MasterclassLandingData {
   const slug = typeof offer.slug === "string" && offer.slug.trim() ? offer.slug.trim() : "masterclass";
+  const canonicalSlug = resolveEducationMasterclassSlug(slug);
   const body = typeof offer.body === "string"
     ? offer.body
     : typeof offer.body_html === "string"
     ? offer.body_html
     : "";
-  const assetFallback = MASTERCLASS_ASSET_MAP[slug];
-  const galleryImageUrls = MASTERCLASS_GALLERY_MAP[slug] ?? [];
+  const assetFallback = canonicalSlug ? MASTERCLASS_ASSET_MAP[canonicalSlug] : MASTERCLASS_ASSET_MAP[slug];
+  const galleryImageUrls = canonicalSlug ? MASTERCLASS_GALLERY_MAP[canonicalSlug] ?? [] : MASTERCLASS_GALLERY_MAP[slug] ?? [];
 
   const heroSection = extractBetween(body, 'id="mc-hero"', 'id="mc-overview"');
   const sampleSection = extractBetween(body, 'id="mc-overview"', "Course Overview");

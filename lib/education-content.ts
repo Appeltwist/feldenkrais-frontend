@@ -175,11 +175,11 @@ function buildEducationNav(locale: string): SiteNavItem[] {
         },
         {
           label: isFr ? "12 Domaines" : "12 domains",
-          href: localizePath(locale, "/domains"),
+          href: localizePath(locale, "/what-is-feldenkrais#12domains"),
         },
         {
           label: "Moshe Feldenkrais",
-          href: localizePath(locale, "/moshe-feldenkrais"),
+          href: localizePath(locale, "/what-is-feldenkrais#biography"),
         },
         {
           label: isFr ? "Trouver un praticien" : "Find a practitioner",
@@ -1178,8 +1178,8 @@ export function getEducationCenters(locale: string): EducationCenterProfile[] {
           title: t(locale, "Cohorte actuelle", "Current cohort"),
           body: t(
             locale,
-            "Bruxelles 4 est le point d’entrée actuel pour les personnes qui veulent étudier dans un rythme plus urbain, sans perdre la profondeur du parcours.",
-            "Brussels 4 is the current entry point for people who want to study in a more urban rhythm without losing the depth of the pathway.",
+            "Bruxelles 5 est le point d’entrée actuel pour les personnes qui veulent étudier dans un rythme plus urbain, sans perdre la profondeur du parcours.",
+            "Brussels 5 is the current entry point for people who want to study in a more urban rhythm without losing the depth of the pathway.",
           ),
         },
       ],
@@ -1202,7 +1202,7 @@ export function getEducationCenters(locale: string): EducationCenterProfile[] {
         },
       ],
       upcomingTraining: {
-        name: isFr ? "Bruxelles 4" : "Brussels 4",
+        name: isFr ? "Bruxelles 5" : "Brussels 5",
         body: t(
           locale,
           "À Bruxelles, la formation professionnelle s’adresse aux personnes qui veulent apprendre la méthode en profondeur, l’inscrire dans leur pratique et rejoindre une communauté internationale de praticiens.",
