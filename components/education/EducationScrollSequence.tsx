@@ -1,7 +1,6 @@
 "use client";
 
-import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 type EducationScrollSequenceProps = {
   alt: string;
@@ -23,6 +22,18 @@ function getViewportHeight() {
   return window.visualViewport?.height || window.innerHeight || document.documentElement.clientHeight || 0;
 }
 
+function getScrollProgress(rect: DOMRect, viewportHeight: number) {
+  const start = viewportHeight * 0.8;
+  const end = viewportHeight * 0.2 - rect.height;
+  const progressWindow = start - end;
+
+  if (progressWindow <= 0) {
+    return 0;
+  }
+
+  return clamp((start - rect.top) / progressWindow, 0, 1);
+}
+
 export default function EducationScrollSequence({
   alt,
   className = "",
@@ -31,23 +42,38 @@ export default function EducationScrollSequence({
   width,
 }: EducationScrollSequenceProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const imageRef = useRef<HTMLImageElement | null>(null);
   const currentFrameRef = useRef(0);
-  const [currentFrame, setCurrentFrame] = useState(0);
 
   useEffect(() => {
-    const preloadedFrames = frameUrls.map((src) => {
-      const image = new window.Image();
-      image.decoding = "async";
-      image.src = src;
-      return image;
-    });
+    if (frameUrls.length === 0) {
+      return;
+    }
+
+    let cancelled = false;
+    let resizeObserver: ResizeObserver | null = null;
+    const preloadedFrames = frameUrls.map(
+      (src) =>
+        new Promise<void>((resolve) => {
+          const image = new window.Image();
+          image.decoding = "async";
+          image.onload = () => resolve();
+          image.onerror = () => resolve();
+          image.src = src;
+        }),
+    );
 
     let animationFrame = 0;
 
     const updateFrame = () => {
       animationFrame = 0;
+      if (cancelled) {
+        return;
+      }
+
       const element = containerRef.current;
-      if (!element) {
+      const imageElement = imageRef.current;
+      if (!element || !imageElement) {
         return;
       }
 
@@ -57,19 +83,12 @@ export default function EducationScrollSequence({
         return;
       }
 
-      const start = viewportHeight * 0.88;
-      const end = viewportHeight * 0.14 - rect.height;
-      const progressWindow = start - end;
-      if (progressWindow <= 0) {
-        return;
-      }
-
-      const progress = clamp((start - rect.top) / progressWindow, 0, 1);
-      const nextFrame = Math.round(progress * (frameUrls.length - 1));
+      const progress = getScrollProgress(rect, viewportHeight);
+      const nextFrame = Math.min(frameUrls.length - 1, Math.floor(progress * frameUrls.length));
 
       if (currentFrameRef.current !== nextFrame) {
         currentFrameRef.current = nextFrame;
-        setCurrentFrame(nextFrame);
+        imageElement.src = frameUrls[nextFrame];
       }
     };
 
@@ -81,25 +100,39 @@ export default function EducationScrollSequence({
       animationFrame = window.requestAnimationFrame(updateFrame);
     };
 
-    requestUpdate();
-    window.addEventListener("scroll", requestUpdate, { passive: true });
-    window.addEventListener("resize", requestUpdate);
-    window.addEventListener("orientationchange", requestUpdate);
-    window.visualViewport?.addEventListener("resize", requestUpdate);
+    const attachListeners = () => {
+      requestUpdate();
+      window.addEventListener("scroll", requestUpdate, { passive: true });
+      window.addEventListener("resize", requestUpdate);
+      window.addEventListener("orientationchange", requestUpdate);
+      window.visualViewport?.addEventListener("resize", requestUpdate);
 
-    const resizeObserver =
-      typeof ResizeObserver !== "undefined"
-        ? new ResizeObserver(() => {
-            requestUpdate();
-          })
-        : null;
+      resizeObserver =
+        typeof ResizeObserver !== "undefined"
+          ? new ResizeObserver(() => {
+              requestUpdate();
+            })
+          : null;
 
-    if (resizeObserver && containerRef.current) {
-      resizeObserver.observe(containerRef.current);
-    }
+      if (resizeObserver && containerRef.current) {
+        resizeObserver.observe(containerRef.current);
+      }
+    };
+
+    void Promise.all(preloadedFrames).then(() => {
+      if (cancelled) {
+        return;
+      }
+
+      if (imageRef.current) {
+        imageRef.current.src = frameUrls[currentFrameRef.current] || "";
+      }
+
+      attachListeners();
+    });
 
     return () => {
-      preloadedFrames.length = 0;
+      cancelled = true;
       window.removeEventListener("scroll", requestUpdate);
       window.removeEventListener("resize", requestUpdate);
       window.removeEventListener("orientationchange", requestUpdate);
@@ -113,14 +146,14 @@ export default function EducationScrollSequence({
 
   return (
     <div className={`education-scroll-sequence ${className}`.trim()} ref={containerRef}>
-      <Image
+      <img
         alt={alt}
         className="education-scroll-sequence__image"
+        decoding="async"
         height={height}
-        priority={false}
-        sizes="100vw"
-        src={frameUrls[currentFrame]}
-        unoptimized
+        loading="eager"
+        ref={imageRef}
+        src={frameUrls[0] || ""}
         width={width}
       />
     </div>
