@@ -20575,7 +20575,10 @@ body:has(.neuro-platform-page) .education-main-shell {
 }
 
 .neuro-platform-header__locale {
+  margin-bottom: -0.35rem;
+  padding-bottom: 0.35rem;
   position: relative;
+  z-index: 90;
 }
 
 .neuro-platform-header__locale summary,
@@ -20609,11 +20612,11 @@ body:has(.neuro-platform-page) .education-main-shell {
   box-shadow: 0 16px 34px rgba(10, 14, 26, 0.18);
   display: grid;
   gap: 0.25rem;
-  margin-top: 0.55rem;
   min-width: 92px;
   padding: 0.45rem;
   position: absolute;
   right: 0;
+  top: calc(100% - 0.05rem);
 }
 
 .neuro-platform-header__locale-menu a {
@@ -20625,7 +20628,8 @@ body:has(.neuro-platform-page) .education-main-shell {
   text-decoration: none;
 }
 
-.neuro-platform-header__locale-menu a:hover {
+.neuro-platform-header__locale-menu a:hover,
+.neuro-platform-header__locale-menu a.is-active {
   background: rgba(43, 123, 185, 0.08);
 }
 

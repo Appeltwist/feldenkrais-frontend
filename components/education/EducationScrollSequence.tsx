@@ -15,6 +15,14 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
+function getViewportHeight() {
+  if (typeof window === "undefined") {
+    return 0;
+  }
+
+  return window.visualViewport?.height || window.innerHeight || document.documentElement.clientHeight || 0;
+}
+
 export default function EducationScrollSequence({
   alt,
   className = "",
@@ -44,12 +52,19 @@ export default function EducationScrollSequence({
       }
 
       const rect = element.getBoundingClientRect();
-      const scrollWindow = window.innerHeight + rect.height;
-      if (scrollWindow <= 0) {
+      const viewportHeight = getViewportHeight();
+      if (viewportHeight <= 0 || rect.height <= 0) {
         return;
       }
 
-      const progress = clamp((window.innerHeight - rect.top) / scrollWindow, 0, 1);
+      const start = viewportHeight * 0.88;
+      const end = viewportHeight * 0.14 - rect.height;
+      const progressWindow = start - end;
+      if (progressWindow <= 0) {
+        return;
+      }
+
+      const progress = clamp((start - rect.top) / progressWindow, 0, 1);
       const nextFrame = Math.round(progress * (frameUrls.length - 1));
 
       if (currentFrameRef.current !== nextFrame) {
@@ -69,11 +84,27 @@ export default function EducationScrollSequence({
     requestUpdate();
     window.addEventListener("scroll", requestUpdate, { passive: true });
     window.addEventListener("resize", requestUpdate);
+    window.addEventListener("orientationchange", requestUpdate);
+    window.visualViewport?.addEventListener("resize", requestUpdate);
+
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => {
+            requestUpdate();
+          })
+        : null;
+
+    if (resizeObserver && containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
 
     return () => {
       preloadedFrames.length = 0;
       window.removeEventListener("scroll", requestUpdate);
       window.removeEventListener("resize", requestUpdate);
+      window.removeEventListener("orientationchange", requestUpdate);
+      window.visualViewport?.removeEventListener("resize", requestUpdate);
+      resizeObserver?.disconnect();
       if (animationFrame) {
         window.cancelAnimationFrame(animationFrame);
       }

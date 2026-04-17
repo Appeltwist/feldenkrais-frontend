@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
+import { getEducationMasterclassLocalePaths } from "@/lib/education-masterclass-media";
 import { isExternalHref, localizePath } from "@/lib/locale-path";
 import type { SiteNavItem } from "@/lib/site-config";
 import { useSiteContext } from "@/lib/site-context";
@@ -100,13 +101,22 @@ export default function EducationHeader() {
   const pathname = usePathname() || "/";
   const { brand, defaultLocale, footer, localeSwitchPaths, nav, siteName, siteSlug } = useSiteContext();
   const locale = getLocaleFromPathname(pathname, defaultLocale);
+  const localizedPathname = stripLocalePrefix(pathname);
+  const masterclassLocalePaths = (() => {
+    if (siteSlug !== "feldenkrais-education") {
+      return null;
+    }
+
+    const match = localizedPathname.match(/^\/masterclasses\/([^/?#]+)/);
+    return match ? getEducationMasterclassLocalePaths(decodeURIComponent(match[1])) : null;
+  })();
   const [menuOpen, setMenuOpen] = useState(false);
   const [openDesktopItem, setOpenDesktopItem] = useState<string | null>(null);
   const [localeMenuOpen, setLocaleMenuOpen] = useState(false);
   const localeMenuRef = useRef<HTMLDivElement | null>(null);
 
-  const enPath = localeSwitchPaths?.en || switchLocaleInPath(pathname, "en");
-  const frPath = localeSwitchPaths?.fr || switchLocaleInPath(pathname, "fr");
+  const enPath = localeSwitchPaths?.en || masterclassLocalePaths?.en || switchLocaleInPath(pathname, "en");
+  const frPath = localeSwitchPaths?.fr || masterclassLocalePaths?.fr || switchLocaleInPath(pathname, "fr");
   const mapHref = footer.contact?.mapUrl || localizePath(locale, "/centers");
   const platformHref = localizePath(locale, "/platform");
   const platformLabel = locale === "fr" ? "La Plateforme" : "The Platform";
@@ -220,12 +230,12 @@ export default function EducationHeader() {
               <span className="education-nav__caret">▾</span>
             </button>
             <div className="education-header__locale-menu">
-              <Link className={locale === "fr" ? "is-active" : ""} href={frPath} onClick={() => setLocaleMenuOpen(false)}>
+              <a className={locale === "fr" ? "is-active" : ""} href={frPath} onClick={() => setLocaleMenuOpen(false)}>
                 FR
-              </Link>
-              <Link className={locale === "en" ? "is-active" : ""} href={enPath} onClick={() => setLocaleMenuOpen(false)}>
+              </a>
+              <a className={locale === "en" ? "is-active" : ""} href={enPath} onClick={() => setLocaleMenuOpen(false)}>
                 EN
-              </Link>
+              </a>
             </div>
           </div>
 

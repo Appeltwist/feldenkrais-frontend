@@ -3,6 +3,7 @@ import { buildVimeoEmbedUrl, parseVimeoVideo } from "@/lib/video-embed";
 import { getFacilitatorName, getFacilitators } from "@/lib/offers";
 import {
   EDUCATION_MASTERCLASS_COVER_MAP,
+  EDUCATION_MASTERCLASS_PURCHASE_LINKS,
   EDUCATION_MASTERCLASS_TEACHER_IMAGE_MAP,
   resolveEducationMasterclassSlug,
   type EducationMasterclassSlug,
@@ -213,13 +214,44 @@ function extractBetween(source: string, startNeedle: string, endNeedle: string) 
   return source.slice(sliceStart, endIndex);
 }
 
-function extractAfter(source: string, startNeedle: string) {
-  const startIndex = source.indexOf(startNeedle);
-  if (startIndex < 0) {
+function findFirstNeedle(source: string, needles: readonly string[]) {
+  for (const needle of needles) {
+    if (source.includes(needle)) {
+      return needle;
+    }
+  }
+
+  return "";
+}
+
+function extractBetweenAny(
+  source: string,
+  startNeedles: readonly string[],
+  endNeedles: readonly string[],
+) {
+  const startNeedle = findFirstNeedle(source, startNeedles);
+  if (!startNeedle) {
     return "";
   }
 
-  return source.slice(startIndex + startNeedle.length);
+  const sliceStart = source.indexOf(startNeedle) + startNeedle.length;
+  const remainder = source.slice(sliceStart);
+  const endNeedle = findFirstNeedle(remainder, endNeedles);
+
+  if (!endNeedle) {
+    return remainder;
+  }
+
+  return remainder.slice(0, remainder.indexOf(endNeedle));
+}
+
+function extractAfterAny(source: string, startNeedles: readonly string[]) {
+  const startNeedle = findFirstNeedle(source, startNeedles);
+  if (!startNeedle) {
+    return "";
+  }
+
+  return source.slice(source.indexOf(startNeedle) + startNeedle.length);
 }
 
 function firstMatch(source: string, pattern: RegExp) {
@@ -246,6 +278,17 @@ function firstLinkByText(source: string, label: string) {
   return "";
 }
 
+function firstLinkByTexts(source: string, labels: readonly string[]) {
+  for (const label of labels) {
+    const href = firstLinkByText(source, label);
+    if (href) {
+      return href;
+    }
+  }
+
+  return "";
+}
+
 function extractPurchaseLine(source: string, locale: string) {
   const match = source.match(/<p><strong>([\s\S]*?)<\/strong>\s*([\s\S]*?)<\/p>/i);
   if (!match) {
@@ -260,12 +303,17 @@ function extractPurchaseLine(source: string, locale: string) {
 }
 
 function extractGuaranteeLine(source: string, locale: string) {
-  const match = source.match(/<p>([\s\S]*?money back guaranteed[\s\S]*?)<\/p>/i);
-  if (!match) {
-    return isFrench(locale) ? "Garantie satisfait ou remboursé pendant 14 jours." : "14-day money back guaranteed.";
+  const normalized = normalizeText(source);
+  const explicitPhrase =
+    normalized.match(/(14-day money back guaranteed\.?)/i)?.[1]
+    || normalized.match(/(garantie satisfait(?:e)? ou rembours(?:e|é)(?: pendant 14 jours)?\.?)/i)?.[1]
+    || normalized.match(/(garantie de remboursement de 14 jours\.?)/i)?.[1];
+
+  if (explicitPhrase) {
+    return explicitPhrase.trim();
   }
 
-  return normalizeText(match[1]);
+  return isFrench(locale) ? "Garantie satisfait ou remboursé pendant 14 jours." : "14-day money back guaranteed.";
 }
 
 function buildVimeoPosterUrl(url: string) {
@@ -292,9 +340,10 @@ function extractAudienceCards(section: string) {
 }
 
 function extractSampleMeta(section: string, fallbackTeacher: string): MasterclassSampleMeta {
-  const teacher = firstMatch(section, /<strong>Teacher:<\/strong>\s*([^<]+)/i) || fallbackTeacher;
-  const length = firstMatch(section, /<strong>Length:<\/strong>\s*([^<]+)/i);
-  const language = firstMatch(section, /<strong>Language:<\/strong>\s*([^<]+)/i);
+  const teacher =
+    firstMatch(section, /<strong>(?:Teacher|Intervenant)\s*:<\/strong>\s*([^<]+)/i) || fallbackTeacher;
+  const length = firstMatch(section, /<strong>(?:Length|Durée)\s*:<\/strong>\s*([^<]+)/i);
+  const language = firstMatch(section, /<strong>(?:Language|Langue)\s*:<\/strong>\s*([^<]+)/i);
 
   return {
     teacher,
@@ -388,24 +437,40 @@ export function buildMasterclassLandingData(offer: OfferDetail, locale: string):
     : "";
   const assetFallback = canonicalSlug ? MASTERCLASS_ASSET_MAP[canonicalSlug] : MASTERCLASS_ASSET_MAP[slug];
   const galleryImageUrls = canonicalSlug ? MASTERCLASS_GALLERY_MAP[canonicalSlug] ?? [] : MASTERCLASS_GALLERY_MAP[slug] ?? [];
+  const purchaseFallback = canonicalSlug ? EDUCATION_MASTERCLASS_PURCHASE_LINKS[canonicalSlug] : null;
+
+  const overviewHeadingMarkers = ["Course Overview", "Aperçu du cours"] as const;
+  const audienceHeadingMarkers = ['id="mc-whom"'] as const;
+  const teacherHeadingMarkers = ['id="mc-teacher"', "Teacher", "Intervenant"] as const;
+  const contentHeadingMarkers = ["Content", "Contenu"] as const;
+  const benefitHeadingMarkers = [
+    "Why Join This Course ?",
+    "Why Join This Course",
+    "Pourquoi rejoindre ce cours?",
+    "Pourquoi rejoindre ce cours",
+  ] as const;
+  const faqHeadingMarkers = ['id="mc-faq"', "FAQ"] as const;
 
   const heroSection = extractBetween(body, 'id="mc-hero"', 'id="mc-overview"');
-  const sampleSection = extractBetween(body, 'id="mc-overview"', "Course Overview");
-  const overviewSection = extractBetween(body, "Course Overview", "For Whom Is This Course");
-  const audienceSection = extractBetween(body, "For Whom Is This Course", "Why Join This Course");
-  const benefitsSection = extractBetween(body, "Why Join This Course ?", "FAQ");
-  const faqSection = extractAfter(body, "FAQ");
+  const sampleSection = extractBetweenAny(body, ['id="mc-overview"'], overviewHeadingMarkers);
+  const overviewSection = extractBetweenAny(body, overviewHeadingMarkers, audienceHeadingMarkers);
+  const audienceAndBenefitsSection = extractBetweenAny(body, audienceHeadingMarkers, faqHeadingMarkers);
+  const audienceSection = extractBetweenAny(body, audienceHeadingMarkers, benefitHeadingMarkers);
+  const benefitsSection = extractBetweenAny(audienceAndBenefitsSection, benefitHeadingMarkers, faqHeadingMarkers);
+  const faqSection = extractAfterAny(body, faqHeadingMarkers);
 
   const heroHeadings = extractHeadingTexts(heroSection);
   const sampleDescriptionSection = extractBetween(sampleSection, "Description", "course-meta");
-  const teacherSection = extractBetween(overviewSection, "Teacher", "Content");
-  const contentSection = extractAfter(overviewSection, "Content");
+  const teacherSection = extractBetweenAny(overviewSection, teacherHeadingMarkers, contentHeadingMarkers);
+  const contentSection = extractAfterAny(overviewSection, contentHeadingMarkers);
 
   const priceText = firstMatch(heroSection, /<p>\s*([^<]*€)\s*<\/p>/i) || "370€";
   const purchaseLine = extractPurchaseLine(heroSection, locale);
   const guaranteeLine = extractGuaranteeLine(heroSection, locale);
-  const buyUrl = firstLinkByText(heroSection, "Buy");
-  const giftUrl = firstLinkByText(heroSection, "Gift");
+  const buyUrl =
+    firstLinkByTexts(heroSection, ["Buy", "Acheter"]) || purchaseFallback?.buyUrl || "";
+  const giftUrl =
+    firstLinkByTexts(heroSection, ["Gift", "Offrir"]) || purchaseFallback?.giftUrl || "";
   const sampleVideoRaw = (() => {
     const match = sampleSection.match(/data-src="([^"]*vimeo[^"]+)"/i) || body.match(/data-src="([^"]*vimeo[^"]+)"/i);
     return match?.[1] ? match[1] : "";

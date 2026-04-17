@@ -1,4 +1,5 @@
 import EducationNeurosomaticHeader from "@/components/education/EducationNeurosomaticHeader";
+import { getEducationMasterclassLocalePaths } from "@/lib/education-masterclass-media";
 import { buildMasterclassLandingData, getMasterclassSupportFeatures } from "@/lib/masterclass-landing";
 import { localizePath } from "@/lib/locale-path";
 import type { OfferDetail } from "@/lib/types";
@@ -17,12 +18,14 @@ export default function MasterclassTemplate({ offer, locale }: MasterclassTempla
   const content = buildMasterclassLandingData(offer, locale);
   const supportFeatures = getMasterclassSupportFeatures(locale);
   const routePath = localizePath(locale, `/masterclasses/${content.slug}`);
+  const localePaths = getEducationMasterclassLocalePaths(content.slug);
 
   return (
     <div className="neuro-platform-page neuro-masterclass-page">
       <EducationNeurosomaticHeader
         locale={locale}
         loginLabel={isFr ? "Connexion" : "Login"}
+        localePaths={localePaths}
         routePath={`/masterclasses/${content.slug}`}
         title={isFr ? "LA PLATEFORME NEUROSOMATIQUE" : "THE NEUROSOMATIC PLATFORM"}
       />

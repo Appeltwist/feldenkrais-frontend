@@ -17,15 +17,22 @@ type EducationNeurosomaticHeaderProps = {
   title: string;
   loginLabel: string;
   routePath: string;
+  localePaths?: {
+    en: string;
+    fr: string;
+  } | null;
 };
 
 export default function EducationNeurosomaticHeader({
   locale,
   title,
   loginLabel,
+  localePaths = null,
   routePath,
 }: EducationNeurosomaticHeaderProps) {
   const currentLocale = locale.toLowerCase().startsWith("fr") ? "FR" : "EN";
+  const enPath = localePaths?.en || localizePath("en", routePath);
+  const frPath = localePaths?.fr || localizePath("fr", routePath);
   const [localeMenuOpen, setLocaleMenuOpen] = useState(false);
   const localeMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -78,8 +85,20 @@ export default function EducationNeurosomaticHeader({
               {currentLocale} ▾
             </button>
             <div className="neuro-platform-header__locale-menu">
-              <Link href={localizePath("en", routePath)} onClick={() => setLocaleMenuOpen(false)}>EN</Link>
-              <Link href={localizePath("fr", routePath)} onClick={() => setLocaleMenuOpen(false)}>FR</Link>
+              <a
+                className={locale === "en" ? "is-active" : ""}
+                href={enPath}
+                onClick={() => setLocaleMenuOpen(false)}
+              >
+                EN
+              </a>
+              <a
+                className={locale === "fr" ? "is-active" : ""}
+                href={frPath}
+                onClick={() => setLocaleMenuOpen(false)}
+              >
+                FR
+              </a>
             </div>
           </div>
 

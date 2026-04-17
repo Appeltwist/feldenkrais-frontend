@@ -5,6 +5,7 @@ import LocaleSwitchSync from "@/components/LocaleSwitchSync";
 import MasterclassTemplate from "@/components/offers/MasterclassTemplate";
 import ForestOfferTemplate from "@/components/offers/ForestOfferTemplate";
 import { ApiError, fetchOfferDetail, fetchOffers, fetchSiteConfig, fetchSiteFaq, type OfferDetail, type OfferSummary } from "@/lib/api";
+import { getEducationMasterclassLocalePaths } from "@/lib/education-masterclass-media";
 import { getHostname } from "@/lib/get-hostname";
 import { getRequestLocale } from "@/lib/get-locale";
 import { buildOfferMetadata, loadOfferRouteData } from "@/lib/offer-page";
@@ -129,5 +130,12 @@ export default async function MasterclassDetailPage({ params }: OfferPageProps) 
     );
   }
 
-  return <MasterclassTemplate locale={requestLocale} offer={offer} />;
+  const localeSwitchPaths = getEducationMasterclassLocalePaths(offer.slug);
+
+  return (
+    <>
+      <LocaleSwitchSync paths={localeSwitchPaths} />
+      <MasterclassTemplate locale={requestLocale} offer={offer} />
+    </>
+  );
 }
